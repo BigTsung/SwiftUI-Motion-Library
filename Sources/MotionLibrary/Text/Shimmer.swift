@@ -9,6 +9,7 @@ struct ShimmerModifier: ViewModifier {
     var highlight: Color
 
     @State private var animating = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
@@ -29,6 +30,8 @@ struct ShimmerModifier: ViewModifier {
                     .allowsHitTesting(false)
                     .onAppear {
                         animating = false
+                        // Reduce Motion: no sweep; the band stays parked off-screen.
+                        guard !reduceMotion else { return }
                         withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
                             animating = true
                         }

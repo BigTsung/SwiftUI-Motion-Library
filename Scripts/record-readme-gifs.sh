@@ -8,8 +8,8 @@
 # window appears on screen while each effect is recorded. Don't move the mouse
 # or click until it finishes: real input can cancel the simulated taps and drags.
 #
-# The sources are copied into a temporary package with their `#Preview` blocks
-# removed, because the Previews macro plugin only ships with full Xcode.
+# Builds from the preview-stripped copy made by Scripts/stage-package.sh, so
+# full Xcode isn't needed.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,33 +19,12 @@ trap 'rm -rf "$WORK"' EXIT
 
 command -v ffmpeg >/dev/null || { echo "ffmpeg not found (brew install ffmpeg)"; exit 1; }
 
-PKG="$WORK/pkg"
-mkdir -p "$PKG/Sources/Recorder"
-(cd "$ROOT" && find Sources -name '*.swift') | while read -r file; do
-    mkdir -p "$PKG/$(dirname "$file")"
-    # Every #Preview is the last declaration in its file.
-    awk '/^#Preview/{exit} {print}' "$ROOT/$file" > "$PKG/$file"
-done
-cp "$ROOT/Scripts/ReadmeGIFs/main.swift" "$PKG/Sources/Recorder/main.swift"
-
-cat > "$PKG/Package.swift" <<'EOF'
-// swift-tools-version: 5.9
-import PackageDescription
-
-let package = Package(
-    name: "ReadmeGIFs",
-    platforms: [.macOS(.v14)],
-    targets: [
-        .target(name: "MotionLibrary"),
-        .target(name: "MotionGallery", dependencies: ["MotionLibrary"]),
-        .executableTarget(name: "Recorder", dependencies: ["MotionGallery"]),
-    ]
-)
-EOF
+PKG="$("$ROOT/Scripts/stage-package.sh" Recorder=Scripts/ReadmeGIFs)"
 
 echo "Building recorder…"
-swift build --package-path "$PKG" -c release --product Recorder 2>&1 | grep -E "error|warning: unre" || true
-[ -x "$PKG/.build/release/Recorder" ] || { echo "build failed"; exit 1; }
+status=0
+out="$(swift build --package-path "$PKG" -c release --product Recorder 2>&1)" || status=$?
+[ "$status" -eq 0 ] || { echo "$out" | grep -E "error:" | sort -u; echo "build failed"; exit 1; }
 
 # Set KEEP_FRAMES=/some/dir to keep the raw PNG frames for debugging.
 FRAMES="${KEEP_FRAMES:-$WORK/frames}"
@@ -61,6 +40,10 @@ for dir in "$FRAMES"/*/; do
     # instead; it is all blur, so the lower resolution doesn't show.
     case "$id" in
         aurora) filter="fps=15,scale=iw/3:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=full[p];[b][p]paletteuse=dither=sierra2_4a" ;;
+        # Whole-frame motion (every pixel changes every frame) makes huge GIFs
+        # at 2x; at 1x they still look sharp at the 240 pt README size.
+        particle-field|starfield|parallax-carousel)
+                filter="fps=15,scale=iw/2:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle" ;;
         *)      filter="fps=25,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" ;;
     esac
     ffmpeg -loglevel error -y -framerate 30 -i "$dir/%04d.png" -vf "$filter" -loop 0 "$OUT/$id.gif"

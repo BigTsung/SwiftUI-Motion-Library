@@ -6,9 +6,13 @@ struct ShakeModifier<Trigger: Equatable>: ViewModifier {
     var trigger: Trigger
     var amplitude: CGFloat
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     func body(content: Content) -> some View {
-        content.keyframeAnimator(initialValue: CGFloat(0), trigger: trigger) { view, offset in
-            view.offset(x: offset)
+        // Reduce Motion: no shake (pair it with a colour or message change).
+        let scale: CGFloat = reduceMotion ? 0 : 1
+        return content.keyframeAnimator(initialValue: CGFloat(0), trigger: trigger) { view, offset in
+            view.offset(x: offset * scale)
         } keyframes: { _ in
             KeyframeTrack {
                 CubicKeyframe(-amplitude, duration: 0.07)

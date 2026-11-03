@@ -13,6 +13,7 @@ public struct ScrambleText: View {
     private let charset: [Character]
 
     @State private var display: String
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
         _ text: String,
@@ -35,6 +36,11 @@ public struct ScrambleText: View {
     }
 
     private func run() async {
+        // Reduce Motion: show the text without the flicker of random glyphs.
+        guard !reduceMotion else {
+            display = text
+            return
+        }
         let target = Array(text)
         let frameInterval = 0.03
         let steps = max(1, Int(duration / frameInterval))

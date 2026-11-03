@@ -25,6 +25,9 @@ public struct MotionDetailView: View {
                             TagLabel(title: trigger.title, symbol: trigger.symbol)
                         }
                     }
+                    Text("Requires \(effect.requirement.platforms)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     Text("Source: Sources/MotionLibrary/\(effect.sourceFile)")
                         .font(.caption.monospaced())
                         .foregroundStyle(.secondary)

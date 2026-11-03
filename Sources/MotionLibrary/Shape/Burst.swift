@@ -10,6 +10,7 @@ struct BurstModifier<Trigger: Equatable>: ViewModifier {
     var isEnabled: Bool
 
     @State private var bursts: [UUID] = []
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
@@ -22,7 +23,8 @@ struct BurstModifier<Trigger: Equatable>: ViewModifier {
                 .allowsHitTesting(false)
             }
             .onChange(of: trigger) {
-                guard isEnabled else { return }
+                // Reduce Motion: skip the particles.
+                guard isEnabled, !reduceMotion else { return }
                 let id = UUID()
                 bursts.append(id)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {

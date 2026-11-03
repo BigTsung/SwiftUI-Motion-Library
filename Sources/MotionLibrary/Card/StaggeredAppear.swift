@@ -8,12 +8,14 @@ struct StaggeredAppearModifier: ViewModifier {
     var distance: CGFloat
 
     @State private var visible = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
             .opacity(visible ? 1 : 0)
-            .offset(y: visible ? 0 : distance)
-            .scaleEffect(visible ? 1 : 0.96)
+            // Reduce Motion: fade only.
+            .offset(y: visible || reduceMotion ? 0 : distance)
+            .scaleEffect(visible || reduceMotion ? 1 : 0.96)
             .onAppear {
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(Double(index) * delayPerItem)) {
                     visible = true

@@ -10,6 +10,7 @@ struct TiltModifier: ViewModifier {
     /// Normalised drag, each axis in -1...1.
     @State private var tilt: CGSize = .zero
     @State private var isDragging = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// Translation (in points) that maps to the maximum angle.
     private let range: CGFloat = 120
@@ -27,8 +28,9 @@ struct TiltModifier: ViewModifier {
                     .allowsHitTesting(false)
                 }
             }
-            .rotation3DEffect(.degrees(Double(-tilt.height) * maxAngle), axis: (x: 1, y: 0, z: 0))
-            .rotation3DEffect(.degrees(Double(tilt.width) * maxAngle), axis: (x: 0, y: 1, z: 0))
+            // Reduce Motion: keep the glare and the lift, drop the rotation.
+            .rotation3DEffect(.degrees(Double(-tilt.height) * angle), axis: (x: 1, y: 0, z: 0))
+            .rotation3DEffect(.degrees(Double(tilt.width) * angle), axis: (x: 0, y: 1, z: 0))
             .scaleEffect(isDragging ? 1.03 : 1)
             .gesture(
                 DragGesture()
@@ -49,6 +51,8 @@ struct TiltModifier: ViewModifier {
                     }
             )
     }
+
+    private var angle: Double { reduceMotion ? 0 : maxAngle }
 
     private func clamp(_ value: CGFloat) -> CGFloat {
         min(1, max(-1, value))

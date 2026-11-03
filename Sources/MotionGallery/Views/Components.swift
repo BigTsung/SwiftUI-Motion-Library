@@ -85,6 +85,9 @@ struct EffectCard: View {
                 ForEach(effect.triggers) { trigger in
                     TagLabel(title: trigger.title, symbol: trigger.symbol)
                 }
+                if effect.requirement != .ios17 {
+                    TagLabel(title: effect.requirement.title, symbol: "exclamationmark.circle")
+                }
             }
         }
         .contentShape(Rectangle())

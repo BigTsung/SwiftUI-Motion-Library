@@ -9,6 +9,7 @@
 import AppKit
 import SwiftUI
 import MotionGallery
+import MotionLibrary
 
 // MARK: - Stage
 
@@ -37,6 +38,20 @@ struct Recording {
 
 private func center(_ stage: CGSize = defaultStage) -> CGPoint {
     CGPoint(x: stage.width / 2, y: stage.height / 2)
+}
+
+/// A straight drag from `from` to `to`, eased in and out.
+private func linearDrag(start: Double, length: Double, from: CGPoint, to: CGPoint) -> [(at: Double, step: Step)] {
+    var steps: [(at: Double, step: Step)] = [(start, .down(from))]
+    let count = max(1, Int(length * fps))
+    for i in 1...count {
+        let t = Double(i) / Double(count)
+        let eased = CGFloat(0.5 - 0.5 * cos(t * .pi))
+        let p = CGPoint(x: from.x + (to.x - from.x) * eased, y: from.y + (to.y - from.y) * eased)
+        steps.append((start + t * length, .move(p)))
+    }
+    steps.append((start + length + 0.02, .up(to)))
+    return steps
 }
 
 /// A drag that circles around the stage centre, so the tilt goes in every direction.
@@ -119,8 +134,149 @@ func recording(for id: String) -> Recording {
             (1.2, .click(plus)),
             (2.0, .click(minus)),
         ])
+
+    // MARK: v0.2
+
+    case "magnetic":
+        return Recording(duration: 3.0, steps: circularDrag(start: 0.3, length: 2.2, radius: 70))
+    case "hold-to-confirm":
+        // A full hold (fills, confirms, resets), then an early release that drains.
+        return Recording(duration: 4.4, steps: [
+            (0.3, .down(c)), (1.8, .up(c)),
+            (3.0, .down(c)), (3.6, .up(c)),
+        ])
+    case "status-button":
+        // The demo alternates success and failure.
+        return Recording(duration: 6.2, steps: [(0.3, .click(c)), (3.3, .click(c))])
+    case "glow-border", "gradient-sweep", "wave-text", "float-3d":
+        return Recording(duration: 3.0)
+    case "blur-in":
+        return Recording(duration: 2.4, appear: true)
+    case "marquee":
+        return Recording(duration: 4.0)
+    case "flip-card":
+        // Toggled in code: synthetic clicks are unreliable on onTapGesture.
+        return Recording(duration: 3.0, scene: { AnyView(FlipScene()) })
+    case "swipe-stack":
+        let start = CGPoint(x: c.x, y: c.y - 8)
+        return Recording(duration: 3.0, steps:
+            linearDrag(start: 0.3, length: 0.45, from: start, to: CGPoint(x: start.x + 170, y: start.y + 20))
+            + linearDrag(start: 1.6, length: 0.45, from: start, to: CGPoint(x: start.x - 170, y: start.y + 10))
+        )
+    case "parallax-carousel":
+        return Recording(duration: 4.4, scene: {
+            AnyView(SteppingScene(steps: [1, 2, 3, 1]) { selection in
+                ParallaxCarousel(Swatch.all, selection: selection, cornerRadius: 16) { swatch in
+                    swatch.gradient
+                        .overlay(Image(systemName: swatch.symbol).font(.system(size: 40)).foregroundStyle(.white.opacity(0.9)))
+                }
+                .frame(width: 320, height: 160)
+            })
+        })
+    case "expandable-card":
+        // Collapsed, the header is at the centre; expanded, the card grows
+        // around the centre and the header moves up.
+        return Recording(duration: 3.4, steps: [
+            (0.4, .click(c)),
+            (2.2, .click(CGPoint(x: c.x, y: c.y - 30))),
+        ])
+    case "checkmark":
+        // The demo checks itself on appear; then uncheck and check again.
+        return Recording(duration: 4.0, appear: true, steps: [(2.0, .click(c)), (2.8, .click(c))])
+    case "confetti":
+        return Recording(duration: 3.6, steps: [(0.3, .click(c)), (1.5, .click(c))])
+    case "loaders":
+        return Recording(duration: 3.0, scene: {
+            AnyView(HStack(spacing: 22) {
+                ForEach(MotionLoader.Style.allCases, id: \.self) { style in
+                    MotionLoader(style).frame(width: 40, height: 40)
+                }
+            })
+        })
+    case "morphing-blob":
+        return Recording(duration: 4.0)
+    case "particle-field", "starfield":
+        return Recording(duration: 4.0, scene: {
+            AnyView(MotionCatalog.all.first { $0.id == id }!.demo().padding(20))
+        })
+    case "cover-flow":
+        return Recording(duration: 4.4, scene: {
+            AnyView(SteppingScene(steps: [1, 2, 3, 4, 2]) { selection in
+                CoverFlow(Swatch.all, selection: selection, itemWidth: 110) { swatch in
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(swatch.gradient)
+                        .frame(height: 110)
+                        .overlay(Image(systemName: swatch.symbol).font(.largeTitle).foregroundStyle(.white))
+                }
+                .frame(height: 170)
+            })
+        })
     default:
         return Recording(duration: 3.0)
+    }
+}
+
+/// The gallery's flip card demo, flipped over and back on a timer.
+struct FlipScene: View {
+    @State private var flipped = false
+
+    var body: some View {
+        FlipCard(isFlipped: flipped) {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.blue.gradient)
+                .overlay(Image(systemName: "questionmark").font(.largeTitle.bold()).foregroundStyle(.white))
+        } back: {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.orange.gradient)
+                .overlay(Text("42").font(.largeTitle.bold()).foregroundStyle(.white))
+        }
+        .frame(width: 90, height: 120)
+        .task {
+            // 0.6 s settle time + 0.4 s into the recording, then back 1.4 s later.
+            try? await Task.sleep(for: .seconds(1.0))
+            flipped = true
+            try? await Task.sleep(for: .seconds(1.4))
+            flipped = false
+        }
+    }
+}
+
+/// Same artwork as the gallery's carousel demos.
+struct Swatch: Identifiable {
+    let id: Int
+    let colors: [Color]
+    let symbol: String
+
+    static let all = [
+        Swatch(id: 0, colors: [.orange, .pink], symbol: "sun.horizon.fill"),
+        Swatch(id: 1, colors: [.teal, .blue], symbol: "water.waves"),
+        Swatch(id: 2, colors: [.purple, .indigo], symbol: "moon.stars.fill"),
+        Swatch(id: 3, colors: [.mint, .green], symbol: "leaf.fill"),
+        Swatch(id: 4, colors: [.yellow, .orange], symbol: "bolt.fill"),
+        Swatch(id: 5, colors: [.pink, .purple], symbol: "sparkles"),
+    ]
+
+    var gradient: LinearGradient {
+        LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+}
+
+/// Scrolls a carousel demo through `steps` (item ids), one every 0.8 s.
+struct SteppingScene<Content: View>: View {
+    let steps: [Int]
+    @ViewBuilder let content: (Binding<Int?>) -> Content
+    @State private var selection: Int? = 0
+
+    var body: some View {
+        content($selection)
+            .task {
+                // 0.6 s settle time + 0.3 s into the recording.
+                try? await Task.sleep(for: .seconds(0.9))
+                for step in steps {
+                    withAnimation(.smooth(duration: 0.6)) { selection = step }
+                    try? await Task.sleep(for: .seconds(0.8))
+                }
+            }
     }
 }
 
@@ -159,7 +315,14 @@ struct ScrollRevealScene: View {
 
 // MARK: - Window and capture
 
-final class StageWindow: NSWindow {
+/// Far outside every display, so recording never covers or interrupts what
+/// the user is doing.
+let offscreenOrigin = CGPoint(x: -20_000, y: -20_000)
+
+/// A non-activating panel: it can become key and receive the synthetic mouse
+/// events without activating the app, so it doesn't steal focus from whatever
+/// the user is doing.
+final class StageWindow: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
 }
@@ -222,14 +385,16 @@ final class Recorder {
         self.outDir = outDir
         self.ids = ids
         window = StageWindow(
-            contentRect: CGRect(origin: CGPoint(x: 80, y: 120), size: defaultStage),
-            styleMask: [.borderless],
+            contentRect: CGRect(origin: offscreenOrigin, size: defaultStage),
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
         window.appearance = NSAppearance(named: .aqua)
         window.isReleasedWhenClosed = false
         window.hasShadow = false
+        // The app is never active, so the panel must not hide on deactivation.
+        window.hidesOnDeactivate = false
         // Stay above every other window: an occluded window stops rendering
         // animation frames, and the capture comes out frozen.
         window.level = .statusBar
@@ -290,8 +455,9 @@ final class Recorder {
         let size = plan.stage
         host.rootView = StageView(size: size, content: AnyView(EmptyView()))
         window.setContentSize(size)
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        window.setFrameOrigin(offscreenOrigin)
+        // Ordered in but never made key, so it can't take keyboard focus.
+        window.orderFrontRegardless()
         try? await Task.sleep(for: .seconds(0.3))
         // Prime the window with a click on the empty stage.
         send(.click(CGPoint(x: 4, y: 4)), to: window, stageHeight: size.height)

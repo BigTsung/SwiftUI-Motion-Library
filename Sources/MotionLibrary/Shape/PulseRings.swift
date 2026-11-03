@@ -16,6 +16,8 @@ public struct PulseRings: View {
     private let duration: Double
     private let lineWidth: CGFloat
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     public init(color: Color = .accentColor, count: Int = 3, duration: Double = 2, lineWidth: CGFloat = 2) {
         self.color = color
         self.count = max(1, count)
@@ -24,8 +26,9 @@ public struct PulseRings: View {
     }
 
     public var body: some View {
-        TimelineView(.animation) { timeline in
-            let time = timeline.date.timeIntervalSinceReferenceDate
+        // Reduce Motion: frozen rings at evenly spaced sizes.
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? duration * 0.5 : timeline.date.timeIntervalSinceReferenceDate
             ZStack {
                 ForEach(0..<count, id: \.self) { index in
                     ring(progress: progress(time: time, index: index))

@@ -19,8 +19,25 @@ public extension View {
         minOpacity: Double = 0.3,
         blur: CGFloat = 2
     ) -> some View {
-        scrollTransition(.interactive, axis: axis) { content, phase in
-            content
+        modifier(ScrollRevealModifier(axis: axis, minScale: minScale, minOpacity: minOpacity, blur: blur))
+    }
+}
+
+struct ScrollRevealModifier: ViewModifier {
+    var axis: Axis
+    var minScale: CGFloat
+    var minOpacity: Double
+    var blur: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        // Reduce Motion: keep the fade, drop the scaling and blur.
+        let minScale = reduceMotion ? 1 : minScale
+        let blur = reduceMotion ? 0 : blur
+        let minOpacity = minOpacity
+        return content.scrollTransition(.interactive, axis: axis) { view, phase in
+            view
                 .opacity(phase.isIdentity ? 1 : minOpacity)
                 .scaleEffect(phase.isIdentity ? 1 : minScale)
                 .blur(radius: phase.isIdentity ? 0 : blur)

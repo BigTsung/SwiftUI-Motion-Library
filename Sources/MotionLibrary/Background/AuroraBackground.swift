@@ -16,6 +16,8 @@ public struct AuroraBackground: View {
     private let blurRadius: CGFloat
     private let baseColor: Color
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     public init(
         colors: [Color] = [.purple, .blue, .teal, .pink],
         speed: Double = 0.4,
@@ -29,8 +31,9 @@ public struct AuroraBackground: View {
     }
 
     public var body: some View {
-        TimelineView(.animation) { timeline in
-            let time = timeline.date.timeIntervalSinceReferenceDate * speed
+        // Reduce Motion: a still frame of the same blobs.
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             GeometryReader { geometry in
                 blobs(time: time, size: geometry.size)
             }
