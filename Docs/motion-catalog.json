@@ -2279,7 +2279,7 @@
       "usage" : "import MotionShaders\n\nCard()\n    .noiseDissolve(isDeleting ? 1 : 0)\n    .animation(.easeIn(duration: 1), value: isDeleting)\n\nif !isDeleted {\n    NoteCard().transition(.noiseDissolve)\n}"
     }
   ],
-  "install" : "```swift\n// Package.swift\n.package(url: \"https://github.com/BigTsung/SwiftUI-Motion-Library\", branch: \"main\")\n// target dependencies\n.product(name: \"MotionLibrary\", package: \"SwiftUI-Motion-Library\")\n```\n\nThen `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects marked iOS 18+ are `@available(iOS 18, macOS 15, visionOS 2, *)`.",
+  "install" : "```swift\n// Package.swift\n.package(url: \"https://github.com/BigTsung/SwiftUI-Motion-Library\", from: \"0.4.0\")\n// target dependencies\n.product(name: \"MotionLibrary\", package: \"SwiftUI-Motion-Library\")\n```\n\nThen `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects marked iOS 18+ are `@available(iOS 18, macOS 15, visionOS 2, *)`.",
   "name" : "SwiftUI Motion Library",
   "repository" : "https://github.com/BigTsung/SwiftUI-Motion-Library"
 }

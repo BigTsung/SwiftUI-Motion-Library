@@ -65,10 +65,13 @@ func html(_ text: String) -> String {
         .replacingOccurrences(of: "\"", with: "&quot;")
 }
 
+/// The current release. Bump it together with the git tag.
+let packageVersion = "0.4.0"
+
 let installSnippet = """
     ```swift
     // Package.swift
-    .package(url: "\(repoURL)", branch: "main")
+    .package(url: "\(repoURL)", from: "\(packageVersion)")
     // target dependencies
     .product(name: "MotionLibrary", package: "SwiftUI-Motion-Library")
     ```
@@ -124,6 +127,14 @@ func readmeEmoji(_ component: MotionComponent) -> String {
 /// generated; the prose around it is maintained by hand in each file.
 enum ReadmeLanguage {
     case english, traditionalChinese
+
+    /// Label of the collapsible usage code under each GIF.
+    var usageLabel: String {
+        switch self {
+        case .english: "Usage"
+        case .traditionalChinese: "用法"
+        }
+    }
 
     var file: String {
         switch self {
@@ -186,9 +197,16 @@ func gifTable(_ group: [MotionEffect], _ language: ReadmeLanguage) -> String {
             return """
                 <td align="center" valign="top" width="33%">
                 <img src="Docs/gifs/\(effect.id).gif" width="240" alt="\(html(effect.name))"><br>
-                <b>\(html(effect.name))</b><br>
+                <a href="\(sourceURL(effect))"><b>\(html(effect.name))</b></a><br>
                 <sub>\(html(triggers))\(requirement)</sub><br>
                 <code>\(html(effect.api))</code>
+                <details><summary>\(language.usageLabel)</summary>
+
+                ```swift
+                \(effect.usage)
+                ```
+
+                </details>
                 </td>
                 """
         }
