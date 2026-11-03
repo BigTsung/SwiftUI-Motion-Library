@@ -117,7 +117,7 @@ struct CodeBlock: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .sensoryFeedback(.success, trigger: copied) { _, new in new }
+                .haptic(.success, trigger: copied) { _, new in new }
             }
 
             ScrollView(.horizontal, showsIndicators: false) {

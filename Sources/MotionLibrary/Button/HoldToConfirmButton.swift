@@ -67,7 +67,7 @@ public struct HoldToConfirmButton<Label: View>: View {
                 withAnimation(.easeOut(duration: 0.35)) { progress = 0 }
             }
         }
-        .sensoryFeedback(.success, trigger: isConfirmed) { _, confirmed in confirmed }
+        .haptic(.success, trigger: isConfirmed) { _, confirmed in confirmed }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("Press and hold to confirm")

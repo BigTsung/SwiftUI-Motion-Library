@@ -4,9 +4,8 @@
 #   Scripts/record-readme-gifs.sh            # all effects
 #   Scripts/record-readme-gifs.sh tilt burst # just these catalog ids
 #
-# Needs macOS, a Swift toolchain and ffmpeg (`brew install ffmpeg`). A small
-# window appears on screen while each effect is recorded. Don't move the mouse
-# or click until it finishes: real input can cancel the simulated taps and drags.
+# Needs macOS, a Swift toolchain and ffmpeg (`brew install ffmpeg`). Renders
+# in a fully transparent off-screen window, so nothing appears on screen.
 #
 # Builds from the preview-stripped copy made by Scripts/stage-package.sh, so
 # full Xcode isn't needed.
@@ -42,7 +41,7 @@ for dir in "$FRAMES"/*/; do
         aurora) filter="fps=15,scale=iw/3:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=full[p];[b][p]paletteuse=dither=sierra2_4a" ;;
         # Whole-frame motion (every pixel changes every frame) makes huge GIFs
         # at 2x; at 1x they still look sharp at the 240 pt README size.
-        particle-field|starfield|parallax-carousel)
+        particle-field|starfield|parallax-carousel|fireworks|snowfall|warp-tunnel|retro-grid|waves|grain|mesh-gradient|spotlight-card|flashlight)
                 filter="fps=15,scale=iw/2:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle" ;;
         *)      filter="fps=25,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" ;;
     esac

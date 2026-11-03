@@ -10,6 +10,7 @@ public enum MotionComponent: String, CaseIterable, Identifiable, Sendable {
     case background
     case number
     case particle
+    case transition
 
     public var id: String { rawValue }
 
@@ -22,6 +23,7 @@ public enum MotionComponent: String, CaseIterable, Identifiable, Sendable {
         case .background: "Background"
         case .number: "Number"
         case .particle: "Particle & 3D"
+        case .transition: "Transition"
         }
     }
 
@@ -34,6 +36,7 @@ public enum MotionComponent: String, CaseIterable, Identifiable, Sendable {
         case .background: "sparkles.rectangle.stack"
         case .number: "number"
         case .particle: "cube.transparent"
+        case .transition: "square.on.square.dashed"
         }
     }
 }

@@ -24,7 +24,7 @@ public struct PressableButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? scale : 1)
             .brightness(configuration.isPressed ? -0.06 : 0)
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
-            .sensoryFeedback(.impact(weight: .light), trigger: configuration.isPressed) { _, isPressed in
+            .haptic(.lightImpact, trigger: configuration.isPressed) { _, isPressed in
                 haptics && isPressed
             }
     }

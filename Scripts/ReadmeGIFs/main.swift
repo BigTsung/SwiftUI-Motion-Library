@@ -211,6 +211,64 @@ func recording(for id: String) -> Recording {
                 .frame(height: 170)
             })
         })
+    // MARK: v0.3
+
+    case "count-up", "split-text":
+        return Recording(duration: 2.2, appear: true)
+    case "rotating-text", "focus-text":
+        return Recording(duration: 3.6)
+    case "glitch":
+        return Recording(duration: 2.6)
+    case "highlighter":
+        return Recording(duration: 4.2)
+    case "jelly":
+        return Recording(duration: 2.4, steps: [(0.3, .click(c)), (1.3, .click(c))])
+    case "click-spark":
+        return Recording(duration: 2.4, steps: [
+            (0.3, .click(CGPoint(x: c.x - 40, y: c.y - 15))),
+            (0.9, .click(CGPoint(x: c.x + 45, y: c.y + 12))),
+            (1.5, .click(c)),
+        ])
+    case "like-button":
+        // Like, unlike, like again.
+        return Recording(duration: 3.0, steps: [(0.3, .click(c)), (1.6, .click(c)), (2.0, .click(c))])
+    case "liquid-toggle":
+        // The switches sit at the right edge of a 140 pt column.
+        let top = CGPoint(x: c.x + 44, y: c.y - 21)
+        let bottom = CGPoint(x: c.x + 44, y: c.y + 21)
+        return Recording(duration: 3.0, steps: [
+            (0.3, .click(top)), (0.9, .click(bottom)), (1.7, .click(top)), (2.3, .click(bottom)),
+        ])
+    case "hero-expand":
+        // Open the middle tile of the top row, then tap the detail to close it.
+        return Recording(duration: 3.2, steps: [
+            (0.3, .click(CGPoint(x: c.x, y: c.y - 23))),
+            (1.8, .click(c)),
+        ])
+    case "spotlight-card", "flashlight", "holo-card":
+        return Recording(duration: 3.0, steps: circularDrag(start: 0.2, length: 2.4, radius: 55))
+    case "dock":
+        let y = c.y + 12
+        return Recording(duration: 3.6, steps:
+            linearDrag(start: 0.2, length: 1.6, from: CGPoint(x: c.x - 80, y: y), to: CGPoint(x: c.x + 80, y: y))
+            + linearDrag(start: 2.2, length: 1.0, from: CGPoint(x: c.x + 60, y: y), to: CGPoint(x: c.x - 20, y: y))
+        )
+    case "sliding-tabs":
+        return Recording(duration: 3.0, steps: [
+            (0.3, .click(CGPoint(x: c.x + 62, y: c.y - 25))),
+            (1.2, .click(CGPoint(x: c.x - 62, y: c.y - 25))),
+            (2.1, .click(CGPoint(x: c.x, y: c.y + 25))),
+        ])
+    case "fan-stack", "skeleton":
+        return Recording(duration: 3.6)
+    case "progress-ring", "draw-on":
+        return Recording(duration: 4.0)
+    case "iris", "blinds", "clock-wipe", "dissolve", "poof", "swoosh", "film-exposure":
+        return Recording(duration: 3.4)
+    case "fireworks", "snowfall", "warp-tunnel", "retro-grid", "waves", "grain", "mesh-gradient":
+        return Recording(duration: 3.0, scene: {
+            AnyView(MotionCatalog.all.first { $0.id == id }!.demo().scaleEffect(1.6))
+        })
     default:
         return Recording(duration: 3.0)
     }
@@ -365,6 +423,15 @@ func captureWindow(_ window: NSWindow) -> CGImage? {
         .takeRetainedValue()
 }
 
+/// Renders the hosting view's current (animated) state, independent of the
+/// window's alpha, so the stage window can stay invisible.
+@MainActor
+func captureView(_ view: NSView) -> CGImage? {
+    guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return nil }
+    view.cacheDisplay(in: view.bounds, to: rep)
+    return rep.cgImage
+}
+
 func writePNG(_ image: CGImage, to url: URL) {
     let rep = NSBitmapImageRep(cgImage: image)
     try? rep.representation(using: .png, properties: [:])?.write(to: url)
@@ -393,6 +460,13 @@ final class Recorder {
         window.appearance = NSAppearance(named: .aqua)
         window.isReleasedWhenClosed = false
         window.hasShadow = false
+        // Fully transparent: nothing ever appears on screen. Frames are read
+        // from the hosting view (cacheDisplay), which still renders every
+        // animation frame at alpha 0.
+        window.alphaValue = 0
+        // Transparent windows let clicks through by default; the synthetic
+        // taps and drags must still land.
+        window.ignoresMouseEvents = false
         // The app is never active, so the panel must not hide on deactivation.
         window.hidesOnDeactivate = false
         // Stay above every other window: an occluded window stops rendering
@@ -484,7 +558,8 @@ final class Recorder {
                 send(next.step, to: window, stageHeight: size.height)
             }
 
-            guard let image = captureWindow(window) else {
+            _ = captureWindow(window)
+            guard let image = captureView(host) else {
                 print("capture failed for \(effect.id)")
                 break
             }

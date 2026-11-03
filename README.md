@@ -74,19 +74,65 @@ Every effect ships with:
 <code>WaveText(&quot;…&quot;)</code>
 </td>
 <td align="center" valign="top" width="33%">
+<img src="Docs/gifs/count-up.gif" width="240" alt="Count Up"><br>
+<b>Count Up</b><br>
+<sub>Text · Appear / Value change</sub><br>
+<code>CountUpText(value: …)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/split-text.gif" width="240" alt="Split Text"><br>
+<b>Split Text</b><br>
+<sub>Text · Appear / Value change · iOS 18+</sub><br>
+<code>SplitText(&quot;…&quot;)</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/rotating-text.gif" width="240" alt="Rotating Text"><br>
+<b>Rotating Text</b><br>
+<sub>Text · Loop</sub><br>
+<code>RotatingText([…])</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/glitch.gif" width="240" alt="Glitch"><br>
+<b>Glitch</b><br>
+<sub>Text · Loop</sub><br>
+<code>.glitch()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/circular-text.gif" width="240" alt="Circular Text"><br>
+<b>Circular Text</b><br>
+<sub>Text · Loop</sub><br>
+<code>CircularText(&quot;…&quot;)</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/focus-text.gif" width="240" alt="Focus Text"><br>
+<b>Focus Text</b><br>
+<sub>Text · Loop</sub><br>
+<code>FocusText(&quot;…&quot;)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/highlighter.gif" width="240" alt="Highlighter"><br>
+<b>Highlighter</b><br>
+<sub>Text · Appear / Value change</sub><br>
+<code>.highlighter()</code>
+</td>
+<td align="center" valign="top" width="33%">
 <img src="Docs/gifs/pressable.gif" width="240" alt="Pressable"><br>
 <b>Pressable</b><br>
 <sub>Button · Press</sub><br>
 <code>.buttonStyle(.pressable)</code>
 </td>
+</tr>
+<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/ripple.gif" width="240" alt="Tap Ripple"><br>
 <b>Tap Ripple</b><br>
 <sub>Button · Tap</sub><br>
 <code>.ripple()</code>
 </td>
-</tr>
-<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/shake.gif" width="240" alt="Error Shake"><br>
 <b>Error Shake</b><br>
@@ -99,14 +145,14 @@ Every effect ships with:
 <sub>Button · Hover / Drag</sub><br>
 <code>.magnetic()</code>
 </td>
+</tr>
+<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/hold-to-confirm.gif" width="240" alt="Hold to Confirm"><br>
 <b>Hold to Confirm</b><br>
 <sub>Button · Press</sub><br>
 <code>HoldToConfirmButton(&quot;…&quot;) { }</code>
 </td>
-</tr>
-<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/status-button.gif" width="240" alt="Loading → Success"><br>
 <b>Loading → Success</b><br>
@@ -119,14 +165,54 @@ Every effect ships with:
 <sub>Button · Loop</sub><br>
 <code>.glowBorder()</code>
 </td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/shine.gif" width="240" alt="Shine"><br>
+<b>Shine</b><br>
+<sub>Button · Value change / Loop</sub><br>
+<code>.shine(every:) / .shine(trigger:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/jelly.gif" width="240" alt="Jelly"><br>
+<b>Jelly</b><br>
+<sub>Button · Tap / Value change</sub><br>
+<code>.jelly(trigger:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/click-spark.gif" width="240" alt="Click Spark"><br>
+<b>Click Spark</b><br>
+<sub>Button · Tap</sub><br>
+<code>.clickSpark()</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/like-button.gif" width="240" alt="Like Button"><br>
+<b>Like Button</b><br>
+<sub>Button · Tap</sub><br>
+<code>LikeButton(isLiked:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/animated-symbol.gif" width="240" alt="Animated Symbol"><br>
+<b>Animated Symbol</b><br>
+<sub>Button · Loop</sub><br>
+<code>AnimatedSymbol(&quot;…&quot;, style:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/liquid-toggle.gif" width="240" alt="Liquid Toggle"><br>
+<b>Liquid Toggle</b><br>
+<sub>Button · Tap</sub><br>
+<code>.toggleStyle(.liquid)</code>
+</td>
+</tr>
+<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/staggered-appear.gif" width="240" alt="Staggered Entrance"><br>
 <b>Staggered Entrance</b><br>
 <sub>Card &amp; Group · Appear</sub><br>
 <code>.staggeredAppear(index:)</code>
 </td>
-</tr>
-<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/tilt.gif" width="240" alt="3D Tilt"><br>
 <b>3D Tilt</b><br>
@@ -139,14 +225,14 @@ Every effect ships with:
 <sub>Card &amp; Group · Scroll</sub><br>
 <code>.scrollReveal()</code>
 </td>
+</tr>
+<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/flip-card.gif" width="240" alt="Flip Card"><br>
 <b>Flip Card</b><br>
 <sub>Card &amp; Group · Tap / Value change</sub><br>
 <code>FlipCard(isFlipped:) { } back: { }</code>
 </td>
-</tr>
-<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/swipe-stack.gif" width="240" alt="Swipe Card Stack"><br>
 <b>Swipe Card Stack</b><br>
@@ -159,11 +245,45 @@ Every effect ships with:
 <sub>Card &amp; Group · Scroll</sub><br>
 <code>ParallaxCarousel(items) { item in }</code>
 </td>
+</tr>
+<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/expandable-card.gif" width="240" alt="Expandable Card"><br>
 <b>Expandable Card</b><br>
 <sub>Card &amp; Group · Tap</sub><br>
 <code>ExpandableCard(isExpanded:) { } detail: { }</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/hero-expand.gif" width="240" alt="Hero Expand"><br>
+<b>Hero Expand</b><br>
+<sub>Card &amp; Group · Tap</sub><br>
+<code>HeroGrid(items) { thumbnail } detail: { }</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/spotlight-card.gif" width="240" alt="Spotlight Card"><br>
+<b>Spotlight Card</b><br>
+<sub>Card &amp; Group · Hover / Drag</sub><br>
+<code>.spotlight()</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/dock.gif" width="240" alt="Magnifying Dock"><br>
+<b>Magnifying Dock</b><br>
+<sub>Card &amp; Group · Hover / Drag</sub><br>
+<code>MagnifyingDock(items) { item in }</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/jiggle.gif" width="240" alt="Jiggle"><br>
+<b>Jiggle</b><br>
+<sub>Card &amp; Group · Loop / Value change</sub><br>
+<code>.jiggle(isActive:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/fan-stack.gif" width="240" alt="Fan Stack"><br>
+<b>Fan Stack</b><br>
+<sub>Card &amp; Group · Tap / Value change</sub><br>
+<code>FanStack(items, isSpread:) { item in }</code>
 </td>
 </tr>
 <tr>
@@ -208,10 +328,76 @@ Every effect ships with:
 </tr>
 <tr>
 <td align="center" valign="top" width="33%">
+<img src="Docs/gifs/draw-on.gif" width="240" alt="Draw On"><br>
+<b>Draw On</b><br>
+<sub>Shape · Appear / Value change</sub><br>
+<code>Shape.drawOn()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/progress-ring.gif" width="240" alt="Progress Ring"><br>
+<b>Progress Ring</b><br>
+<sub>Shape · Value change</sub><br>
+<code>ProgressRing(progress:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/skeleton.gif" width="240" alt="Skeleton"><br>
+<b>Skeleton</b><br>
+<sub>Shape · Loop / Value change</sub><br>
+<code>.skeleton(isLoading:)</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/sliding-tabs.gif" width="240" alt="Sliding Tabs"><br>
+<b>Sliding Tabs</b><br>
+<sub>Shape · Tap</sub><br>
+<code>SlidingTabs([…], selection:)</code>
+</td>
+<td align="center" valign="top" width="33%">
 <img src="Docs/gifs/aurora.gif" width="240" alt="Aurora"><br>
 <b>Aurora</b><br>
 <sub>Background · Loop</sub><br>
 <code>AuroraBackground()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/mesh-gradient.gif" width="240" alt="Mesh Gradient"><br>
+<b>Mesh Gradient</b><br>
+<sub>Background · Loop · iOS 18+</sub><br>
+<code>AnimatedMeshGradient()</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/retro-grid.gif" width="240" alt="Retro Grid"><br>
+<b>Retro Grid</b><br>
+<sub>Background · Loop</sub><br>
+<code>RetroGrid()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/border-beam.gif" width="240" alt="Border Beam"><br>
+<b>Border Beam</b><br>
+<sub>Background · Loop</sub><br>
+<code>.borderBeam()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/waves.gif" width="240" alt="Waves"><br>
+<b>Waves</b><br>
+<sub>Background · Loop</sub><br>
+<code>WaveBackground()</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/grain.gif" width="240" alt="Film Grain"><br>
+<b>Film Grain</b><br>
+<sub>Background · Loop</sub><br>
+<code>.grain()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/flashlight.gif" width="240" alt="Flashlight"><br>
+<b>Flashlight</b><br>
+<sub>Background · Hover / Drag</sub><br>
+<code>.flashlight()</code>
 </td>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/rolling-number.gif" width="240" alt="Rolling Number"><br>
@@ -219,14 +405,14 @@ Every effect ships with:
 <sub>Number · Value change</sub><br>
 <code>RollingNumber(value:)</code>
 </td>
+</tr>
+<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/particle-field.gif" width="240" alt="Particle Field"><br>
 <b>Particle Field</b><br>
 <sub>Particle &amp; 3D · Loop</sub><br>
 <code>ParticleField()</code>
 </td>
-</tr>
-<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/starfield.gif" width="240" alt="Starfield"><br>
 <b>Starfield</b><br>
@@ -239,11 +425,93 @@ Every effect ships with:
 <sub>Particle &amp; 3D · Scroll</sub><br>
 <code>CoverFlow(items) { item in }</code>
 </td>
+</tr>
+<tr>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/float-3d.gif" width="240" alt="Float 3D"><br>
 <b>Float 3D</b><br>
 <sub>Particle &amp; 3D · Loop</sub><br>
 <code>.float3D()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/fireworks.gif" width="240" alt="Fireworks"><br>
+<b>Fireworks</b><br>
+<sub>Particle &amp; 3D · Loop</sub><br>
+<code>Fireworks()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/snowfall.gif" width="240" alt="Snowfall &amp; Rain"><br>
+<b>Snowfall &amp; Rain</b><br>
+<sub>Particle &amp; 3D · Loop</sub><br>
+<code>Snowfall(.snow / .rain)</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/floating-reactions.gif" width="240" alt="Floating Reactions"><br>
+<b>Floating Reactions</b><br>
+<sub>Particle &amp; 3D · Tap / Value change</sub><br>
+<code>.floatingReactions(trigger:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/warp-tunnel.gif" width="240" alt="Warp Tunnel"><br>
+<b>Warp Tunnel</b><br>
+<sub>Particle &amp; 3D · Loop</sub><br>
+<code>WarpTunnel()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/holo-card.gif" width="240" alt="Holographic Card"><br>
+<b>Holographic Card</b><br>
+<sub>Particle &amp; 3D · Hover / Drag</sub><br>
+<code>.holographic()</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/iris.gif" width="240" alt="Iris"><br>
+<b>Iris</b><br>
+<sub>Transition · Appear</sub><br>
+<code>.transition(.iris)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/blinds.gif" width="240" alt="Blinds"><br>
+<b>Blinds</b><br>
+<sub>Transition · Appear</sub><br>
+<code>.transition(.blinds)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/clock-wipe.gif" width="240" alt="Clock Wipe"><br>
+<b>Clock Wipe</b><br>
+<sub>Transition · Appear</sub><br>
+<code>.transition(.clockWipe)</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/dissolve.gif" width="240" alt="Pixel Dissolve"><br>
+<b>Pixel Dissolve</b><br>
+<sub>Transition · Appear</sub><br>
+<code>.transition(.dissolve)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/poof.gif" width="240" alt="Poof"><br>
+<b>Poof</b><br>
+<sub>Transition · Appear</sub><br>
+<code>.transition(.poof)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/swoosh.gif" width="240" alt="Swoosh"><br>
+<b>Swoosh</b><br>
+<sub>Transition · Appear</sub><br>
+<code>.transition(.swoosh)</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/film-exposure.gif" width="240" alt="Film Exposure"><br>
+<b>Film Exposure</b><br>
+<sub>Transition · Appear</sub><br>
+<code>.transition(.filmExposure)</code>
 </td>
 </tr>
 </table>

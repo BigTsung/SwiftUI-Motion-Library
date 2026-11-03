@@ -7,7 +7,7 @@ import MotionLibrary
 /// add a demo view in `Demos.swift`, then append an entry here.
 /// See CONTRIBUTING.md for the checklist.
 public enum MotionCatalog {
-    public static let all: [MotionEffect] = text + button + card + shape + background + number + particle
+    public static let all: [MotionEffect] = text + button + card + shape + background + number + particle + transition
 
     public static func filtered(component: MotionComponent?, trigger: MotionTrigger?, search: String = "") -> [MotionEffect] {
         let query = search.trimmingCharacters(in: .whitespaces).lowercased()
@@ -160,6 +160,148 @@ public enum MotionCatalog {
             Create a SwiftUI WaveText view for iOS 18+ (mark it @available(iOS 18, macOS 15, visionOS 2, *)) that makes each letter bob up and down in a travelling wave while keeping normal text layout. Implement a TextRenderer whose draw(layout:in:) walks every line, run and glyph, keeps a running glyph index, copies the GraphicsContext, translates it vertically by sin((index / wavelength − time × speed) × 2π) × amplitude, and draws the glyph. Set displayPadding to the amplitude above and below so nothing clips. Drive time from TimelineView(.animation) and apply the renderer with .textRenderer. Defaults: amplitude 5 pt, wavelength 8 letters, 1 wave per second. With Reduce Motion on, pause the timeline and use zero amplitude.
             """#
         ) { WaveTextDemo() },
+
+        // MARK: v0.3
+
+        MotionEffect(
+            id: "count-up",
+            name: "Count Up",
+            summary: "A number counts up from zero, and from old to new value on change.",
+            component: .text,
+            triggers: [.appear, .change],
+            sourceFile: "Text/CountUpText.swift",
+            api: "CountUpText(value: …)",
+            usage: #"""
+            CountUpText(value: revenue, prefix: "$")
+                .font(.largeTitle.bold())
+
+            CountUpText(value: 98.6, fractionDigits: 1, suffix: "%", duration: 2)
+            """#,
+            prompt: #"""
+            Create a SwiftUI CountUpText view (iOS 17+) with value, duration (1.4 s), fractionDigits (0), prefix and suffix. Keep a @State shown value starting at 0; on appear and whenever value changes, set shown = value inside withAnimation(.easeOut(duration:)). Render through a private view that conforms to both View and Animatable (animatableData = the number) so SwiftUI calls body on every frame with the interpolated value, and format it with value.formatted(.number.precision(.fractionLength(fractionDigits))) between prefix and suffix. Use .monospacedDigit() so the width doesn't jitter, and give it the final formatted value as its accessibility label. With Reduce Motion on, jump straight to the value.
+            """#
+        ) { CountUpDemo() },
+
+        MotionEffect(
+            id: "split-text",
+            name: "Split Text",
+            summary: "Letters rise into place one after another with a small overshoot.",
+            component: .text,
+            triggers: [.appear, .change],
+            requirement: .ios18,
+            sourceFile: "Text/SplitText.swift",
+            api: "SplitText(\"…\")",
+            usage: #"""
+            if #available(iOS 18, *) {
+                SplitText("Letters take the stage")
+                    .font(.largeTitle.bold())
+            }
+            """#,
+            prompt: #"""
+            Create a SwiftUI SplitText view for iOS 18+ (mark it @available(iOS 18, macOS 15, visionOS 2, *)) with duration per letter (0.5 s), stagger (0.035 s) and distance (18 pt). Apply a TextRenderer that is also Animatable, with a progress value 0…1 as animatableData. In draw(layout:in:), count all glyphs, then for glyph i compute start = spread × i / (count − 1), where spread is the share of the total time taken by the delays, and local = clamp((progress − start) / (1 − spread), 0, 1). Copy the GraphicsContext, set opacity to min(1, local × 2), translate it down by (1 − backOut(local)) × distance (backOut: ease-out with ~1.7 overshoot) and draw the glyph. Set displayPadding at the bottom to distance. In .task(id: string), reset progress to 0 without animation, then animate it to 1 with linear timing over duration + stagger × (count − 1). With Reduce Motion on, use zero distance (a fade).
+            """#
+        ) { SplitTextDemo() },
+
+        MotionEffect(
+            id: "rotating-text",
+            name: "Rotating Text",
+            summary: "Words take turns: the current one slides up and out as the next rises in.",
+            component: .text,
+            triggers: [.loop],
+            sourceFile: "Text/RotatingText.swift",
+            api: "RotatingText([…])",
+            usage: #"""
+            HStack {
+                Text("We")
+                RotatingText(["design", "build", "ship"])
+                    .foregroundStyle(.blue)
+            }
+            .font(.largeTitle.bold())
+            """#,
+            prompt: #"""
+            Create a SwiftUI RotatingText view (iOS 17+) that cycles through an array of words every interval (2 s). Keep a @State index and show Text(words[index]).id(index) inside a ZStack with .fixedSize() and .clipped(). Give the text an asymmetric transition: insertion .move(edge: .bottom) combined with .opacity, removal .move(edge: .top) combined with .opacity. Drive it from .task with a loop of Task.sleep followed by withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { index += 1 }, so the width also springs to fit each word. Expose all words joined by commas as the accessibility label. With Reduce Motion on, use a plain opacity transition.
+            """#
+        ) { RotatingTextDemo() },
+
+        MotionEffect(
+            id: "glitch",
+            name: "Glitch",
+            summary: "Every few seconds the view tears: an RGB split, sliced rows and jitter.",
+            component: .text,
+            triggers: [.loop],
+            sourceFile: "Text/Glitch.swift",
+            api: ".glitch()",
+            usage: #"""
+            Text("SYSTEM FAILURE")
+                .font(.title.monospaced().bold())
+                .glitch()
+
+            Image("logo")
+                .glitch(intensity: 2, interval: 4)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .glitch(isActive:intensity:interval:) view modifier (iOS 17+) that works on any view. Use TimelineView(.animation(minimumInterval: 1/24)) and derive everything from the clock: glitch during the first 0.35 s of every interval (2 s); within that window pick new pseudo-random values 24 times a second from a cheap integer hash of (frame, salt). While glitching: (1) behind the content, draw two silhouettes of it, content.brightness(1).colorMultiply(.cyan) offset left and content.brightness(1).colorMultiply(.red) offset right by 2–6 pt × intensity, at 85 % opacity; (2) in an overlay, draw a copy of the content offset sideways by up to ±12 pt, masked to a horizontal strip at a random height (10–35 % of the view tall); (3) jitter the whole view by up to ±1.5 pt. Outside the window, show the content untouched. With Reduce Motion on, don't glitch at all.
+            """#
+        ) { GlitchDemo() },
+
+        MotionEffect(
+            id: "circular-text",
+            name: "Circular Text",
+            summary: "Text wrapped around a circle that slowly turns, like a rotating badge.",
+            component: .text,
+            triggers: [.loop],
+            sourceFile: "Text/CircularText.swift",
+            api: "CircularText(\"…\")",
+            usage: #"""
+            ZStack {
+                CircularText("SWIFTUI • MOTION • LIBRARY • ", radius: 60)
+                    .font(.caption.monospaced().bold())
+                Image(systemName: "sparkles").font(.largeTitle)
+            }
+            """#,
+            prompt: #"""
+            Create a SwiftUI CircularText view (iOS 17+) with text, radius (60 pt) and speed (20° per second). Split the string into characters and place each one in a ZStack as Text(character).offset(y: −radius).rotationEffect(.degrees(index / count × 360)), so letters stand evenly spaced around the circle. Wrap the ZStack in TimelineView(.animation) and rotate it by time × speed degrees (modulo 360). Frame it to 2 × radius plus 12 pt padding. Use the full text as a single accessibility label. With Reduce Motion on (or speed 0), pause the timeline.
+            """#
+        ) { CircularTextDemo() },
+
+        MotionEffect(
+            id: "focus-text",
+            name: "Focus Text",
+            summary: "Focus hops from word to word: sharp and bracketed, the rest blurred.",
+            component: .text,
+            triggers: [.loop],
+            sourceFile: "Text/FocusText.swift",
+            api: "FocusText(\"…\")",
+            usage: #"""
+            FocusText("Motion made simple")
+                .font(.title.bold())
+
+            FocusText("Plan Build Ship", interval: 0.8, bracketColor: .pink)
+            """#,
+            prompt: #"""
+            Create a SwiftUI FocusText view (iOS 17+) that splits a sentence into words in an HStack (10 pt spacing). A @State focus index advances every interval (1.2 s) in a .task loop with withAnimation(.spring(response: 0.45, dampingFraction: 0.8)). Unfocused words get blur radius 3 and opacity 0.55; the focused word is sharp. Behind the focused word only, draw four L-shaped corner brackets (Canvas, 2.5 pt round strokes, arms 8 pt, 2 pt outside the word's padded frame) and give them .matchedGeometryEffect(id: "focus", in: namespace) so the brackets glide and resize from word to word. Use the sentence as the accessibility label. With Reduce Motion on, use a short ease instead of the spring.
+            """#
+        ) { FocusTextDemo() },
+
+        MotionEffect(
+            id: "highlighter",
+            name: "Highlighter",
+            summary: "A marker pen swipes across the text, or underlines it, left to right.",
+            component: .text,
+            triggers: [.appear, .change],
+            sourceFile: "Text/Highlighter.swift",
+            api: ".highlighter()",
+            usage: #"""
+            Text("the important part")
+                .highlighter()
+
+            Text("Pricing")
+                .highlighter(isActive: isSelected, color: .pink, style: .underline)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .highlighter(isActive:color:style:duration:) view modifier (iOS 17+) with two styles. In a background GeometryReader, draw a rounded rectangle 6 pt wider than the text: for .marker, 55 % of the text height, yellow at 45 % opacity, rotated −1.2° and sitting over the lower half; for .underline, a full-opacity capsule about 10 % of the height (at least 3 pt) at the baseline. Scale it horizontally from 0 to 1 with anchor .leading, animated with easeOut(0.6 s) on appear and whenever isActive changes, so it swipes on from the left and back off. Disable hit testing and hide it from accessibility. With Reduce Motion on, switch it without animation.
+            """#
+        ) { HighlighterDemo() },
     ]
 
     // MARK: - Button
@@ -318,6 +460,122 @@ public enum MotionCatalog {
             Create a SwiftUI .glowBorder(colors:cornerRadius:lineWidth:glowRadius:duration:) view modifier (iOS 17+). In a non-interactive overlay, use TimelineView(.animation) to compute a rotation angle of (time / duration) turns (3 s per turn). Build an AngularGradient from the palette plus its first colour again (pink, purple, blue, cyan, mint by default) starting at that angle. Stroke a continuous RoundedRectangle with it twice: once at 2× line width, blurred by glowRadius (8) at 80% opacity for the glow, and once crisp at lineWidth (2). With Reduce Motion on, pause the rotation.
             """#
         ) { GlowBorderDemo() },
+
+        // MARK: v0.3
+
+        MotionEffect(
+            id: "shine",
+            name: "Shine",
+            summary: "A slanted glint of light sweeps across the button, on cue or on a beat.",
+            component: .button,
+            triggers: [.change, .loop],
+            sourceFile: "Button/Shine.swift",
+            api: ".shine(every:) / .shine(trigger:)",
+            usage: #"""
+            PremiumBadge()
+                .shine(every: 3)
+
+            Button("Upgrade") { purchases += 1 }
+                .buttonStyle(.borderedProminent)
+                .shine(trigger: purchases)
+            """#,
+            prompt: #"""
+            Create two SwiftUI modifiers (iOS 17+): .shine(trigger:color:duration:) and .shine(every:color:duration:). Both overlay a "band": a horizontal LinearGradient clear → white 70 % → clear, 30 % of the view's width (at least 24 pt), twice the view's height, rotated 20°, whose x offset goes from −1.5 × band (fully off the left) at progress 0 to width + 1.5 × band (off the right) at progress 1. Mask the band with the content so only the view's own pixels shine, and disable hit testing. The trigger version runs progress 0 → 1 with keyframeAnimator(initialValue: 0, trigger:) and one CubicKeyframe over duration (0.75 s), so the band is hidden at rest. The looping version uses TimelineView(.animation) with progress = (time mod interval) / duration, clamped to 1. With Reduce Motion on, skip the band.
+            """#
+        ) { ShineDemo() },
+
+        MotionEffect(
+            id: "jelly",
+            name: "Jelly",
+            summary: "A rubbery squash-and-stretch wobble on every tap.",
+            component: .button,
+            triggers: [.tap, .change],
+            sourceFile: "Button/Jelly.swift",
+            api: ".jelly(trigger:)",
+            usage: #"""
+            Button("Boing") { taps += 1 }
+                .buttonStyle(.borderedProminent)
+                .jelly(trigger: taps)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .jelly(trigger:amount:) view modifier (iOS 17+) using keyframeAnimator(initialValue:trigger:) on a struct with x and y scale (both 1), applied with scaleEffect(x:y:). With a = amount (0.25): the x track goes 1 + a (0.1 s), 1 − 0.8a (0.12 s), 1 + 0.5a (0.12 s) with cubic keyframes, then a SpringKeyframe(.bouncy) back to 1 over 0.4 s; the y track does the opposite (1 − a, 1 + 0.8a, 1 − 0.5a, spring to 1), so the view squashes wide and flat, then stretches tall and thin, then settles. With Reduce Motion on, use a = 0.
+            """#
+        ) { JellyDemo() },
+
+        MotionEffect(
+            id: "click-spark",
+            name: "Click Spark",
+            summary: "Short spark lines shoot out from the exact point you tapped.",
+            component: .button,
+            triggers: [.tap],
+            sourceFile: "Button/ClickSpark.swift",
+            api: ".clickSpark()",
+            usage: #"""
+            Button("Launch") { }
+                .buttonStyle(.borderedProminent)
+                .clickSpark(color: .orange)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .clickSpark(color:count:radius:) view modifier (iOS 17+). Detect taps with .simultaneousGesture(SpatialTapGesture()) and append a spark (UUID + location) to a @State array, removing it 0.6 s later. In a hit-testing-disabled overlay, place each spark at its location: count (8) capsules 2.5 pt wide and 0.45 × radius tall, each rotated by index / count × 360°. On appear, animate with easeOut(0.45 s) from offset −0.3 × radius to −radius (outward), scaleEffect(y:) from 1 to 0.1 anchored at the top (so each line shrinks toward its outer tip) and opacity from 1 to 0. With Reduce Motion on, don't add sparks.
+            """#
+        ) { ClickSparkDemo() },
+
+        MotionEffect(
+            id: "like-button",
+            name: "Like Button",
+            summary: "The heart pops in as a ring bursts open and coloured dots fly out.",
+            component: .button,
+            triggers: [.tap],
+            sourceFile: "Button/LikeButton.swift",
+            api: "LikeButton(isLiked:)",
+            usage: #"""
+            LikeButton(isLiked: $post.isLiked)
+
+            LikeButton(isLiked: $liked, size: 40, color: .red)
+            """#,
+            prompt: #"""
+            Create a SwiftUI LikeButton (iOS 17+) bound to isLiked, with size (28 pt), color (pink) and dotColors. It's a plain Button showing Image(systemName: isLiked ? "heart.fill" : "heart"); tapping toggles and, on like, increments a counter used as a keyframeAnimator trigger over a struct {heart, ring, dots}. Tracks: heart drops to 0.2 instantly, holds 0.15 s, then springs to 1 with a bouncy overshoot; ring goes 0 → 1 over 0.3 s then back to 0; dots wait 0.15 s then go 0 → 1 over 0.55 s. Behind the heart draw (a) a circle strokeBorder in color whose diameter is 1.5 × size × ring and whose line width is 0.5 × size × (1 − ring), so it bursts open and thins out; (b) 7 pairs of small dots (0.16 × size) at angles i/7 × 360° ± 10°, at distance size × (0.6 + 0.55 × dots), scaling down to 10 % as they fly. Unliking only springs the heart back. Add a light haptic on like, and hide the burst for Reduce Motion.
+            """#
+        ) { LikeButtonDemo() },
+
+        MotionEffect(
+            id: "animated-symbol",
+            name: "Animated Symbol",
+            summary: "SF Symbols that keep moving: bounce on a beat, pulse, variable colour.",
+            component: .button,
+            triggers: [.loop],
+            sourceFile: "Button/AnimatedSymbol.swift",
+            api: "AnimatedSymbol(\"…\", style:)",
+            usage: #"""
+            AnimatedSymbol("bell.fill")                      // bounces every 1.5 s
+            AnimatedSymbol("heart.fill", style: .pulse)
+            AnimatedSymbol("wifi", style: .variableColor)
+            AnimatedSymbol("mic.fill", style: .scaleUp, isActive: isRecording)
+            """#,
+            prompt: #"""
+            Create a SwiftUI AnimatedSymbol view (iOS 17+) wrapping Image(systemName:) with a style enum: .bounce, .pulse, .variableColor and .scaleUp, plus isActive and interval (1.5 s). For .bounce, apply .symbolEffect(.bounce, value: beats) and increment beats in a .task(id: isActive) loop every interval. For the others, use the indefinite effects .symbolEffect(.pulse, isActive:), .symbolEffect(.variableColor.iterative.reversing, isActive:) and .symbolEffect(.scale.up, isActive:). The view inherits font and foregroundStyle like any Image. With Reduce Motion on, treat it as inactive.
+            """#
+        ) { AnimatedSymbolDemo() },
+
+        MotionEffect(
+            id: "liquid-toggle",
+            name: "Liquid Toggle",
+            summary: "A switch whose knob stretches like a drop of liquid as it slides.",
+            component: .button,
+            triggers: [.tap],
+            sourceFile: "Button/LiquidToggleStyle.swift",
+            api: ".toggleStyle(.liquid)",
+            usage: #"""
+            Toggle("Wi-Fi", isOn: $wifi)
+                .toggleStyle(.liquid)
+
+            Toggle("Dark mode", isOn: $dark)
+                .toggleStyle(.liquid(tint: .purple))
+            """#,
+            prompt: #"""
+            Create a SwiftUI LiquidToggleStyle (iOS 17+) with a tint (green) and static accessors .liquid and .liquid(tint:). makeBody puts the label, a Spacer and a 52 × 32 pt switch in an HStack. The switch is a plain Button that toggles configuration.isOn inside withAnimation(.spring(response: 0.35, dampingFraction: 0.7)); it shows a ZStack aligned .trailing when on and .leading when off, with a capsule track (tint when on, gray 35 % when off) and a white capsule knob (26 pt tall, 3 pt padding, small shadow). The knob's width runs a keyframeAnimator triggered by isOn: CubicKeyframe to 1.5 × 26 pt over 0.12 s, then SpringKeyframe(.bouncy) back to 26 over 0.35 s, so it stretches as it slides and snaps back round. Give it an "On"/"Off" accessibility value. With Reduce Motion on, don't stretch and use a short ease.
+            """#
+        ) { LiquidToggleDemo() },
     ]
 
     // MARK: - Card & Group
@@ -467,6 +725,106 @@ public enum MotionCatalog {
             Create a SwiftUI ExpandableCard<Header, Detail> (iOS 17+) bound to isExpanded. A VStack holds a plain-style Button containing the header, a spacer and a chevron.down that rotates −180° when open, then, if expanded, the detail view. Toggle inside withAnimation(.spring(response 0.45, damping 0.8)) so the card's height springs. Insert the detail with a combined transition of opacity, an 8 pt upward offset and a custom blur transition (radius 6 → 0). The background is a continuous rounded rectangle (16 pt) filled with the background style whose shadow deepens when open. Expose Expanded/Collapsed as the accessibility value. With Reduce Motion on, use a short ease and an opacity transition only.
             """#
         ) { ExpandableCardDemo() },
+
+        // MARK: v0.3
+
+        MotionEffect(
+            id: "hero-expand",
+            name: "Hero Expand",
+            summary: "A thumbnail grows into a full detail card, morphing with matchedGeometryEffect.",
+            component: .card,
+            triggers: [.tap],
+            sourceFile: "Card/HeroGrid.swift",
+            api: "HeroGrid(items) { thumbnail } detail: { }",
+            usage: #"""
+            HeroGrid(photos, columns: 3) { photo in
+                Image(photo.thumbnail).resizable().scaledToFill().frame(height: 90)
+            } detail: { photo in
+                PhotoDetail(photo)
+            }
+            """#,
+            prompt: #"""
+            Create a generic SwiftUI HeroGrid (iOS 17+) over Identifiable items with columns (3), spacing (10), cornerRadius (14) and two view builders: thumbnail and detail. Keep @State selected: Item.ID? and a @Namespace. In a ZStack, show a LazyVGrid of flexible columns; for each item, if it isn't selected show a plain Button with the thumbnail clipped to a continuous rounded rectangle and .matchedGeometryEffect(id: item.id, in: namespace), otherwise show the thumbnail .hidden() to keep the slot. Dim the grid to 30 % while something is selected. Above it, if selected, show the detail in a Button sized maxWidth/maxHeight .infinity, clipped the same way, with the same matchedGeometryEffect id and zIndex 1. Open with withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) and close by tapping the detail. Both views get an .opacity transition so their content cross-fades while the frame morphs. With Reduce Motion on, pass properties: [] to matchedGeometryEffect so it only cross-fades.
+            """#
+        ) { HeroGridDemo() },
+
+        MotionEffect(
+            id: "spotlight-card",
+            name: "Spotlight Card",
+            summary: "A soft glow follows the pointer across the card, like a torch.",
+            component: .card,
+            triggers: [.hover, .drag],
+            sourceFile: "Card/Spotlight.swift",
+            api: ".spotlight()",
+            usage: #"""
+            FeatureCard()
+                .background(.black, in: RoundedRectangle(cornerRadius: 20))
+                .spotlight()
+
+            PricingCard()
+                .spotlight(color: .purple.opacity(0.4), radius: 160)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .spotlight(color:radius:) view modifier (iOS 17+). Track the pointer with .onContinuousHover(coordinateSpace: .local) and a finger with a simultaneous DragGesture(minimumDistance: 0); store the location in @State (nil when the pointer leaves or the drag ends) and remember the last location so the glow can fade out where it was. In an overlay GeometryReader, draw a RadialGradient from color (white 35 %) to clear, centred at the location converted to a UnitPoint, endRadius = radius (120 pt), and mask it with the content so it only lights the card. Move with .interactiveSpring(response: 0.2, dampingFraction: 0.9) and fade out with easeOut(0.35 s). Disable hit testing on the glow. With Reduce Motion on, move the glow without animation.
+            """#
+        ) { SpotlightDemo() },
+
+        MotionEffect(
+            id: "dock",
+            name: "Magnifying Dock",
+            summary: "Icons swell as the pointer passes over them, like the macOS Dock.",
+            component: .card,
+            triggers: [.hover, .drag],
+            sourceFile: "Card/MagnifyingDock.swift",
+            api: "MagnifyingDock(items) { item in }",
+            usage: #"""
+            MagnifyingDock(apps) { app in
+                Image(app.icon).resizable()
+            }
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            """#,
+            prompt: #"""
+            Create a generic SwiftUI MagnifyingDock (iOS 17+) over Identifiable items with size (40 pt), magnification (1.8), range (110 pt), spacing (8) and a content builder. Lay the items out in an HStack(alignment: .bottom) and frame each icon to size × scale(i). Put the HStack in a frame exactly as wide as the resting row (count × size + gaps) and size × magnification tall, aligned to the bottom, so the magnified row overflows it evenly; track the pointer x on that frame with .onContinuousHover and a simultaneous DragGesture(minimumDistance: 0). scale(i) = 1 + (magnification − 1) × cos(d / range × π/2) where d is the distance from the pointer to the icon's resting centre (i × (size + spacing) + size/2), or 1 beyond range. Animate pointer changes with .interactiveSpring(response: 0.2) and the release with .spring(response: 0.35, dampingFraction: 0.75). Add horizontal padding for the overflow. With Reduce Motion on, don't magnify.
+            """#
+        ) { DockDemo() },
+
+        MotionEffect(
+            id: "jiggle",
+            name: "Jiggle",
+            summary: "The home-screen edit-mode wiggle, each item slightly out of step.",
+            component: .card,
+            triggers: [.loop, .change],
+            sourceFile: "Card/Jiggle.swift",
+            api: ".jiggle(isActive:)",
+            usage: #"""
+            ForEach(apps) { app in
+                AppIcon(app)
+                    .jiggle(isActive: isEditing)
+            }
+            """#,
+            prompt: #"""
+            Create a SwiftUI .jiggle(isActive:angle:) view modifier (iOS 17+) that wiggles a view like an app icon in edit mode. Give each instance a random @State phase (0–1) and rate (0.9–1.1) so neighbours never move in lockstep. In TimelineView(.animation(paused: !isActive)), let t = (time × rate + phase) × 2π × 3.6, rotate by sin(t) × angle (2.5°) and offset y by cos(t/2) × 0.8 pt. When inactive, return to 0 with a 0.15 s ease. With Reduce Motion on, don't move.
+            """#
+        ) { JiggleDemo() },
+
+        MotionEffect(
+            id: "fan-stack",
+            name: "Fan Stack",
+            summary: "A pile of cards fans out like a hand of playing cards, and gathers back.",
+            component: .card,
+            triggers: [.tap, .change],
+            sourceFile: "Card/FanStack.swift",
+            api: "FanStack(items, isSpread:) { item in }",
+            usage: #"""
+            FanStack(cards, isSpread: isSpread) { card in
+                CardView(card).frame(width: 80, height: 120)
+            }
+            .onTapGesture { isSpread.toggle() }
+            """#,
+            prompt: #"""
+            Create a generic SwiftUI FanStack (iOS 17+) over Identifiable items with isSpread, angle (10°) and spacing (34 pt). Draw the cards in a ZStack, bottom first. For card i, let c = i − (count − 1)/2. Fanned: rotate by c × angle around the bottom anchor, offset x by c × spacing and y by c² × 4 pt so the outer cards dip along an arc. Stacked: rotate by c × 1.5° around the centre and offset y by −2 pt × i for a neat pile. Animate each card with .spring(response: 0.45, dampingFraction: 0.7).delay(i × 0.03) on isSpread so they follow each other. With Reduce Motion on, use a 0.25 s ease without the stagger.
+            """#
+        ) { FanStackDemo() },
     ]
 
     // MARK: - Shape
@@ -589,6 +947,85 @@ public enum MotionCatalog {
             Create a SwiftUI MorphingBlob view (iOS 17+) generic over a ShapeStyle fill, with a convenience initializer taking colours for a diagonal LinearGradient. Draw a custom Shape in TimelineView(.animation): place N control points (6) evenly around the centre, each at radius base × (1 + wobble × (0.6·sin(1.1t + 1.7i) + 0.4·sin(0.7t + 2.9i))), where base = half the side × (1 − wobble) and wobble is 0.18. Connect them into a smooth closed curve with a Catmull-Rom spline converted to cubic Béziers (control points p1 + (p2 − p0)/6 and p2 − (p3 − p1)/6). Keep a 1:1 aspect ratio and hide it from accessibility. With Reduce Motion on, freeze the shape.
             """#
         ) { BlobDemo() },
+
+        // MARK: v0.3
+
+        MotionEffect(
+            id: "draw-on",
+            name: "Draw On",
+            summary: "Any Shape strokes itself on like a pen, and erases back.",
+            component: .shape,
+            triggers: [.appear, .change],
+            sourceFile: "Shape/DrawOn.swift",
+            api: "Shape.drawOn()",
+            usage: #"""
+            Circle()
+                .drawOn()
+                .frame(width: 80, height: 80)
+
+            SignaturePath()
+                .drawOn(isDrawn: signed, style: .blue, lineWidth: 3, duration: 1.6)
+            """#,
+            prompt: #"""
+            Create a SwiftUI Shape extension drawOn(isDrawn:style:lineWidth:duration:) (iOS 17+) returning a DrawOnShape view. It strokes shape.trim(from: 0, to: progress) with the given ShapeStyle (accent colour), a StrokeStyle with lineWidth (3 pt), round caps and round joins, and pads by lineWidth / 2 so the stroke isn't clipped. Keep progress in @State; on appear and whenever isDrawn changes, animate it to 1 (draw) or 0 (erase) with easeInOut over duration (1.2 s). Works with any Shape, including custom paths, which are drawn in path order. With Reduce Motion on, use a 0.2 s ease.
+            """#
+        ) { DrawOnDemo() },
+
+        MotionEffect(
+            id: "progress-ring",
+            name: "Progress Ring",
+            summary: "A gradient ring springs to each value as the percentage rolls.",
+            component: .shape,
+            triggers: [.change],
+            sourceFile: "Shape/ProgressRing.swift",
+            api: "ProgressRing(progress:)",
+            usage: #"""
+            ProgressRing(progress: uploaded)
+                .frame(width: 120, height: 120)
+
+            ProgressRing(progress: steps / goal, colors: [.green, .mint]) {
+                Image(systemName: "figure.walk").font(.title)
+            }
+            """#,
+            prompt: #"""
+            Create a SwiftUI ProgressRing (iOS 17+) with progress (0…1), lineWidth (12 pt), colors (cyan, blue, purple) and an optional label view builder (default: the percentage). In a ZStack, stroke a full Circle in secondary at 18 % opacity, then a Circle().trim(from: 0, to: progress) stroked with AngularGradient(colors:) over 0–360° and a round line cap, rotated −90° so it starts at twelve o'clock. Pad by lineWidth / 2. Animate progress changes with .spring(response: 0.6, dampingFraction: 0.75). The default label is the percentage as .title2.bold().monospacedDigit() with .contentTransition(.numericText(value:)), so the digits roll. Expose the percentage as the accessibility value. With Reduce Motion on, use a short ease.
+            """#
+        ) { ProgressRingDemo() },
+
+        MotionEffect(
+            id: "skeleton",
+            name: "Skeleton",
+            summary: "A shimmering placeholder of the view's own layout while it loads.",
+            component: .shape,
+            triggers: [.loop, .change],
+            sourceFile: "Shape/Skeleton.swift",
+            api: ".skeleton(isLoading:)",
+            usage: #"""
+            ArticleRow(article)
+                .skeleton(isLoading: isLoading)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .skeleton(isLoading:) view modifier (iOS 17+). While loading, apply .redacted(reason: .placeholder) so text and images become grey blocks in the view's real layout, then the shimmer modifier (a white 80 % highlight band, 35 % of the width, sweeping left to right every 1.6 s, masked by the content), disable hit testing and hide the view from accessibility. When loading ends, remove both and animate with easeInOut(0.3 s) so the real content fades in. The shimmer pauses for Reduce Motion.
+            """#
+        ) { SkeletonDemo() },
+
+        MotionEffect(
+            id: "sliding-tabs",
+            name: "Sliding Tabs",
+            summary: "A segmented control whose pill or underline glides to the selection.",
+            component: .shape,
+            triggers: [.tap],
+            sourceFile: "Shape/SlidingTabs.swift",
+            api: "SlidingTabs([…], selection:)",
+            usage: #"""
+            SlidingTabs(["Day", "Week", "Month"], selection: $range)
+
+            SlidingTabs(Category.allCases, selection: $category, indicator: .underline) { $0.title }
+            """#,
+            prompt: #"""
+            Create a generic SwiftUI SlidingTabs control (iOS 17+) over Hashable options with a selection binding, an indicator style (.pill or .underline), a tint and a title closure (plus a convenience init for [String]). Show the options as plain Buttons in an HStack inside a 4 pt padded capsule tinted secondary at 12 % (pill style only). Behind the selected title only, draw the indicator — a capsule filled with the tint (title turns white), or a 3 pt capsule at the bottom inset 10 pt (title turns tint) — with .matchedGeometryEffect(id: "indicator", in: namespace), so it glides between options. Change the selection inside withAnimation(.spring(response: 0.35, dampingFraction: 0.8)), and add the .isSelected trait. With Reduce Motion on, use a 0.15 s ease.
+            """#
+        ) { SlidingTabsDemo() },
     ]
 
     // MARK: - Background
@@ -613,6 +1050,123 @@ public enum MotionCatalog {
             Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base color, draw one large circle per palette color (default purple, blue, teal, pink; 80% opacity, diameter 70% of the larger side). Each circle drifts on its own Lissajous path, x = cos(t·0.6 + phase)·30% width and y = sin(t·0.8 + phase·1.3)·30% height, where phase differs per index. Drive time from TimelineView(.animation) scaled by a speed parameter, blur the whole group with a ~60 pt radius, clip to bounds and hide it from accessibility.
             """#
         ) { AuroraDemo() },
+
+        // MARK: v0.3
+
+        MotionEffect(
+            id: "mesh-gradient",
+            name: "Mesh Gradient",
+            summary: "A 3×3 MeshGradient whose points drift so the colours flow like liquid.",
+            component: .background,
+            triggers: [.loop],
+            requirement: .ios18,
+            sourceFile: "Background/AnimatedMeshGradient.swift",
+            api: "AnimatedMeshGradient()",
+            usage: #"""
+            if #available(iOS 18, *) {
+                AnimatedMeshGradient()
+                    .ignoresSafeArea()
+            }
+            """#,
+            prompt: #"""
+            Create a SwiftUI AnimatedMeshGradient view for iOS 18+ (mark it @available(iOS 18, macOS 15, visionOS 2, *)) with nine colours (indigo, purple, pink / blue, purple, orange / teal, mint, yellow by default; fewer are repeated) and a speed. Inside TimelineView(.animation), draw MeshGradient(width: 3, height: 3, points:colors:). Keep the four corners fixed; slide the four edge midpoints along their own edge by sin(t × 2π / period + offset) × 0.2, and move the centre point in both axes by 0.25, giving each a different period between 6 and 10 s so the motion never repeats visibly. Hide it from accessibility, and with Reduce Motion on, pause it.
+            """#
+        ) { MeshGradientDemo() },
+
+        MotionEffect(
+            id: "retro-grid",
+            name: "Retro Grid",
+            summary: "A synthwave floor: a perspective grid scrolling toward you.",
+            component: .background,
+            triggers: [.loop],
+            sourceFile: "Background/RetroGrid.swift",
+            api: "RetroGrid()",
+            usage: #"""
+            ZStack {
+                Color.black
+                RetroGrid(color: .pink)
+                Text("NEON").font(.system(size: 60, weight: .black))
+            }
+            """#,
+            prompt: #"""
+            Create a SwiftUI RetroGrid view (iOS 17+) with color (pink), spacing (40 pt), speed (0.8 rows per second) and horizon (0.35 of the height). In a Canvas inside TimelineView(.animation): with top = height × horizon and depth = height − top, draw horizontal lines at y = top + depth / z for z = n + 1 − fract(time × speed), n = 0…39, so the bottom edge is z = 1, rows bunch up toward the horizon and every row moves toward the viewer; draw lines from the vanishing point (centre, top) to (centre + k × spacing, bottom) for enough k to cover the width. Stroke the path twice: 3 pt at 35 % opacity for a glow, then 1 pt solid. Mask the view with a vertical gradient that is clear down to the horizon and opaque 45 % lower, so lines fade into the distance. Hide from accessibility; Reduce Motion pauses it.
+            """#
+        ) { RetroGridDemo() },
+
+        MotionEffect(
+            id: "border-beam",
+            name: "Border Beam",
+            summary: "A short comet of light runs around the card's border forever.",
+            component: .background,
+            triggers: [.loop],
+            sourceFile: "Background/BorderBeam.swift",
+            api: ".borderBeam()",
+            usage: #"""
+            PlanCard()
+                .background(.black, in: RoundedRectangle(cornerRadius: 20))
+                .borderBeam(cornerRadius: 20)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .borderBeam(cornerRadius:colors:lineWidth:length:duration:) view modifier (iOS 17+). In an overlay TimelineView(.animation), compute head = fract(time / duration) (4 s per lap). Stroke RoundedRectangle(cornerRadius:, style: .continuous).trim(from: head − length, to: head) with a LinearGradient of the colours (orange, pink, purple), lineWidth 2 pt and round caps; when head − length is negative, also stroke trim(from: 1 + head − length, to: 1) so the beam wraps past the path's start seamlessly. Draw the beam twice, once blurred by 2 × lineWidth underneath for a glow. Pad by lineWidth / 2, disable hit testing and hide from accessibility. With Reduce Motion on, park the beam.
+            """#
+        ) { BorderBeamDemo() },
+
+        MotionEffect(
+            id: "waves",
+            name: "Waves",
+            summary: "Layered sine waves roll across the bottom, back layers slower and paler.",
+            component: .background,
+            triggers: [.loop],
+            sourceFile: "Background/WaveBackground.swift",
+            api: "WaveBackground()",
+            usage: #"""
+            ZStack(alignment: .top) {
+                WaveBackground()
+                    .ignoresSafeArea()
+                Text("Ocean").font(.largeTitle.bold()).padding(.top, 80)
+            }
+            """#,
+            prompt: #"""
+            Create a SwiftUI WaveBackground view (iOS 17+) with colors (one per layer, back to front: cyan 35 %, blue 45 %, indigo 70 %), amplitude (12 pt) and speed. In a Canvas inside TimelineView(.animation), for each layer with depth d = layer / (count − 1): baseline at height × (0.45 + 0.2 d), wavelength width × (0.9 − 0.3 d), phase = time × (0.6 + 0.5 d), alternating direction per layer. Build a path from the bottom-left corner along y = baseline + sin(x / wavelength × 2π + phase + layer) × amplitude × (0.7 + 0.3 d) sampled every 4 pt, down to the bottom-right corner, close it and fill it with the layer's colour. Hide from accessibility; Reduce Motion pauses it.
+            """#
+        ) { WavesDemo() },
+
+        MotionEffect(
+            id: "grain",
+            name: "Film Grain",
+            summary: "Flickering film grain over any view, from a tiled noise texture.",
+            component: .background,
+            triggers: [.loop],
+            sourceFile: "Background/Grain.swift",
+            api: ".grain()",
+            usage: #"""
+            LinearGradient(colors: [.orange, .pink], startPoint: .top, endPoint: .bottom)
+                .grain()
+
+            HeroImage()
+                .grain(opacity: 0.2, isAnimated: false)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .grain(opacity:isAnimated:) view modifier (iOS 17+). Generate a 128 × 128 grey noise CGImage once (8-bit DeviceGray, random bytes from a seeded generator, no interpolation). In an overlay, show it with Image(decorative:scale: 2).resizable(resizingMode: .tile) in a frame 64 pt larger than the view in each direction, clipped, and shift it by a different offset (frame × 37 mod 64, frame × 53 mod 64) 12 times a second using TimelineView(.periodic(by: 1/12)), so the grain flickers like film. Use .blendMode(.overlay) at opacity (0.35), disable hit testing and hide it from accessibility. With Reduce Motion on (or isAnimated false), keep the grain still.
+            """#
+        ) { GrainDemo() },
+
+        MotionEffect(
+            id: "flashlight",
+            name: "Flashlight",
+            summary: "The view goes dark except a soft circle of light around the pointer.",
+            component: .background,
+            triggers: [.hover, .drag],
+            sourceFile: "Background/Flashlight.swift",
+            api: ".flashlight()",
+            usage: #"""
+            TreasureMap()
+                .flashlight(radius: 100)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .flashlight(radius:darkness:) view modifier (iOS 17+). Track the pointer with .onContinuousHover(coordinateSpace: .local) and a finger with a simultaneous DragGesture(minimumDistance: 0), storing the location in @State (nil on exit) plus the last location. In an overlay GeometryReader, draw a RadialGradient from clear to black at darkness (0.85) opacity, centred on the location as a UnitPoint, from startRadius 0.55 × radius to endRadius radius (90 pt), so everything outside the circle is dark with a soft edge. Fade the whole overlay out when the pointer leaves (lights back on) with easeOut(0.4 s), and follow the pointer with .interactiveSpring(response: 0.18). Disable hit testing. With Reduce Motion on, move without animation.
+            """#
+        ) { FlashlightDemo() },
     ]
 
     // MARK: - Number
@@ -723,5 +1277,249 @@ public enum MotionCatalog {
             Create a SwiftUI .float3D(height:angle:period:shadow:) view modifier (iOS 17+). Inside TimelineView(.animation), let t = time × 2π / period (3 s) and lift = 0.5 + 0.5·sin t. Rotate the content in 3D by sin(t/2) × angle (12°) around the y axis and cos(0.7t) × angle/2 around the x axis (perspective 0.5), and move it up by height (10 pt) × lift. Behind it, at the bottom, draw a black ellipse 12 pt tall, 18 pt below, that gets lighter (opacity 0.25 − 0.1·lift), narrower (scale x 0.75 − 0.15·lift) and blurrier (6 + 4·lift) as the view rises. With Reduce Motion on, pause the timeline.
             """#
         ) { Float3DDemo() },
+
+        // MARK: v0.3
+
+        MotionEffect(
+            id: "fireworks",
+            name: "Fireworks",
+            summary: "Rockets climb and burst into rings of falling, fading sparks.",
+            component: .particle,
+            triggers: [.loop],
+            sourceFile: "Particle/Fireworks.swift",
+            api: "Fireworks()",
+            usage: #"""
+            ZStack {
+                Color.black.ignoresSafeArea()
+                Fireworks()
+                    .ignoresSafeArea()
+                Text("Happy New Year").font(.largeTitle.bold())
+            }
+            """#,
+            prompt: #"""
+            Create a SwiftUI Fireworks view (iOS 17+) with colors, interval (0.9 s between launches) and sparks (36 per burst), drawn statelessly in a Canvas inside TimelineView(.animation). Rocket k launches at k × interval; for every rocket younger than 0.8 s climb + 1.5 s fade, seed a SplitMix64 generator with k to pick x (15–85 % of the width), peak height (15–45 %), colour and reach (22–34 % of the smaller side). Climbing: ease-out from the bottom to the peak and draw a 14 pt trail. Bursting, with t = time since the burst / 1.5: place each spark at angle i / sparks × 2π (plus jitter), distance reach × (1 − (1 − min(1, 1.6 t))³) × random 0.75–1, add gravity fall t² × 0.6 × reach, draw a circle of radius 1.8 × (1 − 0.6 t) at opacity 1 − t, and add a white flash for the first 15 %. Hide from accessibility; with Reduce Motion on, freeze on a frame with a burst in bloom.
+            """#
+        ) { FireworksDemo() },
+
+        MotionEffect(
+            id: "snowfall",
+            name: "Snowfall & Rain",
+            summary: "Drifting, swaying snowflakes or fast slanted rain, with depth.",
+            component: .particle,
+            triggers: [.loop],
+            sourceFile: "Particle/Snowfall.swift",
+            api: "Snowfall(.snow / .rain)",
+            usage: #"""
+            Snowfall()
+                .background(.indigo)
+                .ignoresSafeArea()
+
+            Snowfall(.rain, count: 150, color: .white.opacity(0.8))
+            """#,
+            prompt: #"""
+            Create a SwiftUI Snowfall view (iOS 17+) with a style (.snow or .rain), count (80), color and speed. Give each particle seeded random traits: start x and y (0–1), depth (0–1) and phase. In a Canvas inside TimelineView(.animation), compute positions as pure functions of time, wrapped around the view so nothing is stored. Snow: fall speed 18 + 30 × depth pt/s, horizontal sway sin(time × (0.8 + depth) + phase) × (6 + 10 × depth) plus a slow 4 pt/s drift, radius 1 + 2.4 × depth, opacity 0.35 + 0.6 × depth, so small flakes look far away. Rain: fall speed 380 + 320 × depth, a streak 8 + 14 × depth long slanted by 0.25, width 0.8 + 0.8 × depth, opacity 0.25 + 0.5 × depth. Hide from accessibility; Reduce Motion pauses it.
+            """#
+        ) { SnowfallDemo() },
+
+        MotionEffect(
+            id: "floating-reactions",
+            name: "Floating Reactions",
+            summary: "Live-stream style emoji float up, swaying, every time you react.",
+            component: .particle,
+            triggers: [.tap, .change],
+            sourceFile: "Particle/FloatingReactions.swift",
+            api: ".floatingReactions(trigger:)",
+            usage: #"""
+            LiveVideo()
+                .floatingReactions(trigger: reactionCount)
+
+            Button("❤️") { reactionCount += 1 }
+            """#,
+            prompt: #"""
+            Create a SwiftUI .floatingReactions(trigger:emojis:height:) view modifier (iOS 17+). Every time trigger changes, append a reaction (UUID, a random emoji from the list, a random sway of ±8–18 pt and drift of ±20 pt) to a @State array and remove it 2.3 s later. In a bottom-aligned, hit-testing-disabled overlay, show each emoji (28 pt) with keyframeAnimator(initialValue:trigger:), triggered by a @State flag set in onAppear so it plays once, over {y, x, scale, opacity}: y goes to −height (160 pt) over 2.2 s; x weaves sway → −sway + drift → sway + drift → drift in four 0.55 s cubic keyframes; scale springs from 0.3 to 1.15 and settles at 1; opacity holds for 1.4 s then fades over 0.8 s. With Reduce Motion on, don't spawn reactions.
+            """#
+        ) { FloatingReactionsDemo() },
+
+        MotionEffect(
+            id: "warp-tunnel",
+            name: "Warp Tunnel",
+            summary: "Rings rush out of the vanishing point toward you: flying down a tunnel.",
+            component: .particle,
+            triggers: [.loop],
+            sourceFile: "Particle/WarpTunnel.swift",
+            api: "WarpTunnel()",
+            usage: #"""
+            WarpTunnel()
+                .background(.black)
+                .ignoresSafeArea()
+
+            WarpTunnel(colors: [.green, .mint], sides: 6) // hexagons
+            """#,
+            prompt: #"""
+            Create a SwiftUI WarpTunnel view (iOS 17+) with rings (18), colors (cyan, blue, purple, pink), speed (1.2 rings per second) and sides (0 for circles, 3+ for polygons). In a Canvas inside TimelineView(.animation), for ring i let depth = 1 − (i + fract(time × speed)) / rings and skip depths below 0.02. Its radius is half the view's diagonal × 0.06 / depth (perspective), skipped once it's 1.5 × larger than that. Stroke a circle, or a polygon rotated by i × 0.12 + time × 0.1 rad, centred in the view, with opacity closeness² and line width 0.5 + 3 × closeness (closeness = 1 − depth), cycling colours by ring. Hide from accessibility; Reduce Motion pauses it.
+            """#
+        ) { WarpTunnelDemo() },
+
+        MotionEffect(
+            id: "holo-card",
+            name: "Holographic Card",
+            summary: "A trading card that tilts toward you with a rainbow foil and moving glare.",
+            component: .particle,
+            triggers: [.hover, .drag],
+            sourceFile: "Particle/Holographic.swift",
+            api: ".holographic()",
+            usage: #"""
+            Image("card-art")
+                .resizable()
+                .aspectRatio(5 / 7, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .holographic(cornerRadius: 16)
+            """#,
+            prompt: #"""
+            Create a SwiftUI .holographic(cornerRadius:maxAngle:) view modifier (iOS 17+). Track the pointer with .onContinuousHover and a finger with a simultaneous DragGesture(minimumDistance: 0), normalising the location to p in −1…1 on both axes (nil when released). Overlay, clipped to a continuous rounded rectangle: (1) a rainbow LinearGradient (red → … → purple → red) from (−0.5 + 0.6 px, −0.5 + 0.3 py) to (1.5 + 0.6 px, 1.5 + 0.3 py) with .blendMode(.overlay), at 55 % opacity while touched and 15 % at rest; (2) a white 70 % → clear RadialGradient centred at (0.5 + 0.5 px, 0.5 + 0.5 py) with .blendMode(.softLight), visible only while touched. Tilt with rotation3DEffect: −py × maxAngle (14°) around x and px × maxAngle around y, perspective 0.6, and scale to 1.03 while touched. Follow with .interactiveSpring(response: 0.25) and release with .spring(response: 0.5, dampingFraction: 0.6). With Reduce Motion on, keep the foil and glare but don't tilt or scale.
+            """#
+        ) { HolographicDemo() },
+    ]
+
+    // MARK: - Transition
+
+    static let transition: [MotionEffect] = [
+        MotionEffect(
+            id: "iris",
+            name: "Iris",
+            summary: "A circle opens from a point to reveal the view, like a camera iris.",
+            component: .transition,
+            triggers: [.appear],
+            sourceFile: "Transition/MaskTransitions.swift",
+            api: ".transition(.iris)",
+            usage: #"""
+            if showPhoto {
+                PhotoView()
+                    .transition(.iris)
+            }
+
+            DetailView()
+                .transition(.iris(origin: .topTrailing))
+            """#,
+            prompt: #"""
+            Create a custom SwiftUI Transition (iOS 17+, the Transition protocol) called IrisTransition with an origin UnitPoint (centre), exposed as .iris and .iris(origin:). In body(content:phase:), mask the content with a GeometryReader containing a Circle whose radius is the distance from the origin point to the furthest corner, positioned at the origin, with scaleEffect(phase.isIdentity ? 1 : 0.001, anchor: origin). The circle grows from the origin to cover the view on insertion and closes back on removal, timed by whatever animation drives the change, e.g. withAnimation(.easeInOut(duration: 0.6)). It only masks, so it needs no Reduce Motion fallback.
+            """#
+        ) { TransitionDemo(transition: .iris) },
+
+        MotionEffect(
+            id: "blinds",
+            name: "Blinds",
+            summary: "Horizontal slats open together to reveal the view, like Venetian blinds.",
+            component: .transition,
+            triggers: [.appear],
+            sourceFile: "Transition/MaskTransitions.swift",
+            api: ".transition(.blinds)",
+            usage: #"""
+            Banner()
+                .transition(.blinds)
+
+            Poster()
+                .transition(.blinds(slats: 12))
+            """#,
+            prompt: #"""
+            Create a custom SwiftUI Transition (iOS 17+) called BlindsTransition with a slats count (8), exposed as .blinds and .blinds(slats:). In body(content:phase:), mask the content with a VStack(spacing: 0) of slats Rectangles, each with scaleEffect(y: phase.isIdentity ? 1 : 0.001, anchor: .top), so every slat grows down from its top edge at the same time on insertion and folds back up on removal. It only masks, so it needs no Reduce Motion fallback.
+            """#
+        ) { TransitionDemo(transition: .blinds) },
+
+        MotionEffect(
+            id: "clock-wipe",
+            name: "Clock Wipe",
+            summary: "A wedge sweeps clockwise from twelve o'clock, like a clock hand.",
+            component: .transition,
+            triggers: [.appear],
+            sourceFile: "Transition/MaskTransitions.swift",
+            api: ".transition(.clockWipe)",
+            usage: #"""
+            Badge()
+                .transition(.clockWipe)
+            """#,
+            prompt: #"""
+            Create a custom SwiftUI Transition (iOS 17+) called ClockWipeTransition, exposed as .clockWipe. Mask the content with an animatable Shape whose animatableData is progress (0…1): it returns the full rect at 1, an empty path at 0, and otherwise a pie wedge from the centre with radius equal to the rect's diagonal, from −90° to −90° + 360° × progress (clockwise: false, which sweeps clockwise on screen in SwiftUI's y-down space). Pass progress 1 when phase.isIdentity and 0 otherwise, so the animation interpolates the angle. It only masks, so it needs no Reduce Motion fallback.
+            """#
+        ) { TransitionDemo(transition: .clockWipe, duration: 1) },
+
+        MotionEffect(
+            id: "dissolve",
+            name: "Pixel Dissolve",
+            summary: "The view appears and vanishes in square pixels, in random order.",
+            component: .transition,
+            triggers: [.appear],
+            sourceFile: "Transition/MaskTransitions.swift",
+            api: ".transition(.dissolve)",
+            usage: #"""
+            Avatar()
+                .transition(.dissolve)
+
+            Artwork()
+                .transition(.dissolve(cellSize: 6))
+            """#,
+            prompt: #"""
+            Create a custom SwiftUI Transition (iOS 17+) called DissolveTransition with a cellSize (10 pt), exposed as .dissolve and .dissolve(cellSize:). Mask the content with an animatable Shape whose animatableData is progress (0…1): divide the rect into a grid of cellSize squares, give each cell a stable pseudo-random threshold in 0…1 from an integer hash of (column, row), and add the cells whose threshold is below progress (outset by 0.25 pt so neighbours don't leave seams); return the full rect at 1 and an empty path at 0. Pass progress 1 when phase.isIdentity and 0 otherwise. It only masks, so it needs no Reduce Motion fallback.
+            """#
+        ) { TransitionDemo(transition: .dissolve, duration: 1) },
+
+        MotionEffect(
+            id: "poof",
+            name: "Poof",
+            summary: "The view puffs away like smoke: it swells and blurs out.",
+            component: .transition,
+            triggers: [.appear],
+            sourceFile: "Transition/StyleTransitions.swift",
+            api: ".transition(.poof)",
+            usage: #"""
+            ForEach(notes) { note in
+                NoteRow(note)
+                    .transition(.poof)
+            }
+            """#,
+            prompt: #"""
+            Create a custom SwiftUI Transition (iOS 17+) called PoofTransition, exposed as .poof. Return a small view that reads Reduce Motion and applies: scale 1.35 when phase == .didDisappear, 0.7 when .willAppear, 1 at identity; blur radius 14 when not identity, 0 at identity; opacity 0 when not identity. Removal swells and blurs away like smoke, insertion condenses in from a smaller blur. With Reduce Motion on, keep the scale at 1 (blur and fade only).
+            """#
+        ) { TransitionDemo(transition: .poof, duration: 0.5) },
+
+        MotionEffect(
+            id: "swoosh",
+            name: "Swoosh",
+            summary: "The view whooshes in leaning forward, with a motion blur.",
+            component: .transition,
+            triggers: [.appear],
+            sourceFile: "Transition/StyleTransitions.swift",
+            api: ".transition(.swoosh)",
+            usage: #"""
+            if let toast {
+                ToastView(toast)
+                    .transition(.swoosh)
+            }
+            """#,
+            prompt: #"""
+            Create a custom SwiftUI Transition (iOS 17+) called SwooshTransition, exposed as .swoosh. Use phase.value (−1 before insertion, 0 at rest, +1 after removal) as v and apply a GeometryEffect whose animatableData is v: a CGAffineTransform with c = −0.6 v (a horizontal skew) and tx = v × width − c × height / 2 (slide by the view's own width, skewing around the vertical centre). Add blur 6 × |v| and opacity 1 − |v|, so it whooshes in from the leading edge leaning into the motion and leaves to the trailing edge. With Reduce Motion on, skip the slide and skew (fade only).
+            """#
+        ) { TransitionDemo(transition: .swoosh, duration: 0.6) },
+
+        MotionEffect(
+            id: "film-exposure",
+            name: "Film Exposure",
+            summary: "The view develops like a photo, from over-exposed white to full colour.",
+            component: .transition,
+            triggers: [.appear],
+            sourceFile: "Transition/StyleTransitions.swift",
+            api: ".transition(.filmExposure)",
+            usage: #"""
+            AsyncImage(url: url) { image in
+                image.resizable()
+                    .transition(.filmExposure)
+            } placeholder: {
+                ProgressView()
+            }
+            """#,
+            prompt: #"""
+            Create a custom SwiftUI Transition (iOS 17+) called FilmExposureTransition, exposed as .filmExposure. When the phase isn't identity, apply brightness 0.9, saturation 0 and opacity 0; at identity, brightness 0, saturation 1 and opacity 1. Inserting the view develops it like a photo, from blown-out colourless white to full colour, and removing it fades it back out to white. Nothing moves, so it needs no Reduce Motion fallback.
+            """#
+        ) { TransitionDemo(transition: .filmExposure, duration: 1) },
     ]
 }

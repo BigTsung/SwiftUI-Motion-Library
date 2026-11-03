@@ -6,7 +6,7 @@ This file is read by Claude Code (and mirrored in AGENTS.md for Codex and other 
 
 A SwiftUI counterpart to web "motion library" galleries: a collection of reusable motion effects, organised on two axes:
 
-- **Component** (`MotionComponent`): text, button, card, shape, background, number, particle (Particle & 3D)
+- **Component** (`MotionComponent`): text, button, card, shape, background, number, particle (Particle & 3D), transition
 - **Trigger** (`MotionTrigger`): appear, tap, press, drag, hover, scroll, change, loop
 
 Each effect has: a public API in `MotionLibrary`, a demo view, and a catalog entry with usage code + an AI prompt shown in the `MotionGallery` browser UI. The catalog is the source of truth for everything AI-facing (llms.txt, the Agent Skill, the Cursor rule, the MCP server's JSON), which `Scripts/generate-docs.sh` regenerates.
@@ -53,19 +53,16 @@ Scripts/generate-docs.sh          # regenerate catalog-derived files (--check in
 Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
 ```
 
-With Xcode, also build for iOS (`xcodebuild -scheme MotionLibrary-Package -destination 'generic/platform=iOS Simulator' build`) and check effects in the canvas.
+With Xcode, also build for iOS and visionOS (`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme MotionLibrary-Package -destination 'generic/platform=iOS Simulator' -derivedDataPath .build/xcode build`, same with `visionOS Simulator`) and check effects in the canvas. `sensoryFeedback` needs visionOS 26, so use the internal `.haptic(…)` helpers instead.
 
 ## Roadmap (suggested next tasks)
 
 1. ~~Make v0.1 compile~~ (done for macOS; still check iOS in Xcode and tune demo sizes in the grid).
 2. **Demo app:** add `Examples/MotionLibraryDemo` (an Xcode app project depending on the local package) that shows `MotionGalleryView()`, so people can run it on a device.
 3. ~~Reduce Motion~~ (done: every looping or large-movement effect falls back to a fade or a static state).
-4. **More effects.** v0.2 added gradient sweep, blur-in, marquee, wave text, magnetic, hold-to-confirm, status button, glow border, flip, swipe stack, parallax carousel, expandable card, checkmark, confetti, loaders, morphing blob, particle field, starfield, cover flow and float 3D. Still open:
-   - Text: counting-up text
-   - Card & Group: expand-to-detail hero (`matchedGeometryEffect`)
-   - Background: animated mesh gradient (`MeshGradient`, iOS 18), grid/noise shader
-   - Cursor / Pointer (iPad & macOS): spotlight follow, hover lift (`.hoverEffect`)
-   - Shaders: Metal `[[stitchable]]` effects via `.colorEffect` / `.distortionEffect` / `.layerEffect` (ripple, pixellate, glitch) in `Sources/MotionLibrary/Shaders/` (add `resources: [.process("Shaders")]` if needed)
+4. **More effects.** v0.2 added gradient sweep, blur-in, marquee, wave text, magnetic, hold-to-confirm, status button, glow border, flip, swipe stack, parallax carousel, expandable card, checkmark, confetti, loaders, morphing blob, particle field, starfield, cover flow and float 3D. v0.3 added 40 more (count-up, split text, rotating text, glitch, circular text, focus text, highlighter, shine, jelly, click spark, like button, animated symbol, liquid toggle, hero expand, spotlight card, magnifying dock, jiggle, fan stack, draw-on, progress ring, skeleton, sliding tabs, mesh gradient, retro grid, border beam, waves, film grain, flashlight, fireworks, snowfall, floating reactions, warp tunnel, holographic card) and the Transition component (iris, blinds, clock wipe, pixel dissolve, poof, swoosh, film exposure). Still open:
+   - Cursor / Pointer (iPad & macOS): hover lift (`.hoverEffect`)
+   - Shaders: Metal `[[stitchable]]` effects via `.distortionEffect` / `.layerEffect` (water ripple distortion, live pixellate, wave distortion) in `Sources/MotionLibrary/Shaders/` (add `resources: [.process("Shaders")]` if needed). Needs the Metal compiler: Xcode is at `/Applications/Xcode.app` but `xcode-select` may point to the Command Line Tools, so build with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 5. **"Copy as AI prompt" for the whole filtered list**, and a "View source" link to GitHub from the detail view.
 6. **Docs site:** DocC catalog (README GIFs and AI-facing docs are done).
 7. **Tests:** `Scripts/generate-docs.sh` already fails on duplicate ids, a missing `api` or a missing source file. Snapshot tests are optional.

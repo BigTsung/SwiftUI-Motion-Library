@@ -49,7 +49,7 @@ public extension View {
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
                 .shake(trigger: attempts)
-                .sensoryFeedback(.error, trigger: attempts)
+                .haptic(.error, trigger: attempts)
         }
     }
     return Demo()

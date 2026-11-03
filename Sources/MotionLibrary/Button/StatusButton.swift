@@ -101,7 +101,7 @@ public struct StatusButton: View {
                 withAnimation(.linear(duration: 0.4)) { shakes += 1 }
             }
         }
-        .sensoryFeedback(trigger: status) { _, newValue in
+        .haptic(trigger: status) { _, newValue in
             switch newValue {
             case .success: .success
             case .failure: .error
