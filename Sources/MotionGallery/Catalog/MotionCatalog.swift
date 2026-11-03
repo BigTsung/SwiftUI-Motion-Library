@@ -7,7 +7,16 @@ import MotionLibrary
 /// add a demo view in `Demos.swift`, then append an entry here.
 /// See CONTRIBUTING.md for the checklist.
 public enum MotionCatalog {
-    public static let all: [MotionEffect] = text + button + card + shape + background + number + particle + transition
+    public static let all: [MotionEffect] =
+        text + textV04
+        + button + buttonV04
+        + card + cardV04
+        + shape + shapeV04
+        + background + backgroundV04
+        + number + numberV04
+        + particle + particleV04
+        + transition + transitionV04
+        + shader
 
     public static func filtered(component: MotionComponent?, trigger: MotionTrigger?, search: String = "") -> [MotionEffect] {
         let query = search.trimmingCharacters(in: .whitespaces).lowercased()

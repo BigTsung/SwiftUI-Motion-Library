@@ -28,7 +28,7 @@ public struct MotionDetailView: View {
                     Text("Requires \(effect.requirement.platforms)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    Text("Source: Sources/MotionLibrary/\(effect.sourceFile)")
+                    Text("Source: \(effect.sourcePath)")
                         .font(.caption.monospaced())
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)

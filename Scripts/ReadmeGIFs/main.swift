@@ -13,6 +13,13 @@ import MotionLibrary
 
 // MARK: - Stage
 
+/// Frames come from the window server, which composites everything the user
+/// would see, including GPU work such as Metal shaders. Redrawing the view
+/// with `cacheDisplay` (WINDOW_CAPTURE=0) skips shaders and can return stale
+/// frames for some views. Either way the window is parked far off every
+/// display, so nothing appears on screen.
+let windowCapture = ProcessInfo.processInfo.environment["WINDOW_CAPTURE"] != "0"
+
 let fps = 30.0
 let defaultStage = CGSize(width: 360, height: 220)
 
@@ -269,6 +276,49 @@ func recording(for id: String) -> Recording {
         return Recording(duration: 3.0, scene: {
             AnyView(MotionCatalog.all.first { $0.id == id }!.demo().scaleEffect(1.6))
         })
+    // MARK: v0.4
+    case "bouncy-tab-bar":
+        // Click Saved, Me, then Home. (Known issue: this view stops refreshing
+        // in the off-screen panel, so the GIF may come out frozen.)
+        return Recording(duration: 3.0, steps: [
+            (0.3, .click(c)),
+            (1.2, .click(CGPoint(x: c.x + 66, y: c.y))),
+            (2.1, .click(CGPoint(x: c.x - 66, y: c.y))),
+        ])
+    case "gooey-menu":
+        // The main button sits at the bottom centre of a 168 × 120 pt menu.
+        let button = CGPoint(x: c.x, y: c.y + 24)
+        return Recording(duration: 3.0, steps: [(0.3, .click(button)), (1.9, .click(button))])
+    case "slide-to-confirm":
+        return Recording(duration: 3.4, steps:
+            linearDrag(start: 0.3, length: 0.9, from: CGPoint(x: c.x - 72, y: c.y), to: CGPoint(x: c.x + 80, y: c.y)))
+    case "download-button":
+        return Recording(duration: 3.2, steps: [(0.3, .click(c))])
+    case "scratch-card":
+        var strokes: [(at: Double, step: Step)] = []
+        for (index, y) in [-34.0, -18, -2, 14, 30].enumerated() {
+            let left = index.isMultiple(of: 2)
+            strokes += linearDrag(
+                start: 0.2 + Double(index) * 0.32, length: 0.28,
+                from: CGPoint(x: c.x + (left ? -68 : 68), y: c.y + y),
+                to: CGPoint(x: c.x + (left ? 68 : -68), y: c.y + y + 6)
+            )
+        }
+        return Recording(duration: 3.8, steps: strokes)
+    case "drag-to-dismiss":
+        return Recording(duration: 3.6, steps:
+            linearDrag(start: 0.3, length: 0.3, from: c, to: CGPoint(x: c.x + 130, y: c.y + 30))
+            + linearDrag(start: 2.0, length: 0.5, from: c, to: CGPoint(x: c.x - 40, y: c.y + 20)))
+    case "dot-grid":
+        return Recording(duration: 3.0, steps: circularDrag(start: 0.2, length: 2.6, radius: 45))
+    case "animated-chart":
+        return Recording(duration: 4.0, appear: true)
+    case "morphing-text", "deck-shuffle", "split-flap", "cube", "page-turn", "liquid-swipe", "shatter", "origami", "noise-dissolve", "star-rating", "circular-reveal":
+        return Recording(duration: 3.6)
+    case "slot-machine", "stacking-cards", "shrinking-header", "stretchy-header", "reading-progress", "physics-emoji", "water-ripple":
+        return Recording(duration: 4.0)
+    case "pixellate", "needle-gauge":
+        return Recording(duration: 3.2)
     default:
         return Recording(duration: 3.0)
     }
@@ -463,7 +513,7 @@ final class Recorder {
         // Fully transparent: nothing ever appears on screen. Frames are read
         // from the hosting view (cacheDisplay), which still renders every
         // animation frame at alpha 0.
-        window.alphaValue = 0
+        window.alphaValue = windowCapture ? 1 : 0
         // Transparent windows let clicks through by default; the synthetic
         // taps and drags must still land.
         window.ignoresMouseEvents = false
@@ -558,8 +608,8 @@ final class Recorder {
                 send(next.step, to: window, stageHeight: size.height)
             }
 
-            _ = captureWindow(window)
-            guard let image = captureView(host) else {
+            let windowImage = captureWindow(window)
+            guard let image = windowCapture ? windowImage : captureView(host) else {
                 print("capture failed for \(effect.id)")
                 break
             }
@@ -622,7 +672,12 @@ guard let outPath = arguments.first else {
     exit(1)
 }
 let requested = Array(arguments.dropFirst())
-let ids = requested.isEmpty ? MotionCatalog.all.map(\.id) : requested
+// Scroll-driven effects can't be recorded here: programmatic scrolling in an
+// off-screen macOS window jumps instead of animating. Their GIFs were recorded
+// from the gallery demos in the iOS Simulator, so a full run leaves them alone
+// (name them explicitly to re-record them here anyway).
+let simulatorRecorded: Set = ["stacking-cards", "shrinking-header", "stretchy-header", "reading-progress"]
+let ids = requested.isEmpty ? MotionCatalog.all.map(\.id).filter { !simulatorRecorded.contains($0) } : requested
 
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)

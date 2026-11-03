@@ -8,6 +8,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Prefer a full Xcode when one is installed, like check-build.sh, so the
+# staged build is shared instead of rebuilt for each toolchain.
+if [ -z "${DEVELOPER_DIR:-}" ] && [ -d /Applications/Xcode.app ] \
+    && DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun metal -v >/dev/null 2>&1; then
+    export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+fi
 PKG="$("$ROOT/Scripts/stage-package.sh" DocsGenerator=Scripts/DocsGenerator)"
 status=0
 out="$(swift build --package-path "$PKG" --product DocsGenerator 2>&1)" || status=$?

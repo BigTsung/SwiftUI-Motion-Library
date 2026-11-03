@@ -34,15 +34,24 @@ let groups: [(component: MotionComponent, effects: [MotionEffect])] = MotionComp
 // MARK: - Helpers
 
 func source(of effect: MotionEffect) -> String {
-    let url = root.appendingPathComponent("Sources/MotionLibrary/\(effect.sourceFile)")
-    guard let text = try? String(contentsOf: url, encoding: .utf8) else {
-        fatalError("missing source file for \(effect.id): \(url.path)")
+    func read(_ path: String) -> String {
+        let url = root.appendingPathComponent(path)
+        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+            fatalError("missing source file for \(effect.id): \(url.path)")
+        }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    var text = read(effect.sourcePath)
+    // Shader effects: the Metal file goes with the Swift file.
+    if let shader = effect.shaderPath {
+        let name = (shader as NSString).lastPathComponent
+        text += "\n\n// MARK: - \(name)\n// Save the shader below as \(name) in your app target, and replace\n// `motionShaders` with `ShaderLibrary.default`.\n/*\n" + read(shader) + "\n*/"
+    }
+    return text
 }
 
 func sourceURL(_ effect: MotionEffect) -> String {
-    "\(repoURL)/blob/main/Sources/MotionLibrary/\(effect.sourceFile)"
+    "\(repoURL)/blob/main/\(effect.sourcePath)"
 }
 
 func triggers(_ effect: MotionEffect) -> String {
@@ -107,6 +116,7 @@ func readmeEmoji(_ component: MotionComponent) -> String {
     case .number: "🔢"
     case .particle: "✨"
     case .transition: "🎬"
+    case .shader: "🪄"
     }
 }
 
@@ -133,6 +143,7 @@ enum ReadmeLanguage {
         case .number: return "數字"
         case .particle: return "粒子與 3D"
         case .transition: return "轉場"
+        case .shader: return "著色器"
         }
     }
 
@@ -337,7 +348,7 @@ func catalogJSON() -> String {
                 api: effect.api,
                 usage: effect.usage,
                 prompt: effect.prompt,
-                sourceFile: "Sources/MotionLibrary/\(effect.sourceFile)",
+                sourceFile: effect.sourcePath,
                 sourceURL: sourceURL(effect),
                 gifURL: "\(rawURL)/Docs/gifs/\(effect.id).gif",
                 source: source(of: effect)

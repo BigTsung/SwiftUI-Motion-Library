@@ -11,6 +11,7 @@ public enum MotionComponent: String, CaseIterable, Identifiable, Sendable {
     case number
     case particle
     case transition
+    case shader
 
     public var id: String { rawValue }
 
@@ -24,6 +25,7 @@ public enum MotionComponent: String, CaseIterable, Identifiable, Sendable {
         case .number: "Number"
         case .particle: "Particle & 3D"
         case .transition: "Transition"
+        case .shader: "Shader"
         }
     }
 
@@ -37,6 +39,7 @@ public enum MotionComponent: String, CaseIterable, Identifiable, Sendable {
         case .number: "number"
         case .particle: "cube.transparent"
         case .transition: "square.on.square.dashed"
+        case .shader: "camera.filters"
         }
     }
 }
@@ -118,8 +121,22 @@ public struct MotionEffect: Identifiable {
     /// A description of the look and the technique, written so it can be
     /// pasted into an AI assistant to recreate or adapt the effect.
     public let prompt: String
-    /// Name of the source file in `Sources/MotionLibrary`, for "view source".
+    /// Path of the source file relative to `Sources/MotionLibrary`, or to
+    /// `Sources/` for files in another module (`MotionShaders/…`).
     public let sourceFile: String
+
+    /// The source file's path from the repository root.
+    public var sourcePath: String {
+        sourceFile.hasPrefix("MotionShaders/") ? "Sources/\(sourceFile)" : "Sources/MotionLibrary/\(sourceFile)"
+    }
+
+    /// The Metal shader that goes with a `MotionShaders` effect, from the
+    /// repository root (`Sources/MotionShaders/Shaders/<Name>.metal`).
+    public var shaderPath: String? {
+        guard sourceFile.hasPrefix("MotionShaders/") else { return nil }
+        let name = (sourceFile as NSString).lastPathComponent.replacingOccurrences(of: ".swift", with: ".metal")
+        return "Sources/MotionShaders/Shaders/\(name)"
+    }
     /// The public API in one line, e.g. `.shimmer()` or `PulseRings()`.
     public let api: String
     private let makeDemo: @MainActor () -> AnyView

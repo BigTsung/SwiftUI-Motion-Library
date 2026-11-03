@@ -5,7 +5,7 @@ description: "Adds polished SwiftUI animations from SwiftUI Motion Library: anim
 
 # SwiftUI Motion Library
 
-73 ready-made SwiftUI motion effects as one-line views and modifiers, with no dependencies. Source: https://github.com/BigTsung/SwiftUI-Motion-Library
+118 ready-made SwiftUI motion effects as one-line views and modifiers, with no dependencies. Source: https://github.com/BigTsung/SwiftUI-Motion-Library
 
 ## Install
 
@@ -47,6 +47,11 @@ Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects ma
 | Circular Text | `CircularText("…")` | Loop | Text wrapped around a circle that slowly turns, like a rotating badge. |
 | Focus Text | `FocusText("…")` | Loop | Focus hops from word to word: sharp and bracketed, the rest blurred. |
 | Highlighter | `.highlighter()` | Appear / Value change | A marker pen swipes across the text, or underlines it, left to right. |
+| Morphing Text | `MorphingText([…])` | Loop | Words melt into each other with a gooey, liquid morph. |
+| Neon Flicker | `.neon(color:flicker:)` | Loop | A glowing neon tube that stutters on and glitches now and then. |
+| Karaoke Text | `KaraokeText(_:progress:)` | Value change / Scroll | A line fills with colour left to right as progress goes from 0 to 1. |
+| Weight Wave | `WeightWaveText(_:)` | Loop | Letters swell from thin to black and back in a travelling wave. |
+| Exploding Text (iOS 18+) | `ExplodingText(_:isExploded:)` | Value change / Tap | Letters blast apart spinning and spring back into place. |
 
 ### Button
 
@@ -65,6 +70,11 @@ Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects ma
 | Like Button | `LikeButton(isLiked:)` | Tap | The heart pops in as a ring bursts open and coloured dots fly out. |
 | Animated Symbol | `AnimatedSymbol("…", style:)` | Loop | SF Symbols that keep moving: bounce on a beat, pulse, variable colour. |
 | Liquid Toggle | `.toggleStyle(.liquid)` | Tap | A switch whose knob stretches like a drop of liquid as it slides. |
+| Gooey Menu | `GooeyMenu(symbols:action:)` | Tap | A round button splits into a fan of buttons like a drop of liquid. |
+| Slide to Confirm | `SlideToConfirm(_:action:)` | Drag | Drag the knob all the way across to run the action; let go early and it springs back. |
+| Download Button | `DownloadButton(progress:action:)` | Tap / Value change | A capsule shrinks into a progress ring, then pops into a checkmark. |
+| Star Rating | `StarRating(rating:)` | Tap / Value change | Stars fill one after another with a springy pop and a burst of sparks. |
+| Bouncy Tab Bar | `BouncyTabBar(selection:items:)` | Tap / Value change | A pill glides to the selected tab and its icon squashes and hops. |
 
 ### Card & Group
 
@@ -82,6 +92,13 @@ Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects ma
 | Magnifying Dock | `MagnifyingDock(items) { item in }` | Hover / Drag | Icons swell as the pointer passes over them, like the macOS Dock. |
 | Jiggle | `.jiggle(isActive:)` | Loop / Value change | The home-screen edit-mode wiggle, each item slightly out of step. |
 | Fan Stack | `FanStack(items, isSpread:) { item in }` | Tap / Value change | A pile of cards fans out like a hand of playing cards, and gathers back. |
+| Scratch Card | `.scratchToReveal(_:onReveal:)` | Drag | Rub away a scratch-off cover to reveal what's underneath. |
+| Stacking Cards | `.stackingCard()` | Scroll | Cards stick at the top while scrolling and shrink as the next one covers them. |
+| Deck Shuffle | `DeckShuffle(_:trigger:content:)` | Value change / Tap | A deck splits in two, mixes, and springs back into a messy stack. |
+| Looping Carousel | `LoopingCarousel(_:autoplay:content:)` | Drag / Loop | A paging carousel that wraps around forever, with peeking neighbours. |
+| Drag to Dismiss | `.dragToDismiss(isPresented:)` | Drag | Fling a card away; it flies off with your throw or springs back. |
+| Shrinking Header | `.shrinkingHeader()` | Scroll | The header sticks to the top and shrinks as content scrolls under it. |
+| Stretchy Header | `.stretchyHeader()` | Scroll | A header image stretches when pulled down and drifts with parallax when scrolled. |
 
 ### Shape
 
@@ -97,6 +114,7 @@ Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects ma
 | Progress Ring | `ProgressRing(progress:)` | Value change | A gradient ring springs to each value as the percentage rolls. |
 | Skeleton | `.skeleton(isLoading:)` | Loop / Value change | A shimmering placeholder of the view's own layout while it loads. |
 | Sliding Tabs | `SlidingTabs([…], selection:)` | Tap | A segmented control whose pill or underline glides to the selection. |
+| Reading Progress | `ReadingProgressScrollView { … }` | Scroll | A bar along the top fills as you scroll through the content. |
 
 ### Background
 
@@ -109,12 +127,22 @@ Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects ma
 | Waves | `WaveBackground()` | Loop | Layered sine waves roll across the bottom, back layers slower and paler. |
 | Film Grain | `.grain()` | Loop | Flickering film grain over any view, from a tiled noise texture. |
 | Flashlight | `.flashlight()` | Hover / Drag | The view goes dark except a soft circle of light around the pointer. |
+| Lava Lamp | `LavaLamp()` | Loop | Soft blobs drift up and down, stretching and merging like hot wax. |
+| Matrix Rain | `MatrixRain()` | Loop | Columns of glyphs rain down with bright heads and fading trails. |
+| Interactive Dot Grid | `InteractiveDotGrid()` | Drag / Hover / Loop | A grid of dots scatters away from your finger and eases back. |
+| Meteors | `Meteors()` | Loop | Meteors streak across a starry sky with glowing heads and fading tails. |
+| Flow Field | `FlowField()` | Loop | Generative curves follow a shifting vector field with dashes flowing along them. |
 
 ### Number
 
 | Effect | API | Trigger | Use it for |
 |---|---|---|---|
 | Rolling Number | `RollingNumber(value:)` | Value change | Digits roll like an odometer when the value changes. |
+| Split-Flap Display | `SplitFlapText(_:)` | Value change | Characters flip through the alphabet like an airport departures board. |
+| Slot Machine | `SlotMachineNumber(value:)` | Value change | Number reels spin with motion blur and land one after another. |
+| Price Ticker | `PriceTicker(value:)` | Value change | Digits roll to the new price as the background flashes green or red. |
+| Animated Chart | `GrowingBarChart(values:) / DrawingLineChart(values:)` | Appear / Value change | Bars grow up one after another; a line draws itself left to right. |
+| Needle Gauge | `NeedleGauge(value:)` | Value change | A speedometer needle swings to the value, overshoots and settles. |
 
 ### Particle & 3D
 
@@ -129,6 +157,12 @@ Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects ma
 | Floating Reactions | `.floatingReactions(trigger:)` | Tap / Value change | Live-stream style emoji float up, swaying, every time you react. |
 | Warp Tunnel | `WarpTunnel()` | Loop | Rings rush out of the vanishing point toward you: flying down a tunnel. |
 | Holographic Card | `.holographic()` | Hover / Drag | A trading card that tilts toward you with a rainbow foil and moving glare. |
+| Physics Emoji | `PhysicsEmoji(trigger:)` | Value change / Tap | Emoji tumble in with gravity, bounce off each other and pile up. |
+| Shatter | `.transition(.shatter)` | Value change | The view breaks into triangular shards that fly, spin and fall away. |
+| 3D Cube | `.transition(.cube)` | Value change | Views swap by turning a cube: one face folds away as the next rotates in. |
+| Dot Globe | `DotGlobe()` | Loop | A globe of evenly spread dots spins on a tilted axis, with pulsing cities. |
+| Bubbles | `Bubbles()` | Loop | Soap bubbles rise and wobble with rainbow rims and glossy highlights. |
+| Fireflies | `Fireflies()` | Loop | Glowing fireflies drift lazily and blink on their own rhythms. |
 
 ### Transition
 
@@ -141,3 +175,19 @@ Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects ma
 | Poof | `.transition(.poof)` | Appear | The view puffs away like smoke: it swells and blurs out. |
 | Swoosh | `.transition(.swoosh)` | Appear | The view whooshes in leaning forward, with a motion blur. |
 | Film Exposure | `.transition(.filmExposure)` | Appear | The view develops like a photo, from over-exposed white to full colour. |
+| Circular Reveal | `CircularReveal(value:origin:content:)` | Tap / Value change | New content spreads out in a circle from where you tapped. |
+| Liquid Swipe | `.transition(.liquidSwipe)` | Value change | The next page pours in from the edge behind a bulging liquid wave. |
+| Page Turn | `.transition(.pageTurn)` | Value change | The old page swings away like a book page, revealing the next one. |
+| Glitch Transition | `.transition(.glitch)` | Value change | The view breaks up like a bad signal on its way in or out. |
+| Origami Fold | `.transition(.origami)` | Value change | The view folds up into creased panels like a paper map. |
+
+### Shader
+
+| Effect | API | Trigger | Use it for |
+|---|---|---|---|
+| Water Ripple | `.waterRippleOnTap() / .waterRipple(at:trigger:)` | Tap / Value change | A real ripple distorts the view's pixels outward from a tap. |
+| Pixellate | `.pixellate(_:)` | Value change | The view melts into a mosaic of square blocks and back. |
+| Chromatic Aberration | `.chromaticAberration(_:)` | Value change / Loop | Red and blue split sideways like a cheap lens; animate it on a beat. |
+| CRT Screen | `.crtScreen()` | Loop | Curved glass, scanlines, a rolling band and flicker, like an old monitor. |
+| Heat Haze | `.heatHaze(strength:)` | Loop | The view shimmers like hot air over a desert road. |
+| Noise Dissolve | `.noiseDissolve(_:) / .transition(.noiseDissolve)` | Value change | The view burns away in organic blotches with a glowing edge. |

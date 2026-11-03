@@ -23,10 +23,23 @@ rm -rf "$PKG/Sources.next"
     mkdir -p "$(dirname "$PKG/Sources.next/${file#Sources/}")"
     awk '/^#Preview/{exit} {print}' "$ROOT/$file" > "$PKG/Sources.next/${file#Sources/}"
 done
+# Metal shaders (MotionShaders) need the Metal Toolchain, which only comes
+# with Xcode. Without it, swap them for a placeholder resource so the Swift
+# code still compiles (the shaders just won't exist at run time).
+METAL_OK=0
+xcrun metal -v >/dev/null 2>&1 && METAL_OK=1
 (cd "$ROOT" && find Sources -type f ! -name '*.swift') | while read -r file; do
+    if [ "$METAL_OK" -eq 0 ] && [ "${file##*.}" = "metal" ]; then
+        continue
+    fi
     mkdir -p "$(dirname "$PKG/Sources.next/${file#Sources/}")"
     cp "$ROOT/$file" "$PKG/Sources.next/${file#Sources/}"
 done
+if [ "$METAL_OK" -eq 0 ]; then
+    echo "note: Metal Toolchain not found; MotionShaders compiles without its shaders" >&2
+    mkdir -p "$PKG/Sources.next/MotionShaders/Shaders"
+    echo "placeholder" > "$PKG/Sources.next/MotionShaders/Shaders/placeholder.txt"
+fi
 
 TARGETS=""
 for tool in "$@"; do
@@ -34,7 +47,7 @@ for tool in "$@"; do
     dir="${tool#*=}"
     mkdir -p "$PKG/Sources.next/$name"
     cp "$ROOT/$dir"/*.swift "$PKG/Sources.next/$name/"
-    TARGETS="$TARGETS        .executableTarget(name: \"$name\", dependencies: [\"MotionLibrary\", \"MotionGallery\"]),
+    TARGETS="$TARGETS        .executableTarget(name: \"$name\", dependencies: [\"MotionLibrary\", \"MotionShaders\", \"MotionGallery\"]),
 "
 done
 
@@ -52,7 +65,8 @@ let package = Package(
     platforms: [.macOS(.v14)],
     targets: [
         .target(name: "MotionLibrary"),
-        .target(name: "MotionGallery", dependencies: ["MotionLibrary"]),
+        .target(name: "MotionShaders", resources: [.process("Shaders")]),
+        .target(name: "MotionGallery", dependencies: ["MotionLibrary", "MotionShaders"]),
 $TARGETS    ]
 )
 EOF
