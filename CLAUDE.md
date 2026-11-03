@@ -6,10 +6,10 @@ This file is read by Claude Code (and mirrored in AGENTS.md for Codex and other 
 
 A SwiftUI counterpart to web "motion library" galleries: a collection of reusable motion effects, organised on two axes:
 
-- **Component** (`MotionComponent`): text, button, card, shape, background, number
-- **Trigger** (`MotionTrigger`): appear, tap, press, drag, scroll, change, loop
+- **Component** (`MotionComponent`): text, button, card, shape, background, number, particle (Particle & 3D)
+- **Trigger** (`MotionTrigger`): appear, tap, press, drag, hover, scroll, change, loop
 
-Each effect has: a public API in `MotionLibrary`, a demo view, and a catalog entry with usage code + an AI prompt shown in the `MotionGallery` browser UI.
+Each effect has: a public API in `MotionLibrary`, a demo view, and a catalog entry with usage code + an AI prompt shown in the `MotionGallery` browser UI. The catalog is the source of truth for everything AI-facing (llms.txt, the Agent Skill, the Cursor rule, the MCP server's JSON), which `Scripts/generate-docs.sh` regenerates.
 
 ## Architecture
 
@@ -21,11 +21,18 @@ Sources/MotionGallery/
   Catalog/MotionCatalog.swift         # static list of every effect (display order)
   Catalog/Demos.swift                 # demo views used by the catalog
   Views/                              # gallery grid, detail view, shared components
+Docs/gifs/, Docs/motion-catalog.json  # README previews + generated catalog JSON
+llms.txt, llms-full.txt               # generated
+skills/swiftui-motion/                # generated Agent Skill
+.cursor/rules/swiftui-motion.mdc      # generated Cursor rule
+mcp/server.mjs                        # zero-dependency MCP server (reads the JSON)
+Scripts/                              # check-build, generate-docs, record-readme-gifs
 ```
 
 - `MotionLibrary` must never import `MotionGallery`.
 - `MotionEffect.demo` is `@MainActor`. Call it only from view bodies or `@MainActor` helpers.
 - Catalog `usage` and `prompt` strings use raw multi-line strings `#""" … """#` so key paths like `\.self` don't break.
+- Never hand-edit generated files (README grid between the `effects` markers, llms*.txt, Docs/motion-catalog.json, skills/, .cursor/rules/). Change the catalog and run `Scripts/generate-docs.sh`.
 
 ## Rules
 
@@ -34,36 +41,34 @@ Sources/MotionGallery/
 - Keep public API names short and SwiftUI-like (`.shimmer()`, not `.applyShimmerEffect()`).
 - Every effect file ends with a `#Preview`.
 - Don't rename existing catalog `id`s or public API (it's a library; breaking changes need a major version).
-- Update the README effects table when adding an effect.
+- After adding or changing an effect, run `Scripts/generate-docs.sh` (README grid, llms.txt, Skill, Cursor rule, catalog JSON) and record its GIF.
 
 ## Verifying changes
 
-The environment that created v0.1 had no Swift toolchain, so **v0.1 has never been compiled**. On first checkout on a Mac:
+Full Xcode isn't required. The `#Preview` macro needs Xcode's plugin, so the scripts build a preview-stripped copy of the package (`Scripts/stage-package.sh`):
 
 ```sh
-swift build                                   # macOS build of both targets
-xcodebuild -scheme MotionLibrary-Package \
-  -destination 'generic/platform=iOS Simulator' build
+Scripts/check-build.sh            # compile MotionLibrary + MotionGallery for macOS
+Scripts/generate-docs.sh          # regenerate catalog-derived files (--check in CI)
+Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
 ```
 
-Fix any compile errors first, then open `MotionGalleryView.swift` in Xcode and check every effect visually in the canvas.
+With Xcode, also build for iOS (`xcodebuild -scheme MotionLibrary-Package -destination 'generic/platform=iOS Simulator' build`) and check effects in the canvas.
 
 ## Roadmap (suggested next tasks)
 
-1. **Make v0.1 compile and look right** on iOS and macOS. Tune demo sizes in the grid.
+1. ~~Make v0.1 compile~~ (done for macOS; still check iOS in Xcode and tune demo sizes in the grid).
 2. **Demo app:** add `Examples/MotionLibraryDemo` (an Xcode app project depending on the local package) that shows `MotionGalleryView()`, so people can run it on a device.
-3. **Reduce Motion:** every looping or large-movement effect reads `accessibilityReduceMotion` and falls back to a fade or a static state.
-4. **More effects.** Map the web library's categories to SwiftUI:
-   - Text: gradient sweep text, per-character wave/bounce (`TextRenderer`, iOS 18), blur-in words, counting-up text, marquee
-   - Button: magnetic button (follows the pointer on iPad/macOS `onContinuousHover`), liquid fill on hold, loading-to-success morph, glow border
-   - Card & Group: expand-to-detail (`matchedGeometryEffect`), stacked cards swipe (Tinder style), carousel with parallax, accordion, flip card
-   - Shape: morphing blob, spinning loaders set, checkmark draw (`trim`), confetti
-   - Background: animated mesh gradient (`MeshGradient`, iOS 18), particle field, grid/noise shader
+3. ~~Reduce Motion~~ (done: every looping or large-movement effect falls back to a fade or a static state).
+4. **More effects.** v0.2 added gradient sweep, blur-in, marquee, wave text, magnetic, hold-to-confirm, status button, glow border, flip, swipe stack, parallax carousel, expandable card, checkmark, confetti, loaders, morphing blob, particle field, starfield, cover flow and float 3D. Still open:
+   - Text: counting-up text
+   - Card & Group: expand-to-detail hero (`matchedGeometryEffect`)
+   - Background: animated mesh gradient (`MeshGradient`, iOS 18), grid/noise shader
    - Cursor / Pointer (iPad & macOS): spotlight follow, hover lift (`.hoverEffect`)
    - Shaders: Metal `[[stitchable]]` effects via `.colorEffect` / `.distortionEffect` / `.layerEffect` (ripple, pixellate, glitch) in `Sources/MotionLibrary/Shaders/` (add `resources: [.process("Shaders")]` if needed)
 5. **"Copy as AI prompt" for the whole filtered list**, and a "View source" link to GitHub from the detail view.
-6. **Docs site:** DocC catalog plus GIF previews in the README; CI that builds DocC.
-7. **Tests:** snapshot tests are optional; at minimum a test that every catalog `id` is unique and every `sourceFile` exists.
+6. **Docs site:** DocC catalog (README GIFs and AI-facing docs are done).
+7. **Tests:** `Scripts/generate-docs.sh` already fails on duplicate ids, a missing `api` or a missing source file. Snapshot tests are optional.
 
 ## Commit style
 

@@ -1,0 +1,4038 @@
+# SwiftUI Motion Library: full reference
+
+> Every effect with its API, usage, an implementation description and the complete source. Generated from the catalog; 33 effects.
+
+## Install
+
+```swift
+// Package.swift
+.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", branch: "main")
+// target dependencies
+.product(name: "MotionLibrary", package: "SwiftUI-Motion-Library")
+```
+
+Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects marked iOS 18+ are `@available(iOS 18, macOS 15, visionOS 2, *)`.
+
+---
+
+## Typewriter (`typewriter`)
+
+Characters appear one by one with a blinking cursor.
+
+- API: `TypewriterText("…")`
+- Component: Text
+- Trigger: Appear / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/TypewriterText.swift
+
+### Usage
+
+```swift
+TypewriterText("Hello, SwiftUI!", interval: .milliseconds(60))
+    .font(.title.bold())
+```
+
+### How it works
+
+Create a SwiftUI "typewriter" text view (iOS 17+). It reveals a string one character at a time at a fixed interval (default 60 ms), followed by a cursor character "|" in the accent color that blinks every 0.5 s. Implementation: keep a @State visibleCount, render Text(String(text.prefix(visibleCount))) concatenated with the cursor Text, and drive it from .task(id: text) with Task.sleep so it restarts when the text changes and cancels when the view disappears. Use the full text as the accessibility label.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Reveals a string one character at a time with an optional blinking cursor.
+///
+/// ```swift
+/// TypewriterText("Hello, SwiftUI!")
+///     .font(.title.bold())
+/// ```
+///
+/// The animation restarts whenever `text` changes.
+public struct TypewriterText: View {
+    private let text: String
+    private let interval: Duration
+    private let showsCursor: Bool
+    private let cursor: String
+
+    @State private var visibleCount = 0
+    @State private var cursorVisible = true
+
+    public init(
+        _ text: String,
+        interval: Duration = .milliseconds(60),
+        showsCursor: Bool = true,
+        cursor: String = "|"
+    ) {
+        self.text = text
+        self.interval = interval
+        self.showsCursor = showsCursor
+        self.cursor = cursor
+    }
+
+    public var body: some View {
+        (
+            Text(String(text.prefix(visibleCount)))
+            + Text(showsCursor ? cursor : "")
+                .foregroundStyle(cursorVisible ? Color.accentColor : Color.clear)
+        )
+        .accessibilityLabel(text)
+        .task(id: text) {
+            visibleCount = 0
+            guard !text.isEmpty else { return }
+            for index in 1...text.count {
+                try? await Task.sleep(for: interval)
+                if Task.isCancelled { return }
+                visibleCount = index
+            }
+        }
+        .task {
+            guard showsCursor else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(500))
+                cursorVisible.toggle()
+            }
+        }
+    }
+}
+
+#Preview {
+    TypewriterText("Turning complex data into meaningful visuals.")
+        .font(.title2.weight(.semibold))
+        .padding()
+}
+```
+
+---
+
+## Scramble / Decode (`scramble`)
+
+Random glyphs resolve into the real text from left to right.
+
+- API: `ScrambleText("…")`
+- Component: Text
+- Trigger: Appear / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/ScrambleText.swift
+
+### Usage
+
+```swift
+ScrambleText("ACCESS GRANTED", duration: 1.0)
+    .font(.title.bold())
+```
+
+### How it works
+
+Create a SwiftUI "decode" text effect (iOS 17+). On appear, every character of the string is shown as a random glyph from a charset (A–Z, 0–9, #%&*), re-randomised every 30 ms. Over the given duration, characters lock into their real values from left to right until the full string is shown. Spaces never scramble. Use a monospaced font design so the width doesn't jitter, drive frames from .task(id: text) with Task.sleep, and set the real string as the accessibility label.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// "Decoding" text effect: random glyphs settle into the real string from
+/// left to right.
+///
+/// ```swift
+/// ScrambleText("ACCESS GRANTED")
+///     .font(.title.bold())
+/// ```
+public struct ScrambleText: View {
+    private let text: String
+    private let duration: Double
+    private let charset: [Character]
+
+    @State private var display: String
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    public init(
+        _ text: String,
+        duration: Double = 1.0,
+        charset: String = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*"
+    ) {
+        self.text = text
+        self.duration = duration
+        self.charset = Array(charset)
+        _display = State(initialValue: text)
+    }
+
+    public var body: some View {
+        Text(display)
+            .fontDesign(.monospaced)
+            .accessibilityLabel(text)
+            .task(id: text) {
+                await run()
+            }
+    }
+
+    private func run() async {
+        // Reduce Motion: show the text without the flicker of random glyphs.
+        guard !reduceMotion else {
+            display = text
+            return
+        }
+        let target = Array(text)
+        let frameInterval = 0.03
+        let steps = max(1, Int(duration / frameInterval))
+
+        for step in 0...steps {
+            let revealed = Int(Double(target.count) * Double(step) / Double(steps))
+            var output: [Character] = []
+            output.reserveCapacity(target.count)
+            for (index, character) in target.enumerated() {
+                if index < revealed || character == " " || charset.isEmpty {
+                    output.append(character)
+                } else {
+                    output.append(charset.randomElement() ?? character)
+                }
+            }
+            display = String(output)
+
+            try? await Task.sleep(for: .seconds(frameInterval))
+            if Task.isCancelled { return }
+        }
+        display = text
+    }
+}
+
+#Preview {
+    ScrambleText("ACCESS GRANTED", duration: 1.2)
+        .font(.title.bold())
+        .padding()
+}
+```
+
+---
+
+## Shimmer (`shimmer`)
+
+A band of light sweeps across text or skeleton placeholders.
+
+- API: `.shimmer()`
+- Component: Text
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/Shimmer.swift
+
+### Usage
+
+```swift
+Text("Loading…")
+    .font(.title)
+    .shimmer()
+
+RoundedRectangle(cornerRadius: 8)
+    .fill(.gray.opacity(0.3))
+    .frame(height: 44)
+    .shimmer(duration: 1.2)
+```
+
+### How it works
+
+Create a reusable SwiftUI .shimmer() view modifier (iOS 17+). A soft white highlight band (a horizontal LinearGradient clear → white 80% → clear, about 35% of the view width) moves from just off the left edge to just off the right edge, repeating forever with linear timing (~1.6 s). The band is placed in an overlay with a GeometryReader and masked by the original content so it only lights up the view's own pixels (text glyphs or skeleton shapes). It must not intercept touches and should accept isActive, duration, bandWidth and highlight color parameters.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A band of light that sweeps across the view, clipped to the view's own
+/// shape. Works on text, images, and skeleton placeholders.
+struct ShimmerModifier: ViewModifier {
+    var isActive: Bool
+    var duration: Double
+    var bandWidth: CGFloat
+    var highlight: Color
+
+    @State private var animating = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if isActive {
+                    GeometryReader { geometry in
+                        let width = geometry.size.width
+                        let band = max(1, width * bandWidth)
+                        LinearGradient(
+                            colors: [.clear, highlight, .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: band, height: geometry.size.height)
+                        .offset(x: animating ? width : -band)
+                    }
+                    .mask { content }
+                    .allowsHitTesting(false)
+                    .onAppear {
+                        animating = false
+                        // Reduce Motion: no sweep; the band stays parked off-screen.
+                        guard !reduceMotion else { return }
+                        withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
+                            animating = true
+                        }
+                    }
+                }
+            }
+    }
+}
+
+public extension View {
+    /// Sweeps a highlight across the view.
+    ///
+    /// ```swift
+    /// Text("Loading…").font(.title).shimmer()
+    /// RoundedRectangle(cornerRadius: 8).fill(.gray.opacity(0.3)).shimmer()
+    /// ```
+    func shimmer(
+        isActive: Bool = true,
+        duration: Double = 1.6,
+        bandWidth: CGFloat = 0.35,
+        highlight: Color = .white.opacity(0.8)
+    ) -> some View {
+        modifier(ShimmerModifier(
+            isActive: isActive,
+            duration: duration,
+            bandWidth: bandWidth,
+            highlight: highlight
+        ))
+    }
+}
+
+#Preview {
+    VStack(spacing: 16) {
+        Text("Shimmering title")
+            .font(.largeTitle.bold())
+            .foregroundStyle(.gray)
+            .shimmer()
+        RoundedRectangle(cornerRadius: 12)
+            .fill(.gray.opacity(0.25))
+            .frame(height: 60)
+            .shimmer()
+    }
+    .padding()
+}
+```
+
+---
+
+## Gradient Sweep (`gradient-sweep`)
+
+A multi-colour gradient flows through the letters forever.
+
+- API: `.gradientSweep()`
+- Component: Text
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/GradientSweep.swift
+
+### Usage
+
+```swift
+Text("Motion Library")
+    .font(.largeTitle.weight(.heavy))
+    .gradientSweep()
+
+Image(systemName: "sparkles")
+    .font(.system(size: 60))
+    .gradientSweep(colors: [.yellow, .orange, .pink], duration: 2)
+```
+
+### How it works
+
+Create a SwiftUI .gradientSweep(colors:duration:) view modifier (iOS 17+) that paints a view's own pixels with a flowing multi-colour gradient. In an overlay, use a GeometryReader to draw a horizontal LinearGradient twice as wide as the view whose colours are the palette repeated twice plus the first colour again (so the right half matches the left half). Offset it from 0 to −width with a linear animation that repeats forever without autoreversing, so the loop is seamless. Mask the overlay with the original content so only glyphs or shapes are coloured, and disable hit testing. Default palette pink, orange, yellow, mint, cyan, purple over 3 s. With Reduce Motion on, show the gradient without moving it.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Fills the view's own pixels with a multi-colour gradient that keeps
+/// flowing sideways. Made for headlines, but works on symbols and shapes too.
+struct GradientSweepModifier: ViewModifier {
+    var colors: [Color]
+    var duration: Double
+
+    @State private var flowing = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                GeometryReader { geometry in
+                    let width = max(1, geometry.size.width)
+                    // Two copies of the palette side by side, twice as wide as
+                    // the view. Sliding left by one view width shows the second
+                    // copy, which looks exactly like the first, so it loops.
+                    let palette = colors.isEmpty ? [Color.primary] : colors
+                    LinearGradient(
+                        colors: palette + palette + [palette[0]],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: width * 2, height: geometry.size.height)
+                    .offset(x: flowing ? -width : 0)
+                }
+                .mask { content }
+                .allowsHitTesting(false)
+            }
+            .onAppear {
+                guard !reduceMotion else { return }
+                flowing = false
+                withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
+                    flowing = true
+                }
+            }
+    }
+}
+
+public extension View {
+    /// Paints the view with a gradient that flows sideways forever.
+    ///
+    /// ```swift
+    /// Text("Motion Library")
+    ///     .font(.largeTitle.bold())
+    ///     .gradientSweep()
+    /// ```
+    func gradientSweep(
+        colors: [Color] = [.pink, .orange, .yellow, .mint, .cyan, .purple],
+        duration: Double = 3
+    ) -> some View {
+        modifier(GradientSweepModifier(colors: colors, duration: duration))
+    }
+}
+
+#Preview {
+    Text("Motion Library")
+        .font(.largeTitle.weight(.heavy))
+        .gradientSweep()
+        .padding()
+}
+```
+
+---
+
+## Blur-in Words (`blur-in`)
+
+Words come into focus one after another: fade, rise and un-blur.
+
+- API: `BlurInText("…")`
+- Component: Text
+- Trigger: Appear / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/BlurInText.swift
+
+### Usage
+
+```swift
+BlurInText("Design is how it works.")
+    .font(.title.weight(.semibold))
+
+BlurInText("Letter by letter", by: .character, stagger: 0.03)
+```
+
+### How it works
+
+Create a SwiftUI BlurInText view (iOS 17+) that reveals a string piece by piece, split by word (default) or by character. Lay the pieces out with a custom Layout that flows left to right, wraps to new lines and centres each line; the gap between words is about 0.28 × the line height. Each piece starts at opacity 0, blur radius 8 and 8 pt lower, and animates to opacity 1, no blur and no offset with easeOut(0.6 s), delayed by index × stagger (0.08 s default). Replay when the text changes by resetting a revealed flag and setting it again on the next run loop. Expose the whole string as one accessibility label. With Reduce Motion on, only fade.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Text that comes into focus one word (or one letter) at a time: each piece
+/// fades in, rises a few points and un-blurs, staggered from first to last.
+/// Replays whenever the string changes.
+public struct BlurInText: View {
+    /// How the string is split into animated pieces.
+    public enum Unit: Sendable {
+        case word
+        case character
+    }
+
+    private let text: String
+    private let unit: Unit
+    private let stagger: Double
+    private let duration: Double
+
+    @State private var revealed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - text: The string to show.
+    ///   - unit: Animate word by word or character by character.
+    ///   - stagger: Delay between consecutive pieces, in seconds.
+    ///   - duration: How long each piece takes to come into focus.
+    public init(_ text: String, by unit: Unit = .word, stagger: Double = 0.08, duration: Double = 0.6) {
+        self.text = text
+        self.unit = unit
+        self.stagger = stagger
+        self.duration = duration
+    }
+
+    public var body: some View {
+        FlowLayout(spacing: unit == .word ? 0.28 : 0) {
+            ForEach(Array(pieces.enumerated()), id: \.offset) { index, piece in
+                Text(piece)
+                    .opacity(revealed ? 1 : 0)
+                    .blur(radius: revealed || reduceMotion ? 0 : 8)
+                    .offset(y: revealed || reduceMotion ? 0 : 8)
+                    .animation(
+                        .easeOut(duration: duration).delay(Double(index) * stagger),
+                        value: revealed
+                    )
+            }
+        }
+        .id(text)
+        .onAppear(perform: reveal)
+        .onChange(of: text) { reveal() }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+    }
+
+    private var pieces: [String] {
+        switch unit {
+        case .word:
+            text.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+        case .character:
+            text.map(String.init)
+        }
+    }
+
+    private func reveal() {
+        revealed = false
+        DispatchQueue.main.async { revealed = true }
+    }
+}
+
+/// Lays children out left to right, wrapping onto new lines. `spacing` is a
+/// fraction of the line height, so word gaps scale with the font.
+struct FlowLayout: Layout {
+    var spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = arrange(subviews: subviews, maxWidth: proposal.width ?? .infinity)
+        let width = rows.map(\.width).max() ?? 0
+        let height = rows.reduce(0) { $0 + $1.height }
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let rows = arrange(subviews: subviews, maxWidth: bounds.width)
+        var y = bounds.minY
+        for row in rows {
+            // Centre each row, like multi-line centred text.
+            var x = bounds.minX + (bounds.width - row.width) / 2
+            for item in row.items {
+                subviews[item.index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(item.size))
+                x += item.size.width + item.gap
+            }
+            y += row.height
+        }
+    }
+
+    private struct Row {
+        var items: [(index: Int, size: CGSize, gap: CGFloat)] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func arrange(subviews: Subviews, maxWidth: CGFloat) -> [Row] {
+        var rows: [Row] = []
+        var row = Row()
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(.unspecified)
+            let gapBefore = row.items.last?.gap ?? 0
+            let width = row.items.isEmpty ? size.width : row.width + gapBefore + size.width
+            if width > maxWidth, !row.items.isEmpty {
+                rows.append(row)
+                row = Row()
+                row.width = size.width
+            } else {
+                row.width = width
+            }
+            row.items.append((index, size, size.height * spacing))
+            row.height = max(row.height, size.height)
+        }
+        rows.append(row)
+        return rows
+    }
+}
+
+#Preview {
+    BlurInText("Design is not just what it looks like. Design is how it works.")
+        .font(.title2.weight(.semibold))
+        .padding()
+}
+```
+
+---
+
+## Marquee (`marquee`)
+
+Text too long for its line scrolls sideways forever, with faded edges.
+
+- API: `MarqueeText("…")`
+- Component: Text
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/MarqueeText.swift
+
+### Usage
+
+```swift
+MarqueeText("Now playing: Midnight Drive — Neon Coast")
+    .font(.headline)
+    .frame(width: 200)
+
+MarqueeText(longTitle, speed: 60, gap: 24)
+```
+
+### How it works
+
+Create a SwiftUI MarqueeText view (iOS 17+) for a single line of text. Measure the text's natural width (fixedSize text with a GeometryReader background) and the container width. If the text fits, show it still. If not, show two copies in an HStack separated by a gap (40 pt) and offset them left by (time × speed) modulo (textWidth + gap) using TimelineView(.animation), so the second copy takes the first copy's place and the loop is seamless. Speed defaults to 40 pt/s. Clip to the container and mask the edges with 16 pt linear fades. Reserve one line of height with a hidden copy of the text. Expose the full text to accessibility, and with Reduce Motion on, don't scroll.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A single line of text that scrolls sideways forever when it's too long to
+/// fit, with faded edges. Short text just sits still.
+public struct MarqueeText: View {
+    private let text: String
+    private let speed: Double
+    private let gap: CGFloat
+    private let fadeWidth: CGFloat
+
+    @State private var textWidth: CGFloat = 0
+    @State private var containerWidth: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - text: The string to show.
+    ///   - speed: Scroll speed in points per second.
+    ///   - gap: Space between the end of the text and its next repetition.
+    ///   - fadeWidth: Width of the faded edges.
+    public init(_ text: String, speed: Double = 40, gap: CGFloat = 40, fadeWidth: CGFloat = 16) {
+        self.text = text
+        self.speed = speed
+        self.gap = gap
+        self.fadeWidth = fadeWidth
+    }
+
+    public var body: some View {
+        let scrolls = textWidth > containerWidth && !reduceMotion
+        // Reserve one line of height; the measured text lives in the overlay.
+        Text(text)
+            .lineLimit(1)
+            .hidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .leading) {
+                TimelineView(.animation(paused: !scrolls)) { timeline in
+                    let cycle = textWidth + gap
+                    let offset = scrolls
+                        ? -CGFloat((timeline.date.timeIntervalSinceReferenceDate * speed)
+                            .truncatingRemainder(dividingBy: Double(max(cycle, 1))))
+                        : 0
+                    HStack(spacing: gap) {
+                        label
+                        if scrolls { label }
+                    }
+                    .offset(x: offset)
+                }
+            }
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { containerWidth = proxy.size.width }
+                        .onChange(of: proxy.size.width) { _, width in containerWidth = width }
+                }
+            }
+            .clipped()
+            .mask {
+                if scrolls {
+                    HStack(spacing: 0) {
+                        LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: fadeWidth)
+                        Color.black
+                        LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: fadeWidth)
+                    }
+                } else {
+                    Color.black
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(text)
+    }
+
+    private var label: some View {
+        Text(text)
+            .lineLimit(1)
+            .fixedSize()
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { textWidth = proxy.size.width }
+                        .onChange(of: proxy.size.width) { _, width in textWidth = width }
+                }
+            }
+    }
+}
+
+#Preview {
+    VStack(alignment: .leading, spacing: 20) {
+        MarqueeText("Now playing: Midnight City — M83 · Hurry Up, We're Dreaming")
+            .font(.headline)
+        MarqueeText("Short text stays put")
+    }
+    .frame(width: 240)
+    .padding()
+}
+```
+
+---
+
+## Wave Text (`wave-text`)
+
+Letters bob in a travelling wave, drawn with a TextRenderer.
+
+- API: `WaveText("…")`
+- Component: Text
+- Trigger: Loop
+- Requires: iOS 18+ · macOS 15+ · visionOS 2+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/WaveText.swift
+
+### Usage
+
+```swift
+if #available(iOS 18, *) {
+    WaveText("Making waves")
+        .font(.largeTitle.bold())
+        .foregroundStyle(.blue)
+}
+```
+
+### How it works
+
+Create a SwiftUI WaveText view for iOS 18+ (mark it @available(iOS 18, macOS 15, visionOS 2, *)) that makes each letter bob up and down in a travelling wave while keeping normal text layout. Implement a TextRenderer whose draw(layout:in:) walks every line, run and glyph, keeps a running glyph index, copies the GraphicsContext, translates it vertically by sin((index / wavelength − time × speed) × 2π) × amplitude, and draws the glyph. Set displayPadding to the amplitude above and below so nothing clips. Drive time from TimelineView(.animation) and apply the renderer with .textRenderer. Defaults: amplitude 5 pt, wavelength 8 letters, 1 wave per second. With Reduce Motion on, pause the timeline and use zero amplitude.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Letters bob up and down in a travelling wave, drawn with a `TextRenderer`
+/// so the text keeps its normal layout, wrapping and accessibility.
+@available(iOS 18, macOS 15, visionOS 2, *)
+public struct WaveText: View {
+    private let text: Text
+    private let amplitude: CGFloat
+    private let wavelength: Double
+    private let speed: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - text: The string to show.
+    ///   - amplitude: How far letters move up and down, in points.
+    ///   - wavelength: Number of letters in one full wave.
+    ///   - speed: Waves per second.
+    public init(_ text: String, amplitude: CGFloat = 5, wavelength: Double = 8, speed: Double = 1) {
+        self.init(Text(text), amplitude: amplitude, wavelength: wavelength, speed: speed)
+    }
+
+    /// Wraps an existing `Text`, keeping its styling.
+    public init(_ text: Text, amplitude: CGFloat = 5, wavelength: Double = 8, speed: Double = 1) {
+        self.text = text
+        self.amplitude = amplitude
+        self.wavelength = wavelength
+        self.speed = speed
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            text.textRenderer(WaveRenderer(
+                time: reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate,
+                amplitude: reduceMotion ? 0 : amplitude,
+                wavelength: wavelength,
+                speed: speed
+            ))
+        }
+    }
+}
+
+@available(iOS 18, macOS 15, visionOS 2, *)
+struct WaveRenderer: TextRenderer {
+    var time: Double
+    var amplitude: CGFloat
+    var wavelength: Double
+    var speed: Double
+
+    var displayPadding: EdgeInsets {
+        EdgeInsets(top: amplitude, leading: 0, bottom: amplitude, trailing: 0)
+    }
+
+    func draw(layout: Text.Layout, in context: inout GraphicsContext) {
+        var index = 0
+        for line in layout {
+            for run in line {
+                for glyph in run {
+                    let angle = (Double(index) / max(wavelength, 1) - time * speed) * 2 * .pi
+                    var copy = context
+                    copy.translateBy(x: 0, y: CGFloat(sin(angle)) * amplitude)
+                    copy.draw(glyph)
+                    index += 1
+                }
+            }
+        }
+    }
+}
+
+#Preview {
+    if #available(iOS 18, macOS 15, visionOS 2, *) {
+        WaveText("Making waves in SwiftUI")
+            .font(.title.bold())
+            .foregroundStyle(.blue)
+            .padding()
+    }
+}
+```
+
+---
+
+## Pressable (`pressable`)
+
+Button squashes and darkens on press, then springs back with a light haptic.
+
+- API: `.buttonStyle(.pressable)`
+- Component: Button
+- Trigger: Press
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/PressableButtonStyle.swift
+
+### Usage
+
+```swift
+Button("Continue") { }
+    .buttonStyle(.pressable)
+
+Button("Big squish") { }
+    .buttonStyle(.pressable(scale: 0.85))
+```
+
+### How it works
+
+Create a SwiftUI ButtonStyle called PressableButtonStyle (iOS 17+). While pressed, the label scales to 0.94 and its brightness drops slightly (-0.06); on release it springs back using .spring(response: 0.3, dampingFraction: 0.6). Fire a light impact haptic with .sensoryFeedback only when the press begins. Expose it as .buttonStyle(.pressable) and .buttonStyle(.pressable(scale:haptics:)) via a static extension on ButtonStyle.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A button style that squashes slightly and darkens while pressed, then
+/// springs back. Adds a light haptic on press (iOS).
+///
+/// ```swift
+/// Button("Continue") { }
+///     .buttonStyle(.pressable)
+///
+/// Button("Big squish") { }
+///     .buttonStyle(.pressable(scale: 0.85))
+/// ```
+public struct PressableButtonStyle: ButtonStyle {
+    public var scale: CGFloat
+    public var haptics: Bool
+
+    public init(scale: CGFloat = 0.94, haptics: Bool = true) {
+        self.scale = scale
+        self.haptics = haptics
+    }
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? scale : 1)
+            .brightness(configuration.isPressed ? -0.06 : 0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+            .sensoryFeedback(.impact(weight: .light), trigger: configuration.isPressed) { _, isPressed in
+                haptics && isPressed
+            }
+    }
+}
+
+public extension ButtonStyle where Self == PressableButtonStyle {
+    static var pressable: PressableButtonStyle { PressableButtonStyle() }
+
+    static func pressable(scale: CGFloat = 0.94, haptics: Bool = true) -> PressableButtonStyle {
+        PressableButtonStyle(scale: scale, haptics: haptics)
+    }
+}
+
+#Preview {
+    Button {
+    } label: {
+        Text("Press me")
+            .font(.headline)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 14)
+            .background(Capsule().fill(Color.accentColor))
+    }
+    .buttonStyle(.pressable)
+    .padding()
+}
+```
+
+---
+
+## Tap Ripple (`ripple`)
+
+A circular ripple expands from the exact tap location.
+
+- API: `.ripple()`
+- Component: Button
+- Trigger: Tap
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/Ripple.swift
+
+### Usage
+
+```swift
+Text("Tap")
+    .frame(width: 200, height: 60)
+    .background(.indigo, in: RoundedRectangle(cornerRadius: 12))
+    .ripple(color: .white, cornerRadius: 12)
+```
+
+### How it works
+
+Create a SwiftUI .ripple() view modifier (iOS 17+) that shows a Material-style ripple. Use a simultaneous SpatialTapGesture so it doesn't block the view's own button action. Each tap appends a ripple at the tap location; each ripple is a translucent circle (white, 35% opacity) sized to 2× the view's diagonal that scales from ~0 to 1 while fading to 0 with easeOut over 0.7 s, then is removed. Ripples are drawn in an overlay clipped to a rounded rectangle with a configurable corner radius and never intercept touches. Multiple quick taps should produce overlapping ripples.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Material-style ripple that expands from the exact point the user tapped.
+struct RippleModifier: ViewModifier {
+    var color: Color
+    var cornerRadius: CGFloat
+    var duration: Double
+
+    @State private var ripples: [Ripple] = []
+
+    private struct Ripple: Identifiable {
+        let id = UUID()
+        let location: CGPoint
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                GeometryReader { geometry in
+                    let size = geometry.size
+                    // Large enough to cover the view from any tap point.
+                    let diameter = 2 * hypot(size.width, size.height)
+                    ZStack {
+                        ForEach(ripples) { ripple in
+                            RippleCircle(color: color, diameter: diameter, duration: duration)
+                                .position(ripple.location)
+                        }
+                    }
+                    .frame(width: size.width, height: size.height)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                .allowsHitTesting(false)
+            }
+            .simultaneousGesture(
+                SpatialTapGesture().onEnded { value in
+                    let ripple = Ripple(location: value.location)
+                    ripples.append(ripple)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + duration + 0.1) {
+                        ripples.removeAll { $0.id == ripple.id }
+                    }
+                }
+            )
+    }
+}
+
+private struct RippleCircle: View {
+    let color: Color
+    let diameter: CGFloat
+    let duration: Double
+
+    @State private var expanded = false
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: diameter, height: diameter)
+            .scaleEffect(expanded ? 1 : 0.01)
+            .opacity(expanded ? 0 : 0.35)
+            .onAppear {
+                withAnimation(.easeOut(duration: duration)) {
+                    expanded = true
+                }
+            }
+    }
+}
+
+public extension View {
+    /// Adds a ripple that starts at the tap location.
+    ///
+    /// ```swift
+    /// Button("Tap") { }
+    ///     .padding()
+    ///     .background(.blue, in: RoundedRectangle(cornerRadius: 12))
+    ///     .ripple(cornerRadius: 12)
+    /// ```
+    func ripple(
+        color: Color = .white,
+        cornerRadius: CGFloat = 12,
+        duration: Double = 0.7
+    ) -> some View {
+        modifier(RippleModifier(color: color, cornerRadius: cornerRadius, duration: duration))
+    }
+}
+
+#Preview {
+    Text("Tap anywhere")
+        .font(.headline)
+        .foregroundStyle(.white)
+        .frame(width: 240, height: 80)
+        .background(Color.indigo, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .ripple(cornerRadius: 16)
+        .padding()
+}
+```
+
+---
+
+## Error Shake (`shake`)
+
+Horizontal "no" shake for wrong input, triggered by a value change.
+
+- API: `.shake(trigger:)`
+- Component: Button
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/Shake.swift
+
+### Usage
+
+```swift
+@State private var attempts = 0
+
+SecureField("Password", text: $password)
+    .shake(trigger: attempts)
+    .sensoryFeedback(.error, trigger: attempts)
+
+// On a failed login:
+attempts += 1
+```
+
+### How it works
+
+Create a SwiftUI .shake(trigger:) view modifier (iOS 17+) for error feedback. Every time the Equatable trigger changes, the view shakes horizontally using keyframeAnimator on an x offset: -10, +10, -7, +7, -3 points (≈0.07 s each, cubic keyframes) and then settles back to 0 with a bouncy SpringKeyframe. Amplitude should be configurable. Pair it with .sensoryFeedback(.error, trigger:) for haptics.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Horizontal "no" shake, e.g. for a wrong password. Plays every time
+/// `trigger` changes.
+struct ShakeModifier<Trigger: Equatable>: ViewModifier {
+    var trigger: Trigger
+    var amplitude: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        // Reduce Motion: no shake (pair it with a colour or message change).
+        let scale: CGFloat = reduceMotion ? 0 : 1
+        return content.keyframeAnimator(initialValue: CGFloat(0), trigger: trigger) { view, offset in
+            view.offset(x: offset * scale)
+        } keyframes: { _ in
+            KeyframeTrack {
+                CubicKeyframe(-amplitude, duration: 0.07)
+                CubicKeyframe(amplitude, duration: 0.07)
+                CubicKeyframe(-amplitude * 0.7, duration: 0.07)
+                CubicKeyframe(amplitude * 0.7, duration: 0.07)
+                CubicKeyframe(-amplitude * 0.3, duration: 0.06)
+                SpringKeyframe(0, duration: 0.2, spring: .bouncy)
+            }
+        }
+    }
+}
+
+public extension View {
+    /// Shakes the view horizontally whenever `trigger` changes.
+    ///
+    /// ```swift
+    /// @State private var attempts = 0
+    ///
+    /// SecureField("Password", text: $password)
+    ///     .shake(trigger: attempts)
+    /// // on failure: attempts += 1
+    /// ```
+    func shake<Trigger: Equatable>(trigger: Trigger, amplitude: CGFloat = 10) -> some View {
+        modifier(ShakeModifier(trigger: trigger, amplitude: amplitude))
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var attempts = 0
+        var body: some View {
+            Button("Wrong password") { attempts += 1 }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .shake(trigger: attempts)
+                .sensoryFeedback(.error, trigger: attempts)
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Magnetic Button (`magnetic`)
+
+The button drifts toward a nearby pointer or dragging finger, then springs home.
+
+- API: `.magnetic()`
+- Component: Button
+- Trigger: Hover / Drag
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/Magnetic.swift
+
+### Usage
+
+```swift
+Button("Get started") { }
+    .buttonStyle(.borderedProminent)
+    .magnetic()
+
+Image(systemName: "plus.circle.fill")
+    .font(.system(size: 44))
+    .magnetic(strength: 0.5, radius: 40)
+```
+
+### How it works
+
+Create a SwiftUI .magnetic(strength:radius:) view modifier (iOS 17+) that pulls a view toward the pointer. Pad the view by `radius` (60 pt) to enlarge its tracking area, give it a rectangular contentShape, measure the padded size with a GeometryReader background, then remove the padding again with .padding(-radius). In onContinuousHover (pointer on iPad, Mac and visionOS) and in a simultaneous DragGesture(minimumDistance: 0) (touch), offset the original content by (location − centre) × strength (0.3) using an interactiveSpring(response 0.25, damping 0.7). When hover ends or the drag ends, spring back to zero with spring(response 0.45, damping 0.45) for a little overshoot. With Reduce Motion on, don't move.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Pulls the view toward the pointer while it hovers nearby (iPad pointer,
+/// Mac, visionOS), or toward the finger while it drags on touch screens, then
+/// springs back to rest.
+struct MagneticModifier: ViewModifier {
+    var strength: CGFloat
+    var radius: CGFloat
+
+    @State private var offset: CGSize = .zero
+    /// Size of the padded tracking area.
+    @State private var areaSize: CGSize = .zero
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .offset(reduceMotion ? .zero : offset)
+            // Grow the tracking area by `radius` so the pull starts before the
+            // pointer reaches the view.
+            .padding(radius)
+            .contentShape(Rectangle())
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { areaSize = proxy.size }
+                        .onChange(of: proxy.size) { _, newSize in areaSize = newSize }
+                }
+            }
+            .onContinuousHover(coordinateSpace: .local) { phase in
+                switch phase {
+                case let .active(location):
+                    attract(to: location)
+                case .ended:
+                    release()
+                }
+            }
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                    .onChanged { attract(to: $0.location) }
+                    .onEnded { _ in release() }
+            )
+            .padding(-radius)
+    }
+
+    private func attract(to location: CGPoint) {
+        // `location` is in the padded tracking area, whose centre is the view's centre.
+        let centre = CGPoint(x: areaSize.width / 2, y: areaSize.height / 2)
+        withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7)) {
+            offset = CGSize(
+                width: (location.x - centre.x) * strength,
+                height: (location.y - centre.y) * strength
+            )
+        }
+    }
+
+    private func release() {
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.45)) {
+            offset = .zero
+        }
+    }
+}
+
+public extension View {
+    /// Makes the view drift toward a nearby pointer (or a dragging finger) and
+    /// spring back when it leaves.
+    ///
+    /// ```swift
+    /// Button("Get started") { }
+    ///     .buttonStyle(.borderedProminent)
+    ///     .magnetic()
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - strength: Fraction of the pointer's distance from the centre that
+    ///     the view moves (0…1).
+    ///   - radius: How far outside the view, in points, the pull starts.
+    func magnetic(strength: CGFloat = 0.3, radius: CGFloat = 60) -> some View {
+        modifier(MagneticModifier(strength: strength, radius: radius))
+    }
+}
+
+#Preview {
+    Button("Get started") { }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .magnetic()
+        .padding(80)
+}
+```
+
+---
+
+## Hold to Confirm (`hold-to-confirm`)
+
+Liquid fills the button while you hold; the action runs only when it's full.
+
+- API: `HoldToConfirmButton("…") { }`
+- Component: Button
+- Trigger: Press
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/HoldToConfirmButton.swift
+
+### Usage
+
+```swift
+HoldToConfirmButton("Hold to delete") {
+    deleteAccount()
+}
+
+HoldToConfirmButton(duration: 2, fillColor: .orange) {
+    launch()
+} label: {
+    Label("Hold to launch", systemImage: "flame")
+}
+```
+
+### How it works
+
+Create a SwiftUI HoldToConfirmButton (iOS 17+) for destructive actions. A capsule with a 15% tint of fillColor (red) shows the label in fillColor. While pressed (onLongPressGesture(minimumDuration:perform:onPressingChanged:)), animate a progress value linearly from its current value to 1 over the remaining duration (1.2 s); releasing early animates it back to 0 with easeOut(0.35). Draw the liquid as a Shape filled from the bottom up to progress, with a sine-wave top edge (4 pt amplitude, phase driven by TimelineView) that flattens when empty or full. Mask a stack of the liquid plus a white copy of the label with the same shape, so the submerged part of the text turns white. On completion, run the action, swap the label for a checkmark with a spring, play a success haptic and reset after 1.2 s. Scale to 0.97 while pressing.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A capsule button that fills with liquid while it is held and runs its
+/// action only when the fill reaches the top. Letting go early drains it.
+/// Good for destructive or irreversible actions.
+public struct HoldToConfirmButton<Label: View>: View {
+    private let duration: Double
+    private let fillColor: Color
+    private let action: () -> Void
+    private let label: Label
+
+    @State private var progress: CGFloat = 0
+    @State private var isPressing = false
+    @State private var isConfirmed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - duration: Seconds the user must hold.
+    ///   - fillColor: Colour of the liquid. The resting background is a tint
+    ///     of it and the label is drawn in it, turning white where submerged.
+    ///   - action: Runs once the hold completes.
+    ///   - label: The button's content.
+    public init(
+        duration: Double = 1.2,
+        fillColor: Color = .red,
+        action: @escaping () -> Void,
+        @ViewBuilder label: () -> Label
+    ) {
+        self.duration = duration
+        self.fillColor = fillColor
+        self.action = action
+        self.label = label()
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion || (!isPressing && progress == 0))) { timeline in
+            let liquid = LiquidFill(
+                progress: progress,
+                phase: reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * 6,
+                waveHeight: progress > 0 && progress < 1 ? 4 : 0
+            )
+            // The label sizes the button; the capsule and liquid only decorate it.
+            content
+                .foregroundStyle(fillColor)
+                .background(Capsule().fill(fillColor.opacity(0.15)))
+                .overlay {
+                    // The liquid, with the label redrawn in white where it's submerged.
+                    ZStack {
+                        liquid.fill(fillColor)
+                        content.foregroundStyle(.white)
+                    }
+                    .mask(liquid)
+                }
+                .clipShape(Capsule())
+        }
+        .scaleEffect(isPressing ? 0.97 : 1)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressing)
+        .contentShape(Capsule())
+        .onLongPressGesture(minimumDuration: duration) {
+            confirm()
+        } onPressingChanged: { pressing in
+            guard !isConfirmed else { return }
+            isPressing = pressing
+            if pressing {
+                withAnimation(.linear(duration: duration * (1 - progress))) { progress = 1 }
+            } else if progress < 1 {
+                withAnimation(.easeOut(duration: 0.35)) { progress = 0 }
+            }
+        }
+        .sensoryFeedback(.success, trigger: isConfirmed) { _, confirmed in confirmed }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("Press and hold to confirm")
+        .accessibilityAction { action() }
+    }
+
+    /// The label (swapped for a checkmark once confirmed), padded to button size.
+    private var content: some View {
+        label
+            .opacity(isConfirmed ? 0 : 1)
+            .overlay {
+                Image(systemName: "checkmark")
+                    .fontWeight(.bold)
+                    .scaleEffect(isConfirmed ? 1 : 0.3)
+                    .opacity(isConfirmed ? 1 : 0)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 14)
+    }
+
+    private func confirm() {
+        isPressing = false
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { isConfirmed = true }
+        action()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation(.easeInOut(duration: 0.4)) {
+                isConfirmed = false
+                progress = 0
+            }
+        }
+    }
+}
+
+public extension HoldToConfirmButton where Label == Text {
+    /// A hold-to-confirm button with a text label.
+    ///
+    /// ```swift
+    /// HoldToConfirmButton("Hold to delete") { deleteAccount() }
+    /// ```
+    init(
+        _ title: LocalizedStringKey,
+        duration: Double = 1.2,
+        fillColor: Color = .red,
+        action: @escaping () -> Void
+    ) {
+        self.init(duration: duration, fillColor: fillColor, action: action) {
+            Text(title).font(.headline)
+        }
+    }
+}
+
+/// A rectangle filled from the bottom up to `progress`, with a sine wave on top.
+private struct LiquidFill: Shape {
+    var progress: CGFloat
+    var phase: Double
+    var waveHeight: CGFloat
+
+    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get { AnimatablePair(progress, waveHeight) }
+        set { progress = newValue.first; waveHeight = newValue.second }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        // Overfill slightly so the wave crests are hidden when full.
+        let level = rect.maxY - (rect.height + waveHeight * 2) * progress
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        let steps = 24
+        for step in 0...steps {
+            let x = rect.minX + rect.width * CGFloat(step) / CGFloat(steps)
+            let angle = Double(step) / Double(steps) * .pi * 3 + phase
+            path.addLine(to: CGPoint(x: x, y: level + CGFloat(sin(angle)) * waveHeight))
+        }
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+#Preview {
+    HoldToConfirmButton("Hold to delete") { }
+        .padding()
+}
+```
+
+---
+
+## Loading → Success (`status-button`)
+
+The button morphs into a spinner, then a green checkmark or a red shake.
+
+- API: `StatusButton("…", status:) { }`
+- Component: Button
+- Trigger: Tap / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/StatusButton.swift
+
+### Usage
+
+```swift
+@State private var status = MotionButtonStatus.idle
+
+StatusButton("Pay now", status: status) {
+    status = .loading
+    Task {
+        status = await pay() ? .success : .failure
+        try? await Task.sleep(for: .seconds(1.5))
+        status = .idle
+    }
+}
+```
+
+### How it works
+
+Create a SwiftUI StatusButton (iOS 17+) driven by a status enum: idle, loading, success, failure. It is a 50 pt tall capsule Button. Idle shows the title at its natural width. For any other status the frame width animates to 50 pt, turning the capsule into a circle (spring response 0.45, damping 0.75), and the title shrinks and fades. Loading shows a white 70% arc spinning forever. Success turns the fill green and draws a white checkmark path with trim from 0 to 1 (easeOut 0.35 s, 0.15 s delay). Failure turns the fill red, scales in an xmark and shakes horizontally with a GeometryEffect (8 pt, three swings). Play success and error haptics with sensoryFeedback, disable the button when not idle, and expose the status as the accessibility value.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// The phases a `StatusButton` moves through.
+public enum MotionButtonStatus: Equatable, Sendable {
+    case idle
+    case loading
+    case success
+    case failure
+}
+
+/// A capsule button that morphs to show the result of its action: it shrinks
+/// into a spinning circle while loading, then turns green with a drawn
+/// checkmark on success, or red with a shake on failure.
+///
+/// You own the status, so it works with any async work:
+///
+/// ```swift
+/// @State private var status = MotionButtonStatus.idle
+///
+/// StatusButton("Pay now", status: status) {
+///     status = .loading
+///     Task {
+///         status = await pay() ? .success : .failure
+///         try? await Task.sleep(for: .seconds(1.5))
+///         status = .idle
+///     }
+/// }
+/// ```
+public struct StatusButton: View {
+    private let title: LocalizedStringKey
+    private let status: MotionButtonStatus
+    private let tint: Color
+    private let action: () -> Void
+
+    @State private var spin = false
+    @State private var shakes = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let height: CGFloat = 50
+
+    public init(
+        _ title: LocalizedStringKey,
+        status: MotionButtonStatus,
+        tint: Color = .accentColor,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.status = status
+        self.tint = tint
+        self.action = action
+    }
+
+    public var body: some View {
+        Button(action: action) {
+            ZStack {
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .padding(.horizontal, 28)
+                    .opacity(status == .idle ? 1 : 0)
+                    .scaleEffect(status == .idle ? 1 : 0.6)
+
+                if status == .loading {
+                    Circle()
+                        .trim(from: 0, to: 0.7)
+                        .stroke(.white, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                        .frame(width: 22, height: 22)
+                        .rotationEffect(.degrees(spin ? 360 : 0))
+                        .onAppear {
+                            spin = false
+                            withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) {
+                                spin = true
+                            }
+                        }
+                        .transition(.scale(scale: 0.4).combined(with: .opacity))
+                }
+
+                CheckmarkShape()
+                    .trim(from: 0, to: status == .success ? 1 : 0)
+                    .stroke(.white, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+                    .frame(width: 20, height: 16)
+                    .animation(status == .success ? .easeOut(duration: 0.35).delay(0.15) : nil, value: status)
+
+                Image(systemName: "xmark")
+                    .font(.system(size: 18, weight: .bold))
+                    .scaleEffect(status == .failure ? 1 : 0.3)
+                    .opacity(status == .failure ? 1 : 0)
+            }
+            .foregroundStyle(.white)
+            .frame(width: status == .idle ? nil : height, height: height)
+            .background(Capsule().fill(background))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(StatusPressStyle())
+        .disabled(status != .idle)
+        .modifier(StatusShake(shakes: CGFloat(shakes)))
+        .animation(.spring(response: 0.45, dampingFraction: 0.75), value: status)
+        .onChange(of: status) { _, newValue in
+            if newValue == .failure, !reduceMotion {
+                withAnimation(.linear(duration: 0.4)) { shakes += 1 }
+            }
+        }
+        .sensoryFeedback(trigger: status) { _, newValue in
+            switch newValue {
+            case .success: .success
+            case .failure: .error
+            default: nil
+            }
+        }
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(accessibilityStatus)
+    }
+
+    private var background: Color {
+        switch status {
+        case .idle, .loading: tint
+        case .success: .green
+        case .failure: .red
+        }
+    }
+
+    private var accessibilityStatus: Text {
+        switch status {
+        case .idle: Text("")
+        case .loading: Text("Loading")
+        case .success: Text("Done")
+        case .failure: Text("Failed")
+        }
+    }
+}
+
+private struct StatusPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
+    }
+}
+
+/// Horizontal shake, one full shake per unit of `shakes`.
+private struct StatusShake: GeometryEffect {
+    var shakes: CGFloat
+
+    var animatableData: CGFloat {
+        get { shakes }
+        set { shakes = newValue }
+    }
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        ProjectionTransform(CGAffineTransform(translationX: 8 * sin(shakes * .pi * 6), y: 0))
+    }
+}
+
+/// A checkmark drawn left to right, sized to its frame.
+struct CheckmarkShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.38, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        return path
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var status = MotionButtonStatus.idle
+
+        var body: some View {
+            StatusButton("Pay now", status: status) {
+                status = .loading
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { status = .success }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.8) { status = .idle }
+            }
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Glow Border (`glow-border`)
+
+A rainbow border runs around the view with a soft glow behind it.
+
+- API: `.glowBorder()`
+- Component: Button
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/GlowBorder.swift
+
+### Usage
+
+```swift
+Text("Upgrade to Pro")
+    .padding()
+    .background(.black, in: RoundedRectangle(cornerRadius: 14))
+    .glowBorder(cornerRadius: 14)
+
+CardView()
+    .glowBorder(colors: [.orange, .yellow], cornerRadius: 24, lineWidth: 3)
+```
+
+### How it works
+
+Create a SwiftUI .glowBorder(colors:cornerRadius:lineWidth:glowRadius:duration:) view modifier (iOS 17+). In a non-interactive overlay, use TimelineView(.animation) to compute a rotation angle of (time / duration) turns (3 s per turn). Build an AngularGradient from the palette plus its first colour again (pink, purple, blue, cyan, mint by default) starting at that angle. Stroke a continuous RoundedRectangle with it twice: once at 2× line width, blurred by glowRadius (8) at 80% opacity for the glow, and once crisp at lineWidth (2). With Reduce Motion on, pause the rotation.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A gradient border that keeps rotating around the view, with a soft glow
+/// behind it. Draws attention to a primary action or a highlighted card.
+struct GlowBorderModifier: ViewModifier {
+    var colors: [Color]
+    var cornerRadius: CGFloat
+    var lineWidth: CGFloat
+    var glowRadius: CGFloat
+    var duration: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                TimelineView(.animation(paused: reduceMotion)) { timeline in
+                    let turns = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate / duration
+                    let gradient = AngularGradient(
+                        colors: colors + [colors.first ?? .clear],
+                        center: .center,
+                        angle: .degrees(turns.truncatingRemainder(dividingBy: 1) * 360)
+                    )
+                    let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    ZStack {
+                        shape.stroke(gradient, lineWidth: lineWidth * 2)
+                            .blur(radius: glowRadius)
+                            .opacity(0.8)
+                        shape.stroke(gradient, lineWidth: lineWidth)
+                    }
+                }
+                .allowsHitTesting(false)
+            }
+    }
+}
+
+public extension View {
+    /// Adds a rotating gradient border with a glow.
+    ///
+    /// ```swift
+    /// Text("Upgrade to Pro")
+    ///     .padding()
+    ///     .background(.black, in: RoundedRectangle(cornerRadius: 14))
+    ///     .glowBorder(cornerRadius: 14)
+    /// ```
+    func glowBorder(
+        colors: [Color] = [.pink, .purple, .blue, .cyan, .mint],
+        cornerRadius: CGFloat = 14,
+        lineWidth: CGFloat = 2,
+        glowRadius: CGFloat = 8,
+        duration: Double = 3
+    ) -> some View {
+        modifier(GlowBorderModifier(
+            colors: colors,
+            cornerRadius: cornerRadius,
+            lineWidth: lineWidth,
+            glowRadius: glowRadius,
+            duration: duration
+        ))
+    }
+}
+
+#Preview {
+    Text("Upgrade to Pro")
+        .font(.headline)
+        .foregroundStyle(.white)
+        .padding(.horizontal, 28)
+        .padding(.vertical, 16)
+        .background(.black, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .glowBorder()
+        .padding(40)
+}
+```
+
+---
+
+## Staggered Entrance (`staggered-appear`)
+
+List items fade and rise into place one after another.
+
+- API: `.staggeredAppear(index:)`
+- Component: Card & Group
+- Trigger: Appear
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/StaggeredAppear.swift
+
+### Usage
+
+```swift
+ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+    CardView(item)
+        .staggeredAppear(index: index)
+}
+```
+
+### How it works
+
+Create a SwiftUI .staggeredAppear(index:) view modifier (iOS 17+) for list and grid entrances. Each item starts at opacity 0, offset 24 pt down and scale 0.96, then on appear animates to its resting state with .spring(response: 0.5, dampingFraction: 0.8), delayed by index × 0.08 s so the items cascade in. Delay per item and travel distance are configurable.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Items fade, rise and settle into place one after another when they first
+/// appear.
+struct StaggeredAppearModifier: ViewModifier {
+    var index: Int
+    var delayPerItem: Double
+    var distance: CGFloat
+
+    @State private var visible = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(visible ? 1 : 0)
+            // Reduce Motion: fade only.
+            .offset(y: visible || reduceMotion ? 0 : distance)
+            .scaleEffect(visible || reduceMotion ? 1 : 0.96)
+            .onAppear {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(Double(index) * delayPerItem)) {
+                    visible = true
+                }
+            }
+    }
+}
+
+public extension View {
+    /// Staggered entrance. Give each item in a list its position.
+    ///
+    /// ```swift
+    /// ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+    ///     CardView(item)
+    ///         .staggeredAppear(index: index)
+    /// }
+    /// ```
+    func staggeredAppear(index: Int, delayPerItem: Double = 0.08, distance: CGFloat = 24) -> some View {
+        modifier(StaggeredAppearModifier(index: index, delayPerItem: delayPerItem, distance: distance))
+    }
+}
+
+#Preview {
+    VStack(spacing: 12) {
+        ForEach(0..<5, id: \.self) { index in
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.accentColor.opacity(0.2 + Double(index) * 0.15))
+                .frame(height: 56)
+                .staggeredAppear(index: index)
+        }
+    }
+    .padding()
+}
+```
+
+---
+
+## 3D Tilt (`tilt`)
+
+Card tilts in 3D toward the finger with a moving glare, then springs flat.
+
+- API: `.tiltOnDrag()`
+- Component: Card & Group
+- Trigger: Drag
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/Tilt.swift
+
+### Usage
+
+```swift
+CardView()
+    .tiltOnDrag(maxAngle: 15, cornerRadius: 20)
+```
+
+### How it works
+
+Create a SwiftUI .tiltOnDrag() view modifier (iOS 17+). While the user drags on the view, convert the drag translation into a normalised -1…1 value per axis (120 pt = full tilt) and apply two rotation3DEffects (x axis from vertical drag, y axis from horizontal drag) up to a max angle of ~12°, plus a 1.03 scale. Overlay a white glare gradient whose start/end points follow the tilt and which is only visible while dragging, clipped to the card's corner radius. Use .interactiveSpring while dragging and a bouncy spring back to flat on release.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// 3D card tilt that follows the finger, with a moving glare, then springs
+/// back flat on release.
+struct TiltModifier: ViewModifier {
+    var maxAngle: Double
+    var glare: Bool
+    var cornerRadius: CGFloat
+
+    /// Normalised drag, each axis in -1...1.
+    @State private var tilt: CGSize = .zero
+    @State private var isDragging = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// Translation (in points) that maps to the maximum angle.
+    private let range: CGFloat = 120
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if glare {
+                    LinearGradient(
+                        colors: [.white.opacity(isDragging ? 0.35 : 0), .clear],
+                        startPoint: UnitPoint(x: 0.5 - tilt.width * 0.5, y: 0.5 - tilt.height * 0.5),
+                        endPoint: UnitPoint(x: 0.5 + tilt.width * 0.5, y: 0.5 + tilt.height * 0.5)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    .allowsHitTesting(false)
+                }
+            }
+            // Reduce Motion: keep the glare and the lift, drop the rotation.
+            .rotation3DEffect(.degrees(Double(-tilt.height) * angle), axis: (x: 1, y: 0, z: 0))
+            .rotation3DEffect(.degrees(Double(tilt.width) * angle), axis: (x: 0, y: 1, z: 0))
+            .scaleEffect(isDragging ? 1.03 : 1)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        withAnimation(.interactiveSpring()) {
+                            isDragging = true
+                            tilt = CGSize(
+                                width: clamp(value.translation.width / range),
+                                height: clamp(value.translation.height / range)
+                            )
+                        }
+                    }
+                    .onEnded { _ in
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) {
+                            isDragging = false
+                            tilt = .zero
+                        }
+                    }
+            )
+    }
+
+    private var angle: Double { reduceMotion ? 0 : maxAngle }
+
+    private func clamp(_ value: CGFloat) -> CGFloat {
+        min(1, max(-1, value))
+    }
+}
+
+public extension View {
+    /// Tilts the view in 3D while it is dragged.
+    ///
+    /// ```swift
+    /// CardView()
+    ///     .tiltOnDrag(maxAngle: 15, cornerRadius: 20)
+    /// ```
+    func tiltOnDrag(maxAngle: Double = 12, glare: Bool = true, cornerRadius: CGFloat = 16) -> some View {
+        modifier(TiltModifier(maxAngle: maxAngle, glare: glare, cornerRadius: cornerRadius))
+    }
+}
+
+#Preview {
+    RoundedRectangle(cornerRadius: 20, style: .continuous)
+        .fill(LinearGradient(colors: [.purple, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .frame(width: 220, height: 300)
+        .tiltOnDrag(cornerRadius: 20)
+        .padding(40)
+}
+```
+
+---
+
+## Scroll Reveal (`scroll-reveal`)
+
+Rows scale up and come into focus as they enter the visible area.
+
+- API: `.scrollReveal()`
+- Component: Card & Group
+- Trigger: Scroll
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/ScrollReveal.swift
+
+### Usage
+
+```swift
+ScrollView {
+    LazyVStack {
+        ForEach(items) { item in
+            Row(item).scrollReveal()
+        }
+    }
+}
+```
+
+### How it works
+
+Create a SwiftUI .scrollReveal() view modifier (iOS 17+) using scrollTransition(.interactive). When an item is fully inside the scroll view (phase.isIdentity) it is at full opacity, scale 1 and no blur; as it moves toward the top or bottom edge it interpolates to opacity 0.3, scale 0.85 and a 2 pt blur. Axis, minimum scale, minimum opacity and blur amount should be parameters.
+
+### Source
+
+```swift
+import SwiftUI
+
+public extension View {
+    /// Items scale up and come into focus as they scroll into the visible
+    /// area, and fade back out as they leave. Use inside a `ScrollView`.
+    ///
+    /// ```swift
+    /// ScrollView {
+    ///     LazyVStack {
+    ///         ForEach(items) { item in
+    ///             Row(item).scrollReveal()
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    func scrollReveal(
+        axis: Axis = .vertical,
+        minScale: CGFloat = 0.85,
+        minOpacity: Double = 0.3,
+        blur: CGFloat = 2
+    ) -> some View {
+        modifier(ScrollRevealModifier(axis: axis, minScale: minScale, minOpacity: minOpacity, blur: blur))
+    }
+}
+
+struct ScrollRevealModifier: ViewModifier {
+    var axis: Axis
+    var minScale: CGFloat
+    var minOpacity: Double
+    var blur: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        // Reduce Motion: keep the fade, drop the scaling and blur.
+        let minScale = reduceMotion ? 1 : minScale
+        let blur = reduceMotion ? 0 : blur
+        let minOpacity = minOpacity
+        return content.scrollTransition(.interactive, axis: axis) { view, phase in
+            view
+                .opacity(phase.isIdentity ? 1 : minOpacity)
+                .scaleEffect(phase.isIdentity ? 1 : minScale)
+                .blur(radius: phase.isIdentity ? 0 : blur)
+        }
+    }
+}
+
+#Preview {
+    ScrollView {
+        LazyVStack(spacing: 12) {
+            ForEach(0..<30, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.accentColor.gradient)
+                    .frame(height: 80)
+                    .overlay(Text("Row \(index)").foregroundStyle(.white))
+                    .scrollReveal()
+            }
+        }
+        .padding()
+    }
+}
+```
+
+---
+
+## Flip Card (`flip-card`)
+
+A two-sided card turns over in 3D with a spring.
+
+- API: `FlipCard(isFlipped:) { } back: { }`
+- Component: Card & Group
+- Trigger: Tap / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/FlipCard.swift
+
+### Usage
+
+```swift
+@State private var flipped = false
+
+FlipCard(isFlipped: flipped) {
+    QuestionView()
+} back: {
+    AnswerView()
+}
+.frame(width: 220, height: 300)
+.onTapGesture { flipped.toggle() }
+```
+
+### How it works
+
+Create a SwiftUI FlipCard<Front, Back> view (iOS 17+) with isFlipped and axis (horizontal or vertical) parameters and front/back view builders. Stack both faces in a ZStack and give each an Animatable view modifier holding the animated angle (0 or 180°). The back face uses angle − 180 so it reads correctly once turned. Each face applies rotation3DEffect around the y axis (or x for vertical) with perspective 0.5 and sets opacity to 1 only while |faceAngle| < 90°, so the faces swap exactly at the halfway point and the back never shows mirrored. Animate isFlipped changes with spring(response 0.6, damping 0.75). Hide the hidden face from accessibility. With Reduce Motion on, cross-fade instead of rotating.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A two-sided card that turns over in 3D, showing `back` when `isFlipped`
+/// is true. The faces swap exactly at 90°, so the back never shows mirrored.
+public struct FlipCard<Front: View, Back: View>: View {
+    private let isFlipped: Bool
+    private let axis: Axis
+    private let front: Front
+    private let back: Back
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - isFlipped: Shows the back when true.
+    ///   - axis: `.horizontal` turns like a page (around the vertical axis),
+    ///     `.vertical` tumbles top over bottom.
+    public init(
+        isFlipped: Bool,
+        axis: Axis = .horizontal,
+        @ViewBuilder front: () -> Front,
+        @ViewBuilder back: () -> Back
+    ) {
+        self.isFlipped = isFlipped
+        self.axis = axis
+        self.front = front()
+        self.back = back()
+    }
+
+    public var body: some View {
+        if reduceMotion {
+            // Cross-fade instead of turning.
+            ZStack {
+                front.opacity(isFlipped ? 0 : 1)
+                back.opacity(isFlipped ? 1 : 0)
+            }
+            .animation(.easeInOut(duration: 0.3), value: isFlipped)
+        } else {
+            ZStack {
+                front.modifier(FlipFace(angle: isFlipped ? 180 : 0, axis: axis, isBack: false))
+                back.modifier(FlipFace(angle: isFlipped ? 180 : 0, axis: axis, isBack: true))
+            }
+            .animation(.spring(response: 0.6, dampingFraction: 0.75), value: isFlipped)
+        }
+    }
+}
+
+/// Rotates one face by `angle` and hides it while it faces away.
+private struct FlipFace: ViewModifier, Animatable {
+    var angle: Double
+    var axis: Axis
+    var isBack: Bool
+
+    var animatableData: Double {
+        get { angle }
+        set { angle = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        // The back starts already turned 180° so it reads correctly when shown.
+        let faceAngle = isBack ? angle - 180 : angle
+        let visible = abs(faceAngle) < 90
+        content
+            .opacity(visible ? 1 : 0)
+            .accessibilityHidden(!visible)
+            .rotation3DEffect(
+                .degrees(faceAngle),
+                axis: axis == .horizontal ? (x: 0, y: 1, z: 0) : (x: 1, y: 0, z: 0),
+                perspective: 0.5
+            )
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var flipped = false
+
+        var body: some View {
+            FlipCard(isFlipped: flipped) {
+                RoundedRectangle(cornerRadius: 20).fill(.blue.gradient)
+                    .overlay(Text("Front").font(.title.bold()).foregroundStyle(.white))
+            } back: {
+                RoundedRectangle(cornerRadius: 20).fill(.orange.gradient)
+                    .overlay(Text("Back").font(.title.bold()).foregroundStyle(.white))
+            }
+            .frame(width: 200, height: 260)
+            .onTapGesture { flipped.toggle() }
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Swipe Card Stack (`swipe-stack`)
+
+Tinder-style deck: drag the top card away and the pile moves up.
+
+- API: `SwipeCardStack(items) { item in }`
+- Component: Card & Group
+- Trigger: Drag
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/SwipeCardStack.swift
+
+### Usage
+
+```swift
+SwipeCardStack(profiles) { profile, direction in
+    direction == .right ? like(profile) : pass(profile)
+} card: { profile in
+    ProfileCard(profile)
+        .frame(width: 300, height: 420)
+}
+```
+
+### How it works
+
+Create a generic SwiftUI SwipeCardStack (iOS 17+) over a collection of Identifiable items with a card view builder and an onSwipe(item, direction) callback. Show the top 3 cards from the current position (looping by default). Cards behind are scaled down 5% per level and moved down 12 pt per level. The top card follows a DragGesture: offset by the translation, rotate by translation.width / 20 degrees around the bottom anchor, and overlay a green (right) or red (left) wash, masked by the card, whose opacity grows to 25% at the threshold. On release, if the predicted end translation passes 110 pt, fly the card 600 pt off in that direction with easeIn(0.25), then reset the drag without animation, advance the position with a spring so the pile moves up, and call onSwipe. Otherwise spring back. Add Swipe left and Swipe right accessibility actions.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Which way a card left the stack.
+public enum SwipeDirection: Sendable {
+    case left
+    case right
+}
+
+/// A Tinder-style deck. The top card follows the finger and tilts; past a
+/// threshold it flies off and the cards behind move up. Drag less and it
+/// springs back.
+public struct SwipeCardStack<Data: RandomAccessCollection, Card: View>: View where Data.Element: Identifiable {
+    private let items: Data
+    private let visibleCount: Int
+    private let loops: Bool
+    private let onSwipe: (Data.Element, SwipeDirection) -> Void
+    private let card: (Data.Element) -> Card
+
+    @State private var position = 0
+    @State private var drag: CGSize = .zero
+    @State private var flyingOff: SwipeDirection?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let threshold: CGFloat = 110
+
+    /// - Parameters:
+    ///   - items: The cards, top card first.
+    ///   - visibleCount: How many cards are drawn in the pile.
+    ///   - loops: Starts over from the first card when the deck runs out.
+    ///   - onSwipe: Called after a card leaves, with the direction it went.
+    ///   - card: Builds the view for one item.
+    public init(
+        _ items: Data,
+        visibleCount: Int = 3,
+        loops: Bool = true,
+        onSwipe: @escaping (Data.Element, SwipeDirection) -> Void = { _, _ in },
+        @ViewBuilder card: @escaping (Data.Element) -> Card
+    ) {
+        self.items = items
+        self.visibleCount = visibleCount
+        self.loops = loops
+        self.onSwipe = onSwipe
+        self.card = card
+    }
+
+    public var body: some View {
+        let elements = Array(items)
+        ZStack {
+            ForEach(Array(visibleCards(elements).enumerated()).reversed(), id: \.element.id) { depth, item in
+                card(item)
+                    .modifier(StackedCard(depth: depth, drag: depth == 0 ? drag : .zero, threshold: threshold))
+                    .allowsHitTesting(depth == 0)
+                    .gesture(depth == 0 ? dragGesture(for: item) : nil)
+                    .accessibilityHidden(depth != 0)
+                    .accessibilityActions {
+                        Button("Swipe left") { swipe(item, .left) }
+                        Button("Swipe right") { swipe(item, .right) }
+                    }
+            }
+        }
+    }
+
+    private func visibleCards(_ elements: [Data.Element]) -> [Data.Element] {
+        guard !elements.isEmpty else { return [] }
+        let remaining = loops ? elements.count : max(0, elements.count - position)
+        return (0..<min(visibleCount, remaining)).map { elements[(position + $0) % elements.count] }
+    }
+
+    private func dragGesture(for item: Data.Element) -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                guard flyingOff == nil else { return }
+                drag = value.translation
+            }
+            .onEnded { value in
+                guard flyingOff == nil else { return }
+                // Use the predicted end so a quick flick counts too.
+                let x = value.predictedEndTranslation.width
+                if abs(x) > threshold {
+                    swipe(item, x > 0 ? .right : .left)
+                } else {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { drag = .zero }
+                }
+            }
+    }
+
+    private func swipe(_ item: Data.Element, _ direction: SwipeDirection) {
+        flyingOff = direction
+        let distance: CGFloat = direction == .right ? 600 : -600
+        withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .easeIn(duration: 0.25)) {
+            drag = CGSize(width: distance, height: drag.height + 40)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { drag = .zero }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { position += 1 }
+            flyingOff = nil
+            onSwipe(item, direction)
+        }
+    }
+}
+
+/// Places a card in the pile: deeper cards are smaller and lower; the top
+/// card follows the drag and tilts away from it.
+private struct StackedCard: ViewModifier {
+    var depth: Int
+    var drag: CGSize
+    var threshold: CGFloat
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                // Green or red wash that grows as the card nears the threshold.
+                let progress = min(1, abs(drag.width) / threshold)
+                (drag.width > 0 ? Color.green : Color.red)
+                    .opacity(depth == 0 ? Double(progress) * 0.25 : 0)
+                    .mask { content }
+                    .allowsHitTesting(false)
+            }
+            .scaleEffect(1 - CGFloat(depth) * 0.05)
+            .offset(y: CGFloat(depth) * 12)
+            .offset(drag)
+            .rotationEffect(.degrees(Double(drag.width / 20)), anchor: .bottom)
+    }
+}
+
+#Preview {
+    struct Item: Identifiable {
+        let id: Int
+        let color: Color
+    }
+    let items = [Color.pink, .orange, .teal, .indigo].enumerated().map { Item(id: $0, color: $1) }
+    return SwipeCardStack(items) { item in
+        RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .fill(item.color.gradient)
+            .frame(width: 220, height: 300)
+            .overlay(Text("Card \(item.id + 1)").font(.title.bold()).foregroundStyle(.white))
+    }
+    .padding(40)
+}
+```
+
+---
+
+## Parallax Carousel (`parallax-carousel`)
+
+Paging cards whose images slide slower than the cards, for depth.
+
+- API: `ParallaxCarousel(items) { item in }`
+- Component: Card & Group
+- Trigger: Scroll
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/ParallaxCarousel.swift
+
+### Usage
+
+```swift
+ParallaxCarousel(places) { place in
+    Image(place.photo)
+        .resizable()
+        .scaledToFill()
+}
+.frame(height: 240)
+```
+
+### How it works
+
+Create a generic SwiftUI ParallaxCarousel (iOS 17+) over Identifiable items with an optional selection binding. Use a horizontal ScrollView with a LazyHStack (14 pt spacing), .scrollTargetLayout(), .scrollTargetBehavior(.viewAligned), hidden indicators, .scrollPosition(id:anchor: .center), and horizontal contentMargins so each card (78% of the width) snaps to the centre with neighbours peeking. Draw each card's content wider than the card by the parallax factor (0.35), then use .visualEffect to read the card's frame in the .scrollView coordinate space and offset the content by −(distance of the card centre from the viewport centre) × parallax. Finally frame it to the card size and clip it with a continuous rounded rectangle (22 pt), so the image appears to move slower than its frame. With Reduce Motion on, set parallax to 0.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A paging carousel whose card contents slide slower than the cards
+/// themselves, so images seem to sit deeper than the frame around them.
+/// Neighbouring cards peek in from both sides.
+public struct ParallaxCarousel<Data: RandomAccessCollection, Content: View>: View where Data.Element: Identifiable {
+    private let items: Data
+    private let selection: Binding<Data.Element.ID?>?
+    private let cardWidth: CGFloat
+    private let spacing: CGFloat
+    private let cornerRadius: CGFloat
+    private let parallax: CGFloat
+    private let content: (Data.Element) -> Content
+
+    @State private var internalSelection: Data.Element.ID?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - items: One card per item.
+    ///   - selection: Optional binding to the centred card; set it to scroll.
+    ///   - cardWidth: Card width as a fraction of the carousel's width.
+    ///   - spacing: Gap between cards.
+    ///   - cornerRadius: Corner radius of each card.
+    ///   - parallax: How much slower the content moves than its card (0…1).
+    ///   - content: The card's content, usually an image. It is drawn wider
+    ///     than the card so the parallax never reveals an edge.
+    public init(
+        _ items: Data,
+        selection: Binding<Data.Element.ID?>? = nil,
+        cardWidth: CGFloat = 0.78,
+        spacing: CGFloat = 14,
+        cornerRadius: CGFloat = 22,
+        parallax: CGFloat = 0.35,
+        @ViewBuilder content: @escaping (Data.Element) -> Content
+    ) {
+        self.items = items
+        self.selection = selection
+        self.cardWidth = cardWidth
+        self.spacing = spacing
+        self.cornerRadius = cornerRadius
+        self.parallax = parallax
+        self.content = content
+    }
+
+    public var body: some View {
+        GeometryReader { geometry in
+            let width = geometry.size.width * cardWidth
+            let strength = reduceMotion ? 0 : parallax
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: spacing) {
+                    ForEach(items) { item in
+                        content(item)
+                            // Extra width on both sides for the content to slide into.
+                            .frame(width: width * (1 + strength), height: geometry.size.height)
+                            .visualEffect { view, proxy in
+                                // How far this card's centre is from the carousel's centre.
+                                let frame = proxy.frame(in: .scrollView(axis: .horizontal))
+                                let viewport = proxy.bounds(of: .scrollView(axis: .horizontal))?.width ?? frame.width
+                                let distance = frame.midX - viewport / 2
+                                return view.offset(x: -distance * strength)
+                            }
+                            .frame(width: width, height: geometry.size.height)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                            .id(item.id)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .contentMargins(.horizontal, (geometry.size.width - width) / 2, for: .scrollContent)
+            .scrollTargetBehavior(.viewAligned)
+            .scrollIndicators(.hidden)
+            .scrollPosition(id: selection ?? $internalSelection, anchor: .center)
+        }
+    }
+}
+
+#Preview {
+    struct Place: Identifiable {
+        let id: Int
+        let colors: [Color]
+    }
+    let places = [
+        Place(id: 0, colors: [.orange, .pink]),
+        Place(id: 1, colors: [.teal, .blue]),
+        Place(id: 2, colors: [.purple, .indigo]),
+        Place(id: 3, colors: [.mint, .green]),
+    ]
+    return ParallaxCarousel(places) { place in
+        LinearGradient(colors: place.colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+            .overlay(Image(systemName: "mountain.2.fill").font(.system(size: 60)).foregroundStyle(.white.opacity(0.8)))
+    }
+    .frame(height: 220)
+}
+```
+
+---
+
+## Expandable Card (`expandable-card`)
+
+Tap the header and the card springs open, un-blurring its detail.
+
+- API: `ExpandableCard(isExpanded:) { } detail: { }`
+- Component: Card & Group
+- Trigger: Tap
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/ExpandableCard.swift
+
+### Usage
+
+```swift
+@State private var isOpen = false
+
+ExpandableCard(isExpanded: $isOpen) {
+    Text("Shipping").font(.headline)
+} detail: {
+    Text("Arrives Thursday. Free returns within 30 days.")
+}
+```
+
+### How it works
+
+Create a SwiftUI ExpandableCard<Header, Detail> (iOS 17+) bound to isExpanded. A VStack holds a plain-style Button containing the header, a spacer and a chevron.down that rotates −180° when open, then, if expanded, the detail view. Toggle inside withAnimation(.spring(response 0.45, damping 0.8)) so the card's height springs. Insert the detail with a combined transition of opacity, an 8 pt upward offset and a custom blur transition (radius 6 → 0). The background is a continuous rounded rectangle (16 pt) filled with the background style whose shadow deepens when open. Expose Expanded/Collapsed as the accessibility value. With Reduce Motion on, use a short ease and an opacity transition only.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A card with a tappable header that expands to reveal its detail. The
+/// height springs open, the chevron turns, and the detail un-blurs into place.
+/// Stack several for an accordion.
+public struct ExpandableCard<Header: View, Detail: View>: View {
+    @Binding private var isExpanded: Bool
+    private let cornerRadius: CGFloat
+    private let header: Header
+    private let detail: Detail
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - isExpanded: Whether the detail is showing.
+    ///   - cornerRadius: Corner radius of the card.
+    ///   - header: Always visible; tapping it toggles the card.
+    ///   - detail: Shown below the header when expanded.
+    public init(
+        isExpanded: Binding<Bool>,
+        cornerRadius: CGFloat = 16,
+        @ViewBuilder header: () -> Header,
+        @ViewBuilder detail: () -> Detail
+    ) {
+        _isExpanded = isExpanded
+        self.cornerRadius = cornerRadius
+        self.header = header()
+        self.detail = detail()
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.45, dampingFraction: 0.8)) {
+                    isExpanded.toggle()
+                }
+            } label: {
+                HStack {
+                    header
+                    Spacer(minLength: 8)
+                    Image(systemName: "chevron.down")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? -180 : 0))
+                }
+                .padding()
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(isExpanded ? Text("Expanded") : Text("Collapsed"))
+
+            if isExpanded {
+                detail
+                    .padding([.horizontal, .bottom])
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .transition(
+                        reduceMotion
+                            ? .opacity
+                            : .opacity.combined(with: .offset(y: -8)).combined(with: BlurTransition.blur)
+                    )
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(.background)
+                .shadow(color: .black.opacity(isExpanded ? 0.12 : 0.06), radius: isExpanded ? 12 : 4, y: isExpanded ? 6 : 2)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+    }
+}
+
+/// Blurs a view while it is inserted or removed.
+private struct BlurTransition: ViewModifier {
+    var radius: CGFloat
+
+    func body(content: Content) -> some View {
+        content.blur(radius: radius)
+    }
+
+    static var blur: AnyTransition {
+        .modifier(active: BlurTransition(radius: 6), identity: BlurTransition(radius: 0))
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var open = [true, false, false]
+
+        var body: some View {
+            VStack(spacing: 12) {
+                ForEach(0..<3) { index in
+                    ExpandableCard(isExpanded: $open[index]) {
+                        Text("Question \(index + 1)").font(.headline)
+                    } detail: {
+                        Text("Answers expand smoothly with a spring, and the detail fades and un-blurs into place.")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(Color.gray.opacity(0.1))
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Pulse Rings (`pulse-rings`)
+
+Concentric rings expand and fade continuously, like a radar or live dot.
+
+- API: `PulseRings()`
+- Component: Shape
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Shape/PulseRings.swift
+
+### Usage
+
+```swift
+ZStack {
+    PulseRings(color: .green, count: 3)
+        .frame(width: 120, height: 120)
+    Circle().fill(.green).frame(width: 24, height: 24)
+}
+```
+
+### How it works
+
+Create a SwiftUI PulseRings view (iOS 17+). Draw N stroked circles (default 3, 2 pt line) that each grow from 20% to 100% of the frame while fading from opacity 1 to 0 over a 2 s cycle, evenly phase-offset so a new ring is always emerging. Drive it with TimelineView(.animation) and compute each ring's progress from the timeline date (no @State or repeatForever), so it never drifts and stops when off screen. Hide it from accessibility.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Concentric rings that continuously expand and fade, like a radar or a
+/// "live" indicator. Place it behind an icon or avatar.
+///
+/// ```swift
+/// ZStack {
+///     PulseRings(color: .green)
+///         .frame(width: 120, height: 120)
+///     Circle().fill(.green).frame(width: 24, height: 24)
+/// }
+/// ```
+public struct PulseRings: View {
+    private let color: Color
+    private let count: Int
+    private let duration: Double
+    private let lineWidth: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    public init(color: Color = .accentColor, count: Int = 3, duration: Double = 2, lineWidth: CGFloat = 2) {
+        self.color = color
+        self.count = max(1, count)
+        self.duration = duration
+        self.lineWidth = lineWidth
+    }
+
+    public var body: some View {
+        // Reduce Motion: frozen rings at evenly spaced sizes.
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? duration * 0.5 : timeline.date.timeIntervalSinceReferenceDate
+            ZStack {
+                ForEach(0..<count, id: \.self) { index in
+                    ring(progress: progress(time: time, index: index))
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func progress(time: TimeInterval, index: Int) -> Double {
+        let offset = Double(index) / Double(count)
+        return (time / duration + offset).truncatingRemainder(dividingBy: 1)
+    }
+
+    private func ring(progress: Double) -> some View {
+        Circle()
+            .stroke(color, lineWidth: lineWidth)
+            .scaleEffect(0.2 + progress * 0.8)
+            .opacity(1 - progress)
+    }
+}
+
+#Preview {
+    ZStack {
+        PulseRings(color: .green)
+            .frame(width: 160, height: 160)
+        Circle()
+            .fill(.green)
+            .frame(width: 28, height: 28)
+    }
+}
+```
+
+---
+
+## Like Burst (`burst`)
+
+Particles fly outward from the centre when a value changes.
+
+- API: `.burst(trigger:)`
+- Component: Shape
+- Trigger: Tap / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Shape/Burst.swift
+
+### Usage
+
+```swift
+Image(systemName: isLiked ? "heart.fill" : "heart")
+    .contentTransition(.symbolEffect(.replace))
+    .burst(trigger: isLiked, color: .pink, isEnabled: isLiked)
+```
+
+### How it works
+
+Create a SwiftUI .burst(trigger:) view modifier (iOS 17+) for "like" feedback. Every time the Equatable trigger changes (and isEnabled is true), spawn a burst in an overlay: 12 small circles (alternating 7 pt and 4 pt) placed evenly around a circle, which move outward from the centre to a ~36 pt radius while shrinking to 30% and fading out with easeOut over 0.6 s. Remove each burst after it finishes, allow overlapping bursts, and never intercept touches. Color, count and radius are parameters.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Small dots that fly outward from the centre of the view, e.g. on a "like"
+/// tap. Plays every time `trigger` changes.
+struct BurstModifier<Trigger: Equatable>: ViewModifier {
+    var trigger: Trigger
+    var color: Color
+    var count: Int
+    var radius: CGFloat
+    var isEnabled: Bool
+
+    @State private var bursts: [UUID] = []
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                ZStack {
+                    ForEach(bursts, id: \.self) { _ in
+                        BurstParticles(color: color, count: count, radius: radius)
+                    }
+                }
+                .allowsHitTesting(false)
+            }
+            .onChange(of: trigger) {
+                // Reduce Motion: skip the particles.
+                guard isEnabled, !reduceMotion else { return }
+                let id = UUID()
+                bursts.append(id)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    bursts.removeAll { $0 == id }
+                }
+            }
+    }
+}
+
+private struct BurstParticles: View {
+    let color: Color
+    let count: Int
+    let radius: CGFloat
+
+    @State private var exploded = false
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<max(1, count), id: \.self) { index in
+                particle(angle: Double(index) / Double(max(1, count)) * 2 * .pi, index: index)
+            }
+        }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.6)) {
+                exploded = true
+            }
+        }
+    }
+
+    private func particle(angle: Double, index: Int) -> some View {
+        // Alternate particle size and distance so the burst feels organic.
+        let size: CGFloat = index.isMultiple(of: 2) ? 7 : 4
+        let distance = radius * (index.isMultiple(of: 3) ? 0.75 : 1)
+        return Circle()
+            .fill(color)
+            .frame(width: size, height: size)
+            // Scale before offsetting, otherwise the scale also shrinks the
+            // travel distance and the particles never leave the icon.
+            .scaleEffect(exploded ? 0.3 : 1)
+            .offset(
+                x: exploded ? CGFloat(cos(angle)) * distance : 0,
+                y: exploded ? CGFloat(sin(angle)) * distance : 0
+            )
+            .opacity(exploded ? 0 : 1)
+    }
+}
+
+public extension View {
+    /// Emits a burst of particles every time `trigger` changes.
+    ///
+    /// ```swift
+    /// Image(systemName: isLiked ? "heart.fill" : "heart")
+    ///     .burst(trigger: isLiked, color: .pink, isEnabled: isLiked)
+    /// ```
+    func burst<Trigger: Equatable>(
+        trigger: Trigger,
+        color: Color = .pink,
+        count: Int = 12,
+        radius: CGFloat = 36,
+        isEnabled: Bool = true
+    ) -> some View {
+        modifier(BurstModifier(trigger: trigger, color: color, count: count, radius: radius, isEnabled: isEnabled))
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var liked = false
+        var body: some View {
+            Button {
+                liked.toggle()
+            } label: {
+                Image(systemName: liked ? "heart.fill" : "heart")
+                    .font(.system(size: 44))
+                    .foregroundStyle(liked ? Color.pink : Color.secondary)
+                    .contentTransition(.symbolEffect(.replace))
+            }
+            .buttonStyle(.plain)
+            .burst(trigger: liked, isEnabled: liked)
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Checkmark Draw (`checkmark`)
+
+A success mark draws itself: circle stroke, fill, then a popping check.
+
+- API: `AnimatedCheckmark(isChecked:)`
+- Component: Shape
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Shape/AnimatedCheckmark.swift
+
+### Usage
+
+```swift
+AnimatedCheckmark(isChecked: isDone)
+    .frame(width: 80, height: 80)
+
+AnimatedCheckmark(isChecked: saved, color: .blue, lineWidth: 3)
+```
+
+### How it works
+
+Create a SwiftUI AnimatedCheckmark view (iOS 17+) with isChecked, color (green) and lineWidth (4 at 60 pt, scaled with size). It is square. Layer three parts in a ZStack: a circle stroke trimmed from 0 to 1 and rotated −90° so it draws clockwise from the top (easeInOut 0.45 s); a filled circle that scales from 0.6 and fades in with a spring after 0.35 s; and a white checkmark path (short stroke down-right, long stroke up-right, round caps and joins) trimmed from 0 to 1 with easeOut 0.3 s after 0.55 s. Finish with a small bouncy scale pop at 0.75 s. Unchecking reverses everything without delays. With Reduce Motion on, replace the sequence with a 0.2 s fade.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A success mark that draws itself: the circle strokes around, fills, then
+/// the checkmark is drawn on top with a small pop. Unchecking erases it.
+public struct AnimatedCheckmark: View {
+    private let isChecked: Bool
+    private let color: Color
+    private let lineWidth: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - isChecked: Draws the mark when true, erases it when false.
+    ///   - color: Circle colour; the checkmark is white on top of it.
+    ///   - lineWidth: Stroke width, scaled with the view's size (at 60 pt).
+    public init(isChecked: Bool, color: Color = .green, lineWidth: CGFloat = 4) {
+        self.isChecked = isChecked
+        self.color = color
+        self.lineWidth = lineWidth
+    }
+
+    public var body: some View {
+        GeometryReader { geometry in
+            let side = min(geometry.size.width, geometry.size.height)
+            let scale = side / 60
+            ZStack {
+                Circle()
+                    .trim(from: 0, to: isChecked ? 1 : 0)
+                    .stroke(color, style: StrokeStyle(lineWidth: lineWidth * scale, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(timing(.easeInOut(duration: 0.45)), value: isChecked)
+                Circle()
+                    .fill(color)
+                    .scaleEffect(isChecked ? 1 : 0.6)
+                    .opacity(isChecked ? 1 : 0)
+                    .animation(timing(.spring(response: 0.35, dampingFraction: 0.6).delay(isChecked ? 0.35 : 0)), value: isChecked)
+                CheckmarkShape()
+                    .trim(from: 0, to: isChecked ? 1 : 0)
+                    .stroke(.white, style: StrokeStyle(lineWidth: lineWidth * 1.2 * scale, lineCap: .round, lineJoin: .round))
+                    .frame(width: side * 0.42, height: side * 0.32)
+                    .offset(y: side * 0.02)
+                    .animation(timing(.easeOut(duration: 0.3).delay(isChecked ? 0.55 : 0)), value: isChecked)
+            }
+            .frame(width: side, height: side)
+            .scaleEffect(isChecked && !reduceMotion ? 1 : 0.95)
+            .animation(timing(.spring(response: 0.3, dampingFraction: 0.4).delay(isChecked ? 0.75 : 0)), value: isChecked)
+            .frame(width: geometry.size.width, height: geometry.size.height)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityElement()
+        .accessibilityLabel(isChecked ? Text("Done") : Text("Not done"))
+    }
+
+    /// Reduce Motion: skip the drawing and just fade.
+    private func timing(_ animation: Animation) -> Animation {
+        reduceMotion ? .easeInOut(duration: 0.2) : animation
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var checked = false
+
+        var body: some View {
+            AnimatedCheckmark(isChecked: checked)
+                .frame(width: 80, height: 80)
+                .onTapGesture { checked.toggle() }
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Confetti (`confetti`)
+
+Confetti bursts out of the view, tumbles under gravity and fades.
+
+- API: `.confetti(trigger:)`
+- Component: Shape
+- Trigger: Tap / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Shape/Confetti.swift
+
+### Usage
+
+```swift
+@State private var orders = 0
+
+Button("Complete order") { orders += 1 }
+    .confetti(trigger: orders)
+
+Text("🎉 Level up!")
+    .confetti(trigger: level, colors: [.yellow, .orange], count: 120)
+```
+
+### How it works
+
+Create a SwiftUI .confetti(trigger:colors:count:spread:) view modifier (iOS 17+). Each change of the equatable trigger appends a burst with a start date and 80 random pieces, removed after 2.4 s. Each piece has a velocity fanned ±60° around straight up (speed up to 3.2 × spread), a spin rate, a wobble phase, a 5–9 × 8–14 pt size, a colour index and every fourth one is a circle. Draw all bursts in one Canvas inside TimelineView(.animation), in an overlay enlarged by .padding(−spread) (160 pt) so confetti flies beyond the view, with hit testing off. Position = origin + velocity × (1 − e^(−1.6t)) / 1.6 + ½ × gravity × t² (air drag plus gravity), rotate by spin × t, scale x by cos(wobble + 8t) to fake turning over, and fade out over the last 0.6 s. With Reduce Motion on, skip the burst.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Confetti that bursts up and out of the view whenever `trigger` changes,
+/// then tumbles down under gravity and fades. Drawn in a single `Canvas`, so
+/// a few hundred pieces stay cheap.
+struct ConfettiModifier<Trigger: Equatable>: ViewModifier {
+    var trigger: Trigger
+    var colors: [Color]
+    var count: Int
+    var spread: CGFloat
+
+    @State private var bursts: [ConfettiBurst] = []
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if !bursts.isEmpty {
+                    TimelineView(.animation) { timeline in
+                        Canvas { context, size in
+                            let now = timeline.date
+                            for burst in bursts {
+                                burst.draw(in: &context, size: size, time: now.timeIntervalSince(burst.start), colors: colors)
+                            }
+                        }
+                    }
+                    // Draw well beyond the view's own bounds.
+                    .padding(-spread)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                }
+            }
+            .onChange(of: trigger) {
+                guard !reduceMotion else { return }
+                let burst = ConfettiBurst(count: count, spread: spread)
+                bursts.append(burst)
+                DispatchQueue.main.asyncAfter(deadline: .now() + ConfettiBurst.lifetime) {
+                    bursts.removeAll { $0.id == burst.id }
+                }
+            }
+    }
+}
+
+struct ConfettiBurst: Identifiable {
+    static let lifetime: Double = 2.4
+
+    struct Piece {
+        var velocity: CGVector
+        var spin: Double
+        var wobble: Double
+        var size: CGSize
+        var colorIndex: Int
+        var isCircle: Bool
+    }
+
+    let id = UUID()
+    let start = Date()
+    let pieces: [Piece]
+
+    init(count: Int, spread: CGFloat) {
+        pieces = (0..<max(1, count)).map { index in
+            // Mostly upward, fanned out ±60° from vertical.
+            let angle = -Double.pi / 2 + Double.random(in: -1.05...1.05)
+            let speed = Double.random(in: 0.55...1.0) * Double(spread) * 3.2
+            return Piece(
+                velocity: CGVector(dx: cos(angle) * speed, dy: sin(angle) * speed),
+                spin: Double.random(in: -9...9),
+                wobble: Double.random(in: 0...(2 * .pi)),
+                size: CGSize(width: .random(in: 5...9), height: .random(in: 8...14)),
+                colorIndex: index,
+                isCircle: index.isMultiple(of: 4)
+            )
+        }
+    }
+
+    func draw(in context: inout GraphicsContext, size: CGSize, time: Double, colors: [Color]) {
+        guard time >= 0, time < Self.lifetime, !colors.isEmpty else { return }
+        let origin = CGPoint(x: size.width / 2, y: size.height / 2)
+        let gravity = 900.0
+        let drag = 1.6
+        // Velocity decays with air drag; position integrates it.
+        let decay = (1 - exp(-drag * time)) / drag
+        let fade = time > Self.lifetime - 0.6 ? (Self.lifetime - time) / 0.6 : 1
+        for piece in pieces {
+            let x = origin.x + piece.velocity.dx * decay
+            let y = origin.y + piece.velocity.dy * decay + 0.5 * gravity * time * time * 0.55
+            var copy = context
+            copy.opacity = fade
+            copy.translateBy(x: x, y: y)
+            copy.rotate(by: .radians(piece.spin * time))
+            // Squash horizontally to fake the piece turning over in 3D.
+            copy.scaleBy(x: CGFloat(cos(piece.wobble + time * 8)), y: 1)
+            let rect = CGRect(
+                x: -piece.size.width / 2,
+                y: -piece.size.height / 2,
+                width: piece.size.width,
+                height: piece.isCircle ? piece.size.width : piece.size.height
+            )
+            let shape = piece.isCircle ? Path(ellipseIn: rect) : Path(rect)
+            copy.fill(shape, with: .color(colors[piece.colorIndex % colors.count]))
+        }
+    }
+}
+
+public extension View {
+    /// Fires a confetti burst from the view each time `trigger` changes.
+    ///
+    /// ```swift
+    /// Button("Complete order") { orders += 1 }
+    ///     .confetti(trigger: orders)
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - trigger: Any equatable value; each change fires one burst.
+    ///   - colors: Colours the pieces cycle through.
+    ///   - count: Pieces per burst.
+    ///   - spread: How far beyond the view's bounds confetti may travel.
+    func confetti<Trigger: Equatable>(
+        trigger: Trigger,
+        colors: [Color] = [.pink, .orange, .yellow, .green, .blue, .purple],
+        count: Int = 80,
+        spread: CGFloat = 160
+    ) -> some View {
+        modifier(ConfettiModifier(trigger: trigger, colors: colors, count: count, spread: spread))
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var count = 0
+
+        var body: some View {
+            Button("Celebrate 🎉") { count += 1 }
+                .buttonStyle(.borderedProminent)
+                .confetti(trigger: count)
+                .frame(width: 400, height: 400)
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Loaders (`loaders`)
+
+Five looping activity indicators: spinner, dots, bars, orbit and pulse.
+
+- API: `MotionLoader(.spinner)`
+- Component: Shape
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Shape/MotionLoader.swift
+
+### Usage
+
+```swift
+MotionLoader(.spinner)
+    .frame(width: 32, height: 32)
+
+MotionLoader(.dots, color: .secondary)
+    .frame(width: 44, height: 44)
+```
+
+### How it works
+
+Create a SwiftUI MotionLoader view (iOS 17+) with a style enum (spinner, dots, bars, orbit, pulse), a color and a speed multiplier. It is square and drives everything from TimelineView(.animation) time, sizing parts relative to its side. Spinner: a round-capped arc whose trim length breathes between 15% and 75% while it rotates. Dots: three dots hopping up in sequence (max(0, sin(6t − i·0.9))) and brightening at the top. Bars: five capsules whose heights follow a sine wave offset per bar. Orbit: two dots circling each other, scaled and layered by a fake depth. Pulse: two rings expanding and fading in turn around a centre dot. Label it "Loading" for accessibility, and with Reduce Motion on, show a dot that slowly breathes in opacity.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A set of looping activity indicators. Pick a style; size it with `.frame`.
+public struct MotionLoader: View {
+    /// The look of the loader.
+    public enum Style: String, CaseIterable, Sendable {
+        /// An arc that spins while its length breathes.
+        case spinner
+        /// Three dots hopping in sequence.
+        case dots
+        /// Equaliser bars rising and falling in a wave.
+        case bars
+        /// Two dots orbiting each other.
+        case orbit
+        /// A ring that pulses outward.
+        case pulse
+    }
+
+    private let style: Style
+    private let color: Color
+    private let speed: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - style: Which loader to draw.
+    ///   - color: Fill or stroke colour.
+    ///   - speed: Multiplier on the default tempo.
+    public init(_ style: Style = .spinner, color: Color = .accentColor, speed: Double = 1) {
+        self.style = style
+        self.color = color
+        self.speed = speed
+    }
+
+    public var body: some View {
+        TimelineView(.animation) { timeline in
+            // Reduce Motion: a slow opacity breathe instead of movement.
+            let time = timeline.date.timeIntervalSinceReferenceDate * speed
+            GeometryReader { geometry in
+                let side = min(geometry.size.width, geometry.size.height)
+                Group {
+                    if reduceMotion {
+                        Circle()
+                            .fill(color)
+                            .frame(width: side * 0.4, height: side * 0.4)
+                            .opacity(0.4 + 0.4 * (0.5 + 0.5 * sin(time * 2)))
+                    } else {
+                        loader(time: time, side: side)
+                    }
+                }
+                .frame(width: geometry.size.width, height: geometry.size.height)
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityElement()
+        .accessibilityLabel("Loading")
+        .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    @ViewBuilder
+    private func loader(time: Double, side: CGFloat) -> some View {
+        switch style {
+        case .spinner:
+            let breathe = 0.5 + 0.5 * sin(time * 3)
+            Circle()
+                .trim(from: 0, to: 0.15 + 0.6 * breathe)
+                .stroke(color, style: StrokeStyle(lineWidth: side * 0.1, lineCap: .round))
+                .rotationEffect(.radians(time * 5))
+                .padding(side * 0.05)
+
+        case .dots:
+            HStack(spacing: side * 0.1) {
+                ForEach(0..<3, id: \.self) { index in
+                    let hop = max(0, sin(time * 6 - Double(index) * 0.9))
+                    Circle()
+                        .fill(color)
+                        .frame(width: side * 0.22, height: side * 0.22)
+                        .offset(y: -side * 0.25 * hop)
+                        .opacity(0.5 + 0.5 * hop)
+                }
+            }
+            .offset(y: side * 0.1)
+
+        case .bars:
+            HStack(alignment: .center, spacing: side * 0.07) {
+                ForEach(0..<5, id: \.self) { index in
+                    let level = 0.5 + 0.5 * sin(time * 5 - Double(index) * 0.7)
+                    Capsule()
+                        .fill(color)
+                        .frame(width: side * 0.12, height: side * (0.25 + 0.65 * level))
+                }
+            }
+
+        case .orbit:
+            ZStack {
+                ForEach(0..<2, id: \.self) { index in
+                    let angle = time * 4 + Double(index) * .pi
+                    let depth = 0.5 + 0.5 * sin(angle)
+                    Circle()
+                        .fill(color)
+                        .frame(width: side * 0.3, height: side * 0.3)
+                        .scaleEffect(0.7 + 0.3 * depth)
+                        .opacity(0.6 + 0.4 * depth)
+                        .offset(x: cos(angle) * side * 0.3)
+                        .zIndex(depth)
+                }
+            }
+
+        case .pulse:
+            ZStack {
+                ForEach(0..<2, id: \.self) { index in
+                    let phase = (time * 0.8 + Double(index) * 0.5).truncatingRemainder(dividingBy: 1)
+                    Circle()
+                        .stroke(color, lineWidth: side * 0.06)
+                        .scaleEffect(0.2 + 0.8 * phase)
+                        .opacity(1 - phase)
+                }
+                Circle()
+                    .fill(color)
+                    .frame(width: side * 0.2, height: side * 0.2)
+            }
+        }
+    }
+}
+
+#Preview {
+    HStack(spacing: 24) {
+        ForEach(MotionLoader.Style.allCases, id: \.self) { style in
+            MotionLoader(style)
+                .frame(width: 44, height: 44)
+        }
+    }
+    .padding()
+}
+```
+
+---
+
+## Morphing Blob (`morphing-blob`)
+
+An organic, lava-lamp blob whose outline never stops changing.
+
+- API: `MorphingBlob()`
+- Component: Shape
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Shape/MorphingBlob.swift
+
+### Usage
+
+```swift
+MorphingBlob(colors: [.purple, .pink, .orange])
+    .frame(width: 200, height: 200)
+
+MorphingBlob(fill: Color.blue.opacity(0.3), points: 8, wobble: 0.1)
+    .overlay(Image(systemName: "mic.fill"))
+```
+
+### How it works
+
+Create a SwiftUI MorphingBlob view (iOS 17+) generic over a ShapeStyle fill, with a convenience initializer taking colours for a diagonal LinearGradient. Draw a custom Shape in TimelineView(.animation): place N control points (6) evenly around the centre, each at radius base × (1 + wobble × (0.6·sin(1.1t + 1.7i) + 0.4·sin(0.7t + 2.9i))), where base = half the side × (1 − wobble) and wobble is 0.18. Connect them into a smooth closed curve with a Catmull-Rom spline converted to cubic Béziers (control points p1 + (p2 − p0)/6 and p2 − (p3 − p1)/6). Keep a 1:1 aspect ratio and hide it from accessibility. With Reduce Motion on, freeze the shape.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// An organic blob whose outline keeps morphing, like a lava lamp. Use it as
+/// an avatar backdrop, a "listening" indicator or a hero decoration.
+public struct MorphingBlob<Fill: ShapeStyle>: View {
+    private let fill: Fill
+    private let points: Int
+    private let wobble: CGFloat
+    private let speed: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - fill: Any shape style: a colour, gradient or material.
+    ///   - points: Number of lobes around the outline (4…10 looks organic).
+    ///   - wobble: How far the outline moves in and out, as a fraction of the radius.
+    ///   - speed: Multiplier on the morphing tempo.
+    public init(fill: Fill, points: Int = 6, wobble: CGFloat = 0.18, speed: Double = 1) {
+        self.fill = fill
+        self.points = points
+        self.wobble = wobble
+        self.speed = speed
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            BlobShape(
+                time: reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed,
+                points: points,
+                wobble: wobble
+            )
+            .fill(fill)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityHidden(true)
+    }
+}
+
+public extension MorphingBlob where Fill == LinearGradient {
+    /// A blob filled with a diagonal gradient.
+    init(colors: [Color] = [.purple, .pink, .orange], points: Int = 6, wobble: CGFloat = 0.18, speed: Double = 1) {
+        self.init(
+            fill: LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing),
+            points: points,
+            wobble: wobble,
+            speed: speed
+        )
+    }
+}
+
+/// A closed, smooth outline through `points` control points whose distance
+/// from the centre is a sum of slow sine waves.
+struct BlobShape: Shape {
+    var time: Double
+    var points: Int
+    var wobble: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let count = max(3, points)
+        let centre = CGPoint(x: rect.midX, y: rect.midY)
+        let baseRadius = min(rect.width, rect.height) / 2 * (1 - wobble)
+        let vertices: [CGPoint] = (0..<count).map { index in
+            let angle = Double(index) / Double(count) * 2 * .pi
+            let i = Double(index)
+            // Two waves with unrelated frequencies so the motion never visibly repeats.
+            let offset = sin(time * 1.1 + i * 1.7) * 0.6 + sin(time * 0.7 + i * 2.9) * 0.4
+            let radius = baseRadius * (1 + wobble * CGFloat(offset))
+            return CGPoint(x: centre.x + CGFloat(cos(angle)) * radius, y: centre.y + CGFloat(sin(angle)) * radius)
+        }
+        return smoothClosedPath(through: vertices)
+    }
+
+    /// Catmull-Rom spline through the points, as cubic Béziers.
+    private func smoothClosedPath(through p: [CGPoint]) -> Path {
+        var path = Path()
+        let n = p.count
+        path.move(to: p[0])
+        for i in 0..<n {
+            let p0 = p[(i - 1 + n) % n], p1 = p[i], p2 = p[(i + 1) % n], p3 = p[(i + 2) % n]
+            let c1 = CGPoint(x: p1.x + (p2.x - p0.x) / 6, y: p1.y + (p2.y - p0.y) / 6)
+            let c2 = CGPoint(x: p2.x - (p3.x - p1.x) / 6, y: p2.y - (p3.y - p1.y) / 6)
+            path.addCurve(to: p2, control1: c1, control2: c2)
+        }
+        path.closeSubpath()
+        return path
+    }
+}
+
+#Preview {
+    MorphingBlob()
+        .frame(width: 200, height: 200)
+        .padding()
+}
+```
+
+---
+
+## Aurora (`aurora`)
+
+Soft, blurred colour blobs drift slowly behind your content.
+
+- API: `AuroraBackground()`
+- Component: Background
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/AuroraBackground.swift
+
+### Usage
+
+```swift
+ZStack {
+    AuroraBackground(colors: [.purple, .blue, .teal, .pink])
+        .ignoresSafeArea()
+    Text("Welcome").font(.largeTitle.bold())
+}
+```
+
+### How it works
+
+Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base color, draw one large circle per palette color (default purple, blue, teal, pink; 80% opacity, diameter 70% of the larger side). Each circle drifts on its own Lissajous path, x = cos(t·0.6 + phase)·30% width and y = sin(t·0.8 + phase·1.3)·30% height, where phase differs per index. Drive time from TimelineView(.animation) scaled by a speed parameter, blur the whole group with a ~60 pt radius, clip to bounds and hide it from accessibility.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Soft, slowly drifting colour blobs, heavily blurred. A calm animated
+/// backdrop for onboarding screens, paywalls, or hero sections.
+///
+/// ```swift
+/// ZStack {
+///     AuroraBackground()
+///         .ignoresSafeArea()
+///     Text("Welcome").font(.largeTitle.bold())
+/// }
+/// ```
+public struct AuroraBackground: View {
+    private let colors: [Color]
+    private let speed: Double
+    private let blurRadius: CGFloat
+    private let baseColor: Color
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    public init(
+        colors: [Color] = [.purple, .blue, .teal, .pink],
+        speed: Double = 0.4,
+        blurRadius: CGFloat = 60,
+        baseColor: Color = .black
+    ) {
+        self.colors = colors
+        self.speed = speed
+        self.blurRadius = blurRadius
+        self.baseColor = baseColor
+    }
+
+    public var body: some View {
+        // Reduce Motion: a still frame of the same blobs.
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
+            GeometryReader { geometry in
+                blobs(time: time, size: geometry.size)
+            }
+        }
+        .background(baseColor)
+        .clipped()
+        .accessibilityHidden(true)
+    }
+
+    private func blobs(time: Double, size: CGSize) -> some View {
+        ZStack {
+            ForEach(colors.indices, id: \.self) { index in
+                blob(color: colors[index], index: index, time: time, size: size)
+            }
+        }
+        .frame(width: size.width, height: size.height)
+        .blur(radius: blurRadius)
+    }
+
+    private func blob(color: Color, index: Int, time: Double, size: CGSize) -> some View {
+        let phase = Double(index) * 1.7
+        let diameter = max(size.width, size.height) * 0.7
+        let x = CGFloat(cos(time * 0.6 + phase)) * size.width * 0.3
+        let y = CGFloat(sin(time * 0.8 + phase * 1.3)) * size.height * 0.3
+        return Circle()
+            .fill(color.opacity(0.8))
+            .frame(width: diameter, height: diameter)
+            .offset(x: x, y: y)
+    }
+}
+
+#Preview {
+    ZStack {
+        AuroraBackground()
+            .ignoresSafeArea()
+        Text("Welcome")
+            .font(.largeTitle.bold())
+            .foregroundStyle(.white)
+    }
+}
+```
+
+---
+
+## Rolling Number (`rolling-number`)
+
+Digits roll like an odometer when the value changes.
+
+- API: `RollingNumber(value:)`
+- Component: Number
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Number/RollingNumber.swift
+
+### Usage
+
+```swift
+RollingNumber(value: score)
+    .font(.system(size: 48, weight: .bold, design: .rounded))
+```
+
+### How it works
+
+Create a SwiftUI RollingNumber view (iOS 17+) that displays a number with odometer-style digit rolling. Render Text(value, format:) with monospacedDigit(), apply .contentTransition(.numericText(value:)) so digits roll up when the value increases and down when it decreases, and animate changes with .snappy. Provide initialisers for Int and for Double with a FloatingPointFormatStyle.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A number whose digits roll up or down when the value changes, like an
+/// odometer. Built on `contentTransition(.numericText)`.
+///
+/// ```swift
+/// RollingNumber(value: score)
+///     .font(.system(size: 48, weight: .bold, design: .rounded))
+/// ```
+public struct RollingNumber: View {
+    private let value: Double
+    private let format: FloatingPointFormatStyle<Double>
+    private let animation: Animation
+
+    public init(
+        value: Double,
+        format: FloatingPointFormatStyle<Double> = .number.precision(.fractionLength(0)),
+        animation: Animation = .snappy
+    ) {
+        self.value = value
+        self.format = format
+        self.animation = animation
+    }
+
+    public init(value: Int, animation: Animation = .snappy) {
+        self.init(value: Double(value), animation: animation)
+    }
+
+    public var body: some View {
+        Text(value, format: format)
+            .monospacedDigit()
+            .contentTransition(.numericText(value: value))
+            .animation(animation, value: value)
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var value = 1280
+        var body: some View {
+            VStack(spacing: 20) {
+                RollingNumber(value: value)
+                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                HStack {
+                    Button("-") { value -= Int.random(in: 1...300) }
+                    Button("+") { value += Int.random(in: 1...300) }
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Particle Field (`particle-field`)
+
+Drifting particles linked by faint lines, like a living constellation.
+
+- API: `ParticleField()`
+- Component: Particle & 3D
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/ParticleField.swift
+
+### Usage
+
+```swift
+ZStack {
+    Color.black.ignoresSafeArea()
+    ParticleField(count: 60, color: .cyan)
+        .ignoresSafeArea()
+    Text("Connected").font(.largeTitle.bold())
+}
+```
+
+### How it works
+
+Create a SwiftUI ParticleField view (iOS 17+) with count (50), color, speed (14 pt/s) and linkDistance (70 pt). Generate each particle's traits once from a seeded SplitMix64 generator: start position (0…1 in each axis), direction, speed factor (0.4–1.2), radius (1–2.8 pt) and opacity (0.4–1). In TimelineView(.animation) with a Canvas, compute each position as start + direction × time × speed × factor, wrapped around the canvas edges, so there is no stored state. Stroke a 0.8 pt line between every pair closer than linkDistance with opacity 0.35 × (1 − distance / linkDistance), then fill each particle as a circle. Hide it from accessibility, and with Reduce Motion on, freeze time.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Particles drifting slowly through the view, joined by faint lines when they
+/// come close, like a constellation. A calm, techy background.
+public struct ParticleField: View {
+    private let count: Int
+    private let color: Color
+    private let speed: Double
+    private let linkDistance: CGFloat
+    private let seeds: [ParticleSeed]
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - count: Number of particles.
+    ///   - color: Particle and line colour.
+    ///   - speed: Drift speed in points per second.
+    ///   - linkDistance: Particles closer than this are joined by a line (0 turns lines off).
+    public init(count: Int = 50, color: Color = .white, speed: Double = 14, linkDistance: CGFloat = 70) {
+        self.count = count
+        self.color = color
+        self.speed = speed
+        self.linkDistance = linkDistance
+        var generator = SplitMix64(seed: 42)
+        seeds = (0..<max(0, count)).map { _ in ParticleSeed(using: &generator) }
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            Canvas { context, size in
+                let positions = seeds.map { $0.position(at: time, speed: speed, in: size) }
+                if linkDistance > 0 {
+                    for i in positions.indices {
+                        for j in positions.indices where j > i {
+                            let distance = hypot(positions[i].x - positions[j].x, positions[i].y - positions[j].y)
+                            guard distance < linkDistance else { continue }
+                            var line = Path()
+                            line.move(to: positions[i])
+                            line.addLine(to: positions[j])
+                            context.stroke(line, with: .color(color.opacity(0.35 * (1 - distance / linkDistance))), lineWidth: 0.8)
+                        }
+                    }
+                }
+                for (seed, point) in zip(seeds, positions) {
+                    let r = seed.radius
+                    context.fill(
+                        Path(ellipseIn: CGRect(x: point.x - r, y: point.y - r, width: r * 2, height: r * 2)),
+                        with: .color(color.opacity(seed.opacity))
+                    )
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// Fixed random traits of one particle. Its position is a pure function of
+/// time, so the field needs no state and never drifts out of the view.
+struct ParticleSeed {
+    var start: CGPoint      // 0…1 in both axes
+    var direction: Double   // radians
+    var speedFactor: Double
+    var radius: CGFloat
+    var opacity: Double
+
+    init(using generator: inout SplitMix64) {
+        start = CGPoint(x: generator.unit(), y: generator.unit())
+        direction = generator.unit() * 2 * .pi
+        speedFactor = 0.4 + generator.unit() * 0.8
+        radius = 1 + generator.unit() * 1.8
+        opacity = 0.4 + generator.unit() * 0.6
+    }
+
+    func position(at time: Double, speed: Double, in size: CGSize) -> CGPoint {
+        guard size.width > 0, size.height > 0 else { return .zero }
+        let travel = time * speed * speedFactor
+        let x = (start.x * size.width + CGFloat(cos(direction) * travel)).wrapped(to: size.width)
+        let y = (start.y * size.height + CGFloat(sin(direction) * travel)).wrapped(to: size.height)
+        return CGPoint(x: x, y: y)
+    }
+}
+
+/// Small deterministic random generator, so particle layouts are stable
+/// between launches and previews.
+struct SplitMix64: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) { state = seed }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        return z ^ (z >> 31)
+    }
+
+    /// A Double in 0..<1.
+    mutating func unit() -> Double { Double.random(in: 0..<1, using: &self) }
+}
+
+extension CGFloat {
+    /// Wraps the value into 0..<length.
+    func wrapped(to length: CGFloat) -> CGFloat {
+        let r = truncatingRemainder(dividingBy: length)
+        return r < 0 ? r + length : r
+    }
+}
+
+#Preview {
+    ParticleField()
+        .background(Color(red: 0.05, green: 0.07, blue: 0.15))
+        .frame(width: 320, height: 220)
+}
+```
+
+---
+
+## Starfield (`starfield`)
+
+Stars stream out of the centre and stretch into streaks: warp speed.
+
+- API: `Starfield()`
+- Component: Particle & 3D
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/Starfield.swift
+
+### Usage
+
+```swift
+Starfield()
+    .background(.black)
+    .ignoresSafeArea()
+
+Starfield(count: 300, speed: 1.5) // warp jump
+```
+
+### How it works
+
+Create a SwiftUI Starfield view (iOS 17+) with count (200), speed (0.35 depth units per second) and color. Give each star a seeded random x and y in −1…1 and a depth in 0…1. In a Canvas inside TimelineView(.animation), compute z = 0.05 + 0.95 × fract(depth − time × speed), so stars approach the camera and wrap back to the far plane. Project with perspective: point = centre + (x, y) / z × 0.15 × half the larger side. Draw each star as a round-capped streak from its projection at a slightly larger z (z + min(0.08, speed × 0.05)) to its current projection, with opacity and line width growing as it gets closer. Hide it from accessibility, and with Reduce Motion on, freeze time.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Flying through space: stars stream out from the centre and stretch into
+/// streaks as they pass the camera. Raise `speed` for a warp jump.
+public struct Starfield: View {
+    private let speed: Double
+    private let color: Color
+    private let stars: [Star]
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - count: Number of stars.
+    ///   - speed: Depth units per second; 0.3 cruises, 1.5 is warp speed.
+    ///   - color: Star colour.
+    public init(count: Int = 200, speed: Double = 0.35, color: Color = .white) {
+        self.speed = speed
+        self.color = color
+        var generator = SplitMix64(seed: 7)
+        stars = (0..<max(0, count)).map { _ in
+            Star(
+                x: generator.unit() * 2 - 1,
+                y: generator.unit() * 2 - 1,
+                depth: generator.unit()
+            )
+        }
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            Canvas { context, size in
+                let centre = CGPoint(x: size.width / 2, y: size.height / 2)
+                let scale = max(size.width, size.height) * 0.5
+                // Streak length: where the star was a moment ago.
+                let trail = min(0.08, speed * 0.05)
+                for star in stars {
+                    // Depth runs 1 (far) → 0.05 (at the camera), then wraps.
+                    let z = 0.05 + 0.95 * (star.depth - time * speed).wrappedUnit
+                    let zBehind = min(1, z + trail)
+                    let head = CGPoint(x: centre.x + star.x / z * scale * 0.15, y: centre.y + star.y / z * scale * 0.15)
+                    let tail = CGPoint(x: centre.x + star.x / zBehind * scale * 0.15, y: centre.y + star.y / zBehind * scale * 0.15)
+                    let brightness = min(1, (1 - z) * 1.4)
+                    var streak = Path()
+                    streak.move(to: tail)
+                    streak.addLine(to: head)
+                    context.stroke(
+                        streak,
+                        with: .color(color.opacity(brightness)),
+                        style: StrokeStyle(lineWidth: max(0.6, (1 - z) * 2.4), lineCap: .round)
+                    )
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    private struct Star {
+        var x: Double
+        var y: Double
+        var depth: Double
+    }
+}
+
+private extension Double {
+    /// Wraps the value into 0..<1.
+    var wrappedUnit: Double {
+        let r = truncatingRemainder(dividingBy: 1)
+        return r < 0 ? r + 1 : r
+    }
+}
+
+#Preview {
+    Starfield()
+        .background(.black)
+        .frame(width: 320, height: 220)
+}
+```
+
+---
+
+## Cover Flow (`cover-flow`)
+
+Side items turn away in 3D, shrink and dim; the centre faces you.
+
+- API: `CoverFlow(items) { item in }`
+- Component: Particle & 3D
+- Trigger: Scroll
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/CoverFlow.swift
+
+### Usage
+
+```swift
+CoverFlow(albums) { album in
+    Image(album.artwork)
+        .resizable()
+        .aspectRatio(1, contentMode: .fit)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+}
+.frame(height: 220)
+```
+
+### How it works
+
+Create a generic SwiftUI CoverFlow carousel (iOS 17+) over Identifiable items with an optional selection binding, itemWidth (140), spacing (−10) and maxAngle (50°). Use a horizontal ScrollView + LazyHStack with .scrollTargetLayout(), .scrollTargetBehavior(.viewAligned), hidden indicators, .scrollPosition(id:anchor: .center) and contentMargins that centre the first and last items. In .visualEffect, read the item's frame in the .scrollView coordinate space, compute p = clamp((midX − viewport centre) / itemWidth, −1, 1) and apply rotation3DEffect of −p × maxAngle around the y axis (perspective 0.6), scale 1 − |p| × 0.18 and brightness −|p| × 0.25. Raise the selected item's zIndex. With Reduce Motion on, drop the rotation.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A horizontal carousel in the style of Cover Flow: the centred item faces
+/// you, and items to either side turn away in 3D, recede and dim. Items snap
+/// to the centre.
+public struct CoverFlow<Data: RandomAccessCollection, Content: View>: View where Data.Element: Identifiable {
+    private let items: Data
+    private let selection: Binding<Data.Element.ID?>?
+    private let itemWidth: CGFloat
+    private let spacing: CGFloat
+    private let maxAngle: Double
+    private let content: (Data.Element) -> Content
+
+    @State private var internalSelection: Data.Element.ID?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - items: One item per element.
+    ///   - selection: Optional binding to the centred item; set it to scroll.
+    ///   - itemWidth: Width of each item in points.
+    ///   - spacing: Gap between items (negative values overlap them).
+    ///   - maxAngle: How far side items turn, in degrees.
+    ///   - content: Builds one item, usually artwork.
+    public init(
+        _ items: Data,
+        selection: Binding<Data.Element.ID?>? = nil,
+        itemWidth: CGFloat = 140,
+        spacing: CGFloat = -10,
+        maxAngle: Double = 50,
+        @ViewBuilder content: @escaping (Data.Element) -> Content
+    ) {
+        self.items = items
+        self.selection = selection
+        self.itemWidth = itemWidth
+        self.spacing = spacing
+        self.maxAngle = maxAngle
+        self.content = content
+    }
+
+    public var body: some View {
+        GeometryReader { geometry in
+            // Plain values for the visualEffect closure, which can't touch the view.
+            let fallbackWidth = geometry.size.width
+            let itemWidth = itemWidth
+            let maxAngle = reduceMotion ? 0 : maxAngle
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: spacing) {
+                    ForEach(items) { item in
+                        content(item)
+                            .frame(width: itemWidth)
+                            .visualEffect { view, proxy in
+                                // -1 (one item left of centre) … 0 (centred) … 1.
+                                let frame = proxy.frame(in: .scrollView(axis: .horizontal))
+                                let viewport = proxy.bounds(of: .scrollView(axis: .horizontal))?.width ?? fallbackWidth
+                                let clamped = max(-1, min(1, (frame.midX - viewport / 2) / itemWidth))
+                                let angle = -clamped * maxAngle
+                                return view
+                                    .rotation3DEffect(.degrees(angle), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
+                                    .scaleEffect(1 - abs(clamped) * 0.18)
+                                    .brightness(-abs(clamped) * 0.25)
+                            }
+                            // Centred item draws on top of its neighbours.
+                            .zIndex(isSelected(item) ? 1 : 0)
+                            .id(item.id)
+                    }
+                }
+                .scrollTargetLayout()
+                .frame(height: geometry.size.height)
+            }
+            .contentMargins(.horizontal, max(0, (geometry.size.width - itemWidth) / 2), for: .scrollContent)
+            .scrollTargetBehavior(.viewAligned)
+            .scrollIndicators(.hidden)
+            .scrollPosition(id: selection ?? $internalSelection, anchor: .center)
+        }
+    }
+
+    private func isSelected(_ item: Data.Element) -> Bool {
+        (selection?.wrappedValue ?? internalSelection) == item.id
+    }
+}
+
+#Preview {
+    struct Album: Identifiable {
+        let id: Int
+        let color: Color
+    }
+    let albums = [Color.red, .orange, .yellow, .green, .teal, .blue, .indigo, .purple]
+        .enumerated().map { Album(id: $0, color: $1) }
+    return CoverFlow(albums) { album in
+        RoundedRectangle(cornerRadius: 12)
+            .fill(album.color.gradient)
+            .aspectRatio(1, contentMode: .fit)
+            .overlay(Image(systemName: "music.note").font(.largeTitle).foregroundStyle(.white))
+    }
+    .frame(height: 200)
+}
+```
+
+---
+
+## Float 3D (`float-3d`)
+
+The view hovers: a gentle bob, a slow 3D sway and a breathing shadow.
+
+- API: `.float3D()`
+- Component: Particle & 3D
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/Float3D.swift
+
+### Usage
+
+```swift
+Image("product")
+    .resizable()
+    .scaledToFit()
+    .frame(width: 180)
+    .float3D()
+
+BadgeView()
+    .float3D(height: 6, angle: 8, period: 4, shadow: false)
+```
+
+### How it works
+
+Create a SwiftUI .float3D(height:angle:period:shadow:) view modifier (iOS 17+). Inside TimelineView(.animation), let t = time × 2π / period (3 s) and lift = 0.5 + 0.5·sin t. Rotate the content in 3D by sin(t/2) × angle (12°) around the y axis and cos(0.7t) × angle/2 around the x axis (perspective 0.5), and move it up by height (10 pt) × lift. Behind it, at the bottom, draw a black ellipse 12 pt tall, 18 pt below, that gets lighter (opacity 0.25 − 0.1·lift), narrower (scale x 0.75 − 0.15·lift) and blurrier (6 + 4·lift) as the view rises. With Reduce Motion on, pause the timeline.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Makes a view hover in space: it bobs up and down and slowly sways in 3D,
+/// while its shadow shrinks and grows underneath. For hero images, product
+/// shots, badges and empty-state illustrations.
+struct Float3DModifier: ViewModifier {
+    var height: CGFloat
+    var angle: Double
+    var period: Double
+    var shadow: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let t = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * 2 * .pi / period
+            // Bob: 0 at rest height, 1 at the top.
+            let lift = 0.5 + 0.5 * sin(t)
+            content
+                .rotation3DEffect(.degrees(sin(t * 0.5) * angle), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
+                .rotation3DEffect(.degrees(cos(t * 0.7) * angle * 0.5), axis: (x: 1, y: 0, z: 0), perspective: 0.5)
+                .offset(y: -height * lift)
+                .background(alignment: .bottom) {
+                    if shadow {
+                        Ellipse()
+                            .fill(.black.opacity(0.25 - 0.1 * lift))
+                            .frame(height: 12)
+                            .scaleEffect(x: 0.75 - 0.15 * lift, y: 1)
+                            .blur(radius: 6 + 4 * lift)
+                            .offset(y: 18)
+                    }
+                }
+        }
+    }
+}
+
+public extension View {
+    /// Floats the view in 3D: a gentle bob, a slow sway and a breathing shadow.
+    ///
+    /// ```swift
+    /// Image("product")
+    ///     .resizable()
+    ///     .scaledToFit()
+    ///     .frame(width: 180)
+    ///     .float3D()
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - height: How high the view rises, in points.
+    ///   - angle: Maximum sway angle, in degrees.
+    ///   - period: Seconds for one bob up and down.
+    ///   - shadow: Draws a soft ground shadow under the view.
+    func float3D(height: CGFloat = 10, angle: Double = 12, period: Double = 3, shadow: Bool = true) -> some View {
+        modifier(Float3DModifier(height: height, angle: angle, period: period, shadow: shadow))
+    }
+}
+
+#Preview {
+    RoundedRectangle(cornerRadius: 24, style: .continuous)
+        .fill(LinearGradient(colors: [.cyan, .blue], startPoint: .top, endPoint: .bottom))
+        .frame(width: 140, height: 140)
+        .overlay(Image(systemName: "cube.fill").font(.system(size: 56)).foregroundStyle(.white))
+        .float3D()
+        .padding(60)
+}
+```

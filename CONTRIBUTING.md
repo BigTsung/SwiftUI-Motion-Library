@@ -12,15 +12,21 @@ Thanks for helping grow the library! Adding an effect takes three files.
    - Keep the `ViewModifier` type itself `internal`; only the `View` extension is public.
    - Sensible defaults for every parameter, so `.effect()` with no arguments looks good.
    - A `///` doc comment with a short usage example.
-   - A `#Preview` at the bottom of the file.
+   - **Reduce Motion:** if it loops or moves a lot, read `@Environment(\.accessibilityReduceMotion)` and pause, fade or drop the movement instead.
+   - Effects that need a newer OS are marked `@available(iOS 18, macOS 15, visionOS 2, *)`; the package itself stays on iOS 17.
+   - A `#Preview` at the bottom of the file (it must be the last declaration: the build scripts strip it).
    - No third-party dependencies. Pure SwiftUI (+ Metal shaders later, see below).
 2. **Demo view:** add a small `struct <Name>Demo: View` to `Sources/MotionGallery/Catalog/Demos.swift`. It must look good both in a ~160×140 grid cell and in the large detail preview.
 3. **Catalog entry:** append a `MotionEffect(...)` to the matching section in `Sources/MotionGallery/Catalog/MotionCatalog.swift`:
    - `id`: kebab-case, unique, never changed once released.
    - `triggers`: every `MotionTrigger` that applies.
+   - `requirement`: `.ios18` if the effect needs iOS 18; omit it otherwise.
+   - `api`: the public API in one line, e.g. `".shimmer()"` or `"PulseRings()"`. It appears in the README, llms.txt, the Skill and the MCP server.
    - `usage`: a copy-paste snippet, written as a raw string `#""" … """#`.
    - `prompt`: an AI prompt (see below), also a raw string.
-4. **README preview:** if the demo needs taps, presses or drags, add a case for its `id` to `recording(for:)` in `Scripts/ReadmeGIFs/main.swift`. Then run `Scripts/record-readme-gifs.sh <id>` (macOS + ffmpeg) to create `Docs/gifs/<id>.gif`, and add a cell for it to the effects grid in `README.md`.
+4. **Check it compiles:** `Scripts/check-build.sh` builds both targets with just the Command Line Tools (no Xcode needed).
+5. **README preview:** if the demo needs taps, presses or drags, add a case for its `id` to `recording(for:)` in `Scripts/ReadmeGIFs/main.swift` (or drive it from a small scene in code; synthetic clicks are unreliable on `onTapGesture`). Then run `Scripts/record-readme-gifs.sh <id>` (macOS + ffmpeg) to create `Docs/gifs/<id>.gif`. It renders off-screen, so it won't get in your way.
+6. **Generated docs:** run `Scripts/generate-docs.sh`. It rewrites the README grid, `llms.txt`, `llms-full.txt`, `Docs/motion-catalog.json`, the Agent Skill and the Cursor rule from the catalog. Never edit those by hand; CI runs `Scripts/generate-docs.sh --check`.
 
 ## Writing the AI prompt
 
