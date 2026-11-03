@@ -33,19 +33,98 @@ let groups: [(component: MotionComponent, effects: [MotionEffect])] = MotionComp
 
 // MARK: - Helpers
 
-func source(of effect: MotionEffect) -> String {
-    func read(_ path: String) -> String {
-        let url = root.appendingPathComponent(path)
-        guard let text = try? String(contentsOf: url, encoding: .utf8) else {
-            fatalError("missing source file for \(effect.id): \(url.path)")
-        }
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+func read(_ path: String, for effect: MotionEffect) -> String {
+    let url = root.appendingPathComponent(path)
+    guard let text = try? String(contentsOf: url, encoding: .utf8) else {
+        fatalError("missing source file for \(effect.id): \(url.path)")
     }
-    var text = read(effect.sourcePath)
+    return text.trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
+// MARK: - Files an effect needs
+
+/// One Swift file of a module, with comments and the trailing `#Preview`
+/// removed so only real code is scanned.
+struct ScannedFile {
+    let path: String
+    let code: String
+    /// Non-private top-level types, and members of top-level extensions.
+    let types: Set<String>
+    let members: Set<String>
+}
+
+func scanModule(_ directory: String) -> [ScannedFile] {
+    let base = root.appendingPathComponent(directory)
+    let paths = (FileManager.default.enumerator(atPath: base.path)?.allObjects as? [String] ?? [])
+        .filter { $0.hasSuffix(".swift") }
+        .sorted()
+    let typePattern = try! NSRegularExpression(pattern: #"^(?:@\w+\s+)*(?:public\s+|internal\s+|final\s+)*(?:struct|enum|class|protocol|actor|typealias)\s+(\w+)"#)
+    let memberPattern = try! NSRegularExpression(pattern: #"^    (?:@\w+\s+)*(?:public\s+|internal\s+|static\s+|mutating\s+|nonisolated\s+)*(?:func|var)\s+(\w+)"#)
+    func firstMatch(_ regex: NSRegularExpression, _ line: String) -> String? {
+        guard let match = regex.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) else { return nil }
+        return String(line[Range(match.range(at: 1), in: line)!])
+    }
+    return paths.map { relative in
+        let path = "\(directory)/\(relative)"
+        let text = (try? String(contentsOf: base.appendingPathComponent(relative), encoding: .utf8)) ?? ""
+        var lines: [String] = []
+        var types = Set<String>(), members = Set<String>()
+        var inExtension = false
+        for line in text.components(separatedBy: "\n") {
+            if line.hasPrefix("#Preview") { break }
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("//") { continue }
+            lines.append(line)
+            if line.hasPrefix("extension ") || line.hasPrefix("public extension ") { inExtension = true }
+            if line == "}" { inExtension = false }
+            if let name = firstMatch(typePattern, line) { types.insert(name) }
+            if inExtension, let name = firstMatch(memberPattern, line) { members.insert(name) }
+        }
+        return ScannedFile(path: path, code: lines.joined(separator: "\n"), types: types, members: members)
+    }
+}
+
+let libraryFiles = scanModule("Sources/MotionLibrary")
+
+/// Other `MotionLibrary` files an effect's source needs to compile on its own
+/// (shared helpers in `Support/`, or another effect it builds on), found by
+/// looking for types and extension members declared elsewhere. Transitive.
+func dependencies(of effect: MotionEffect) -> [String] {
+    var needed: [String] = []
+    var queue = [effect.sourcePath]
+    while let path = queue.popLast() {
+        guard let file = libraryFiles.first(where: { $0.path == path }) else { continue }
+        for other in libraryFiles where other.path != path && other.path != effect.sourcePath && !needed.contains(other.path) {
+            let usesType = other.types.contains { file.code.range(of: #"\b\#($0)\b"#, options: .regularExpression) != nil && !file.types.contains($0) }
+            let usesMember = other.members.contains { file.code.range(of: #"\.\#($0)\b"#, options: .regularExpression) != nil && !file.members.contains($0) }
+            if usesType || usesMember {
+                needed.append(other.path)
+                queue.append(other.path)
+            }
+        }
+    }
+    return needed.sorted()
+}
+
+/// File names of the extra files an effect needs (helpers and shaders).
+func extraFileNames(_ effect: MotionEffect) -> [String] {
+    files(of: effect).dropFirst().map { ($0 as NSString).lastPathComponent }
+}
+
+/// The effect's own file followed by every file it needs, in copy order.
+func files(of effect: MotionEffect) -> [String] {
+    [effect.sourcePath] + dependencies(of: effect) + (effect.shaderPath.map { [$0] } ?? [])
+}
+
+func source(of effect: MotionEffect) -> String {
+    var text = read(effect.sourcePath, for: effect)
+    for path in dependencies(of: effect) {
+        text += "\n\n// MARK: - \((path as NSString).lastPathComponent)\n// Needed by this effect: save it as its own file next to the one above.\n\n" + read(path, for: effect)
+    }
     // Shader effects: the Metal file goes with the Swift file.
     if let shader = effect.shaderPath {
         let name = (shader as NSString).lastPathComponent
-        text += "\n\n// MARK: - \(name)\n// Save the shader below as \(name) in your app target, and replace\n// `motionShaders` with `ShaderLibrary.default`.\n/*\n" + read(shader) + "\n*/"
+        text += "\n\n// MARK: - \(name)\n// Save the shader below as \(name) in your app target, and replace\n// `motionShaders` with `ShaderLibrary.default`.\n/*\n" + read(shader, for: effect) + "\n*/"
     }
     return text
 }
@@ -77,6 +156,8 @@ let installSnippet = """
     ```
 
     Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects marked iOS 18+ are `@available(iOS 18, macOS 15, visionOS 2, *)`.
+
+    In an Xcode app project, add the package with **File → Add Package Dependencies…** rather than editing `project.pbxproj` by hand. To use one effect without the package, copy its source file plus any files listed under "Files" for it (shared helpers such as `Support/Haptics.swift`); every effect compiles from just those files.
     """
 
 /// Markdown table of every effect, grouped by component.
@@ -136,6 +217,14 @@ enum ReadmeLanguage {
         }
     }
 
+    /// Lead-in to the extra files an effect needs without the package.
+    var copyLabel: String {
+        switch self {
+        case .english: "Copying instead of using the package? Also copy"
+        case .traditionalChinese: "不用套件、直接複製檔案？還要一起複製"
+        }
+    }
+
     var file: String {
         switch self {
         case .english: "README.md"
@@ -187,6 +276,14 @@ enum ReadmeLanguage {
     }
 }
 
+/// Under the usage code: the extra files to copy when not using the package.
+func copyNote(_ effect: MotionEffect, _ language: ReadmeLanguage) -> String {
+    let extra = dependencies(of: effect) + (effect.shaderPath.map { [$0] } ?? [])
+    guard !extra.isEmpty else { return "" }
+    let links = extra.map { "<a href=\"\(repoURL)/blob/main/\($0)\">\(($0 as NSString).lastPathComponent)</a>" }
+    return "<sub>\(language.copyLabel) \(links.joined(separator: ", "))</sub>\n"
+}
+
 /// One 3-column table of GIF cells.
 func gifTable(_ group: [MotionEffect], _ language: ReadmeLanguage) -> String {
     var rows: [String] = []
@@ -206,7 +303,7 @@ func gifTable(_ group: [MotionEffect], _ language: ReadmeLanguage) -> String {
                 \(effect.usage)
                 ```
 
-                </details>
+                \(copyNote(effect, language))</details>
                 </td>
                 """
         }
@@ -264,7 +361,9 @@ func llmsTxt() -> String {
         lines.append("")
         for effect in group.effects {
             let requirement = effect.requirement == .ios17 ? "" : " Requires \(effect.requirement.title)."
-            lines.append("- [\(effect.name)](\(sourceURL(effect))): \(effect.summary) API: `\(effect.api)`. Trigger: \(triggers(effect)).\(requirement)")
+            let extra = extraFileNames(effect)
+            let copy = extra.isEmpty ? "" : " Copying it without the package also needs \(extra.map { "`\($0)`" }.joined(separator: ", "))."
+            lines.append("- [\(effect.name)](\(sourceURL(effect))): \(effect.summary) API: `\(effect.api)`. Trigger: \(triggers(effect)).\(requirement)\(copy)")
         }
         lines.append("")
     }
@@ -304,6 +403,7 @@ func llmsFullTxt() -> String {
             - Trigger: \(triggers(effect))
             - Requires: \(effect.requirement.platforms)
             - Source: \(sourceURL(effect))
+            - Files: \(files(of: effect).joined(separator: ", "))
 
             ### Usage
 
@@ -338,6 +438,8 @@ struct CatalogEntry: Encodable {
     let usage: String
     let prompt: String
     let sourceFile: String
+    /// Every file to copy to use the effect without the package, own file first.
+    let files: [String]
     let sourceURL: String
     let gifURL: String
     let source: String
@@ -367,6 +469,7 @@ func catalogJSON() -> String {
                 usage: effect.usage,
                 prompt: effect.prompt,
                 sourceFile: effect.sourcePath,
+                files: files(of: effect),
                 sourceURL: sourceURL(effect),
                 gifURL: "\(rawURL)/Docs/gifs/\(effect.id).gif",
                 source: source(of: effect)
@@ -384,7 +487,7 @@ let usageRules = """
     ## How to use
 
     1. Pick the effect from the table that matches what the UI needs. Prefer the library API over hand-writing the animation.
-    2. Add the package if the project doesn't have it yet, and `import MotionLibrary`.
+    2. Add the package if the project doesn't have it yet (in an Xcode app project, ask the user to use **File → Add Package Dependencies…** instead of editing `project.pbxproj`), and `import MotionLibrary`. If the user wants no dependency, copy the effect's files instead: its own source plus the helpers listed for it in `Docs/motion-catalog.json` (`files`) or llms-full.txt ("Files").
     3. Copy the usage for that effect from `references/effects.md` (or \(rawURL)/llms-full.txt) and adapt colours, sizes and timing through the parameters.
     4. Effects marked iOS 18+ need `if #available(iOS 18, macOS 15, visionOS 2, *)` when the app targets an older OS.
     5. Effects with large or looping motion already honour Reduce Motion (they pause, fade or drop the movement), so don't wrap them in your own check.
@@ -420,7 +523,7 @@ func skillReference() -> String {
         parts.append("""
             ## \(effect.name)
 
-            \(effect.summary) Trigger: \(triggers(effect)). Requires \(effect.requirement.title).
+            \(effect.summary) Trigger: \(triggers(effect)). Requires \(effect.requirement.title). Files: \(files(of: effect).joined(separator: ", ")).
 
             ```swift
             \(effect.usage)

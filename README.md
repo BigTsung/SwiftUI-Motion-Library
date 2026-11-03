@@ -9,7 +9,8 @@ Each one comes with a live demo, usage code and an AI prompt. Pure SwiftUI, zero
 <a href="https://swift.org"><img alt="Swift 5.9" src="https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white"></a> <img alt="iOS 17 · macOS 14 · visionOS 1" src="https://img.shields.io/badge/iOS%2017%20%C2%B7%20macOS%2014%20%C2%B7%20visionOS%201-555?style=for-the-badge"> <img alt="Swift Package Manager" src="https://img.shields.io/badge/SPM-compatible-2E7DF7?style=for-the-badge"> <a href="#license"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-2EA44F?style=for-the-badge"></a> <a href="README.zh-TW.md"><img alt="繁體中文" src="https://img.shields.io/badge/README-%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87-555?style=for-the-badge"></a>
 
 🤖 **Made for AI coding tools.** `llms.txt`, an Agent Skill, a Cursor rule and an MCP server<br>
-are generated from the same catalog as the gallery. [See how ↓](#ask-your-ai-assistant)
+are generated from the same catalog as the gallery. [See how ↓](#ask-your-ai-assistant)<br>
+**AI agents:** start at [`llms.txt`](https://raw.githubusercontent.com/BigTsung/SwiftUI-Motion-Library/main/llms.txt): every effect, its API and the files it needs.
 
 🆕 **2026-11-04 · v0.4**: 45 new effects and the optional `MotionShaders` product. [See the shaders ↓](#shader)<br>
 🆕 **2026-11-04 · Demo app**: an iOS app with the gallery, full-screen scroll examples and their UI tests. [Open it ↓](#option-2-clone-and-browse-the-gallery)
@@ -76,6 +77,10 @@ In Xcode, **File → Add Package Dependencies…** and enter this repository's U
 
 The gallery lets you filter by component and trigger, play with each effect, replay it, and copy the usage code or AI prompt.
 
+### Option 3: copy only the files you need
+
+No dependency at all: open **Usage** under an effect below and copy its source file. Some effects share a small helper (for example `Support/Haptics.swift`); the note under their usage code links every extra file. Each effect compiles from just those files, checked by `Scripts/check-standalone.sh`.
+
 ### Then write it in one line
 
 ```swift
@@ -105,7 +110,14 @@ struct LoginView: View {
 
 ### Ask your AI assistant
 
-The library is built to be picked up by AI assistants, so "add a hold-to-delete button" turns into one line of `MotionLibrary` instead of 80 lines of hand-tuned animation.
+The library is built to be picked up by AI assistants, so "add a hold-to-delete button" turns into one line of `MotionLibrary` instead of 80 lines of hand-tuned animation. Paste this into any assistant that can read the web:
+
+```text
+Use SwiftUI Motion Library (https://github.com/BigTsung/SwiftUI-Motion-Library).
+Read https://raw.githubusercontent.com/BigTsung/SwiftUI-Motion-Library/main/llms.txt first, then add the <effect name> effect to <your view>.
+```
+
+The assistant finds the effect there, adds the package (or copies the effect's listed files if you'd rather not add a dependency) and uses the usage code.
 
 | Format | For | How |
 |---|---|---|
@@ -529,6 +541,7 @@ Button("Big squish") { }
     .buttonStyle(.pressable(scale: 0.85))
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -607,6 +620,7 @@ HoldToConfirmButton(duration: 2, fillColor: .orange) {
 }
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -629,6 +643,7 @@ StatusButton("Pay now", status: status) {
 }
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/CheckmarkShape.swift">CheckmarkShape.swift</a>, <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -715,6 +730,7 @@ LikeButton(isLiked: $post.isLiked)
 LikeButton(isLiked: $liked, size: 40, color: .red)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -781,6 +797,7 @@ SlideToConfirm("Slide to pay", color: .green) {
 .frame(width: 280)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -798,6 +815,7 @@ DownloadButton(progress: download.progress) {
 }
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -811,6 +829,7 @@ DownloadButton(progress: download.progress) {
 StarRating(rating: $rating)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -828,6 +847,7 @@ BouncyTabBar(selection: $tab, items: [
 ])
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -1232,6 +1252,7 @@ AnimatedCheckmark(isChecked: isDone)
 AnimatedCheckmark(isChecked: saved, color: .blue, lineWidth: 3)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/CheckmarkShape.swift">CheckmarkShape.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -1339,6 +1360,7 @@ ArticleRow(article)
     .skeleton(isLoading: isLoading)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/Shimmer.swift">Shimmer.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -1479,6 +1501,7 @@ HeroImage()
     .grain(opacity: 0.2, isAnimated: false)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -1689,6 +1712,7 @@ ZStack {
 }
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -1706,6 +1730,7 @@ Starfield()
 Starfield(count: 300, speed: 1.5) // warp jump
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -1765,6 +1790,7 @@ ZStack {
 }
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -1782,6 +1808,7 @@ Snowfall()
 Snowfall(.rain, count: 150, color: .white.opacity(0.8))
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -2124,6 +2151,7 @@ if showAlert {
 }
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/GlitchSlice.swift">GlitchSlice.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2140,6 +2168,7 @@ if showTicket {
 }
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/GlitchSlice.swift">GlitchSlice.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -2166,6 +2195,7 @@ Card()
     .waterRipple(at: tapLocation, trigger: tapCount)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/WaterRipple.metal">WaterRipple.metal</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2183,6 +2213,7 @@ Avatar()
     .animation(.easeInOut, value: isHidden)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/Pixellate.metal">Pixellate.metal</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2200,6 +2231,7 @@ Text("BASS DROP")
     .chromaticAberration(isPlaying ? 6 : 0)
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/ChromaticAberration.metal">ChromaticAberration.metal</a></sub>
 </details>
 </td>
 </tr>
@@ -2219,6 +2251,7 @@ GameView()
     .clipShape(RoundedRectangle(cornerRadius: 24))
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/CRT.metal">CRT.metal</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2235,6 +2268,7 @@ Image("desert-road")
     .heatHaze()
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/HeatHaze.metal">HeatHaze.metal</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2256,6 +2290,7 @@ if !isDeleted {
 }
 ```
 
+<sub>Copying instead of using the package? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/NoiseDissolve.metal">NoiseDissolve.metal</a></sub>
 </details>
 </td>
 </tr>

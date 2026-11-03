@@ -9,7 +9,8 @@
 <a href="https://swift.org"><img alt="Swift 5.9" src="https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white"></a> <img alt="iOS 17 · macOS 14 · visionOS 1" src="https://img.shields.io/badge/iOS%2017%20%C2%B7%20macOS%2014%20%C2%B7%20visionOS%201-555?style=for-the-badge"> <img alt="Swift Package Manager" src="https://img.shields.io/badge/SPM-compatible-2E7DF7?style=for-the-badge"> <a href="#授權"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-2EA44F?style=for-the-badge"></a> <a href="README.md"><img alt="English" src="https://img.shields.io/badge/README-English-555?style=for-the-badge"></a>
 
 🤖 **為 AI 編碼工具而做。** `llms.txt`、Agent Skill、Cursor rule 和 MCP server<br>
-都和 Gallery 從同一份 catalog 產生。[看怎麼用 ↓](#請-ai-助理幫你加)
+都和 Gallery 從同一份 catalog 產生。[看怎麼用 ↓](#請-ai-助理幫你加)<br>
+**AI agent 請從 [`llms.txt`](https://raw.githubusercontent.com/BigTsung/SwiftUI-Motion-Library/main/llms.txt) 開始讀**：所有效果、API 和各自需要的檔案都在裡面。
 
 🆕 **2026-11-04 · v0.4**：新增 45 個效果，以及選用的 `MotionShaders` product。[看著色器效果 ↓](#著色器)<br>
 🆕 **2026-11-04 · 範例 App**：包含 Gallery、捲動效果全螢幕範例和 UI 測試的 iOS App。[打開它 ↓](#方式二clone-下來瀏覽-gallery)
@@ -76,6 +77,10 @@
 
 Gallery 可以依元件和觸發時機篩選，操作、重播每個效果，並複製用法程式碼或 AI 提示詞。
 
+### 方式三：只複製需要的檔案
+
+完全不加依賴：展開下方效果的 **用法**，複製它的原始碼檔即可。少數效果共用小型 helper（例如 `Support/Haptics.swift`），用法程式碼下方會列出並連結所有要一起複製的檔案。每個效果只靠這些檔案就能編譯，由 `Scripts/check-standalone.sh` 驗證。
+
 ### 接著用一行程式碼套用
 
 ```swift
@@ -105,7 +110,14 @@ struct LoginView: View {
 
 ### 請 AI 助理幫你加
 
-這個 library 就是設計給 AI 助理使用的：跟 AI 說「加一個長按刪除的按鈕」，它會用一行 `MotionLibrary` 完成，而不是手寫 80 行調過的動畫。
+這個 library 就是設計給 AI 助理使用的：跟 AI 說「加一個長按刪除的按鈕」，它會用一行 `MotionLibrary` 完成，而不是手寫 80 行調過的動畫。把下面這段貼給任何能上網的 AI 助理：
+
+```text
+請使用 SwiftUI Motion Library（https://github.com/BigTsung/SwiftUI-Motion-Library）。
+先讀 https://raw.githubusercontent.com/BigTsung/SwiftUI-Motion-Library/main/llms.txt，再把 <效果名稱> 加到 <你的畫面>。
+```
+
+AI 會在裡面找到該效果，加入套件（如果你不想加依賴，就改成複製該效果列出的檔案），再照用法程式碼套用。
 
 | 格式 | 適用 | 使用方式 |
 |---|---|---|
@@ -529,6 +541,7 @@ Button("Big squish") { }
     .buttonStyle(.pressable(scale: 0.85))
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -607,6 +620,7 @@ HoldToConfirmButton(duration: 2, fillColor: .orange) {
 }
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -629,6 +643,7 @@ StatusButton("Pay now", status: status) {
 }
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/CheckmarkShape.swift">CheckmarkShape.swift</a>, <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -715,6 +730,7 @@ LikeButton(isLiked: $post.isLiked)
 LikeButton(isLiked: $liked, size: 40, color: .red)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -781,6 +797,7 @@ SlideToConfirm("Slide to pay", color: .green) {
 .frame(width: 280)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -798,6 +815,7 @@ DownloadButton(progress: download.progress) {
 }
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -811,6 +829,7 @@ DownloadButton(progress: download.progress) {
 StarRating(rating: $rating)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -828,6 +847,7 @@ BouncyTabBar(selection: $tab, items: [
 ])
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -1232,6 +1252,7 @@ AnimatedCheckmark(isChecked: isDone)
 AnimatedCheckmark(isChecked: saved, color: .blue, lineWidth: 3)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/CheckmarkShape.swift">CheckmarkShape.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -1339,6 +1360,7 @@ ArticleRow(article)
     .skeleton(isLoading: isLoading)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/Shimmer.swift">Shimmer.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -1479,6 +1501,7 @@ HeroImage()
     .grain(opacity: 0.2, isAnimated: false)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -1689,6 +1712,7 @@ ZStack {
 }
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -1706,6 +1730,7 @@ Starfield()
 Starfield(count: 300, speed: 1.5) // warp jump
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -1765,6 +1790,7 @@ ZStack {
 }
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -1782,6 +1808,7 @@ Snowfall()
 Snowfall(.rain, count: 150, color: .white.opacity(0.8))
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/SeededRandom.swift">SeededRandom.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -2124,6 +2151,7 @@ if showAlert {
 }
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/GlitchSlice.swift">GlitchSlice.swift</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2140,6 +2168,7 @@ if showTicket {
 }
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/GlitchSlice.swift">GlitchSlice.swift</a></sub>
 </details>
 </td>
 </tr>
@@ -2166,6 +2195,7 @@ Card()
     .waterRipple(at: tapLocation, trigger: tapCount)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/WaterRipple.metal">WaterRipple.metal</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2183,6 +2213,7 @@ Avatar()
     .animation(.easeInOut, value: isHidden)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/Pixellate.metal">Pixellate.metal</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2200,6 +2231,7 @@ Text("BASS DROP")
     .chromaticAberration(isPlaying ? 6 : 0)
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/ChromaticAberration.metal">ChromaticAberration.metal</a></sub>
 </details>
 </td>
 </tr>
@@ -2219,6 +2251,7 @@ GameView()
     .clipShape(RoundedRectangle(cornerRadius: 24))
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/CRT.metal">CRT.metal</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2235,6 +2268,7 @@ Image("desert-road")
     .heatHaze()
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/HeatHaze.metal">HeatHaze.metal</a></sub>
 </details>
 </td>
 <td align="center" valign="top" width="33%">
@@ -2256,6 +2290,7 @@ if !isDeleted {
 }
 ```
 
+<sub>不用套件、直接複製檔案？還要一起複製 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Shaders/NoiseDissolve.metal">NoiseDissolve.metal</a></sub>
 </details>
 </td>
 </tr>

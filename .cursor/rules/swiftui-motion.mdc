@@ -19,10 +19,12 @@ When SwiftUI code needs animation, use these ready-made effects from `MotionLibr
 
 Then `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects marked iOS 18+ are `@available(iOS 18, macOS 15, visionOS 2, *)`.
 
+In an Xcode app project, add the package with **File → Add Package Dependencies…** rather than editing `project.pbxproj` by hand. To use one effect without the package, copy its source file plus any files listed under "Files" for it (shared helpers such as `Support/Haptics.swift`); every effect compiles from just those files.
+
 ## How to use
 
 1. Pick the effect from the table that matches what the UI needs. Prefer the library API over hand-writing the animation.
-2. Add the package if the project doesn't have it yet, and `import MotionLibrary`.
+2. Add the package if the project doesn't have it yet (in an Xcode app project, ask the user to use **File → Add Package Dependencies…** instead of editing `project.pbxproj`), and `import MotionLibrary`. If the user wants no dependency, copy the effect's files instead: its own source plus the helpers listed for it in `Docs/motion-catalog.json` (`files`) or llms-full.txt ("Files").
 3. Copy the usage for that effect from https://raw.githubusercontent.com/BigTsung/SwiftUI-Motion-Library/main/llms-full.txt and adapt colours, sizes and timing through the parameters.
 4. Effects marked iOS 18+ need `if #available(iOS 18, macOS 15, visionOS 2, *)` when the app targets an older OS.
 5. Effects with large or looping motion already honour Reduce Motion (they pause, fade or drop the movement), so don't wrap them in your own check.

@@ -123,7 +123,11 @@ async function getEffect({ id, includeSource = true } = {}) {
     `## How it works\n\n${effect.prompt}`,
   ];
   if (includeSource) {
-    parts.push(`## Source (${effect.sourceFile})\n\nTo use it without the package, copy this file into the project.\n\n\`\`\`swift\n${effect.source}\n\`\`\``);
+    const files = effect.files ?? [effect.sourceFile];
+    const howTo = files.length > 1
+      ? `To use it without the package, copy these files into the project: ${files.join(", ")}. They are all below, one after another.`
+      : "To use it without the package, copy this file into the project.";
+    parts.push(`## Source (${effect.sourceFile})\n\n${howTo}\n\n\`\`\`swift\n${effect.source}\n\`\`\``);
   }
   return parts.join("\n\n");
 }

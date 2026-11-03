@@ -28,10 +28,11 @@ skills/swiftui-motion/                # generated Agent Skill
 .cursor/rules/swiftui-motion.mdc      # generated Cursor rule
 mcp/server.mjs                        # zero-dependency MCP server (reads the JSON)
 Examples/MotionLibraryDemo/           # iOS demo app (XcodeGen project.yml + committed .xcodeproj) + scroll UI tests
-Scripts/                              # check-build, generate-docs, record-readme-gifs, record-simulator-gifs
+Scripts/                              # check-build, check-standalone, generate-docs, record-readme-gifs, record-simulator-gifs
 ```
 
 - `MotionLibrary` must never import `MotionGallery`.
+- Every effect must stay copyable on its own: helpers shared by several effects live in `Sources/MotionLibrary/Support/`, never inside another effect's file. `Scripts/generate-docs.sh` detects each effect's extra files (`files` in the catalog JSON, the note under each README usage block) and `Scripts/check-standalone.sh` type-checks every effect from just those files.
 - `MotionEffect.demo` is `@MainActor`. Call it only from view bodies or `@MainActor` helpers.
 - Catalog `usage` and `prompt` strings use raw multi-line strings `#""" … """#` so key paths like `\.self` don't break.
 - Never hand-edit generated files (README grids between the `effects` markers in README.md and README.zh-TW.md, llms*.txt, Docs/motion-catalog.json, skills/, .cursor/rules/). Change the catalog and run `Scripts/generate-docs.sh`.
@@ -57,6 +58,7 @@ Full Xcode isn't required. The `#Preview` macro needs Xcode's plugin, so the scr
 
 ```sh
 Scripts/check-build.sh            # compile MotionLibrary + MotionGallery for macOS
+Scripts/check-standalone.sh       # each effect compiles from just its listed files (after generate-docs)
 Scripts/generate-docs.sh          # regenerate catalog-derived files (--check in CI)
 Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
 Scripts/record-simulator-gifs.sh  # GIFs that need real scrolling, recorded in the iOS Simulator

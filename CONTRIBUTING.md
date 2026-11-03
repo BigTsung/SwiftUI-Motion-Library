@@ -16,6 +16,7 @@ Thanks for helping grow the library! Adding an effect takes three files.
    - Effects that need a newer OS are marked `@available(iOS 18, macOS 15, visionOS 2, *)`; the package itself stays on iOS 17.
    - A `#Preview` at the bottom of the file (it must be the last declaration: the build scripts strip it).
    - No third-party dependencies. Pure SwiftUI, plus Metal for the Shader component (see below).
+   - **Copyable on its own:** people copy single effects into their apps. Keep private helpers in the effect's file; a helper shared by several effects goes in `Sources/MotionLibrary/Support/<Name>.swift`, not inside another effect's file. The docs generator finds the extra files each effect needs and lists them under its usage.
 2. **Demo view:** add a small `struct <Name>Demo: View` to `Sources/MotionGallery/Catalog/Demos.swift`. It must look good both in a ~160×140 grid cell and in the large detail preview.
 3. **Catalog entry:** append a `MotionEffect(...)` to the matching section in `Sources/MotionGallery/Catalog/MotionCatalog.swift`:
    - `id`: kebab-case, unique, never changed once released.
@@ -24,7 +25,7 @@ Thanks for helping grow the library! Adding an effect takes three files.
    - `api`: the public API in one line, e.g. `".shimmer()"` or `"PulseRings()"`. It appears in the README, llms.txt, the Skill and the MCP server.
    - `usage`: a copy-paste snippet, written as a raw string `#""" … """#`.
    - `prompt`: an AI prompt (see below), also a raw string.
-4. **Check it compiles:** `Scripts/check-build.sh` builds both targets with just the Command Line Tools (no Xcode needed).
+4. **Check it compiles:** `Scripts/check-build.sh` builds both targets with just the Command Line Tools (no Xcode needed). After step 6, `Scripts/check-standalone.sh <id>` checks that the effect also compiles from just its listed files.
 5. **README preview:** if the demo needs taps, presses or drags, add a case for its `id` to `recording(for:)` in `Scripts/ReadmeGIFs/main.swift` (or drive it from a small scene in code; synthetic clicks are unreliable on `onTapGesture`). Then run `Scripts/record-readme-gifs.sh <id>` (macOS + ffmpeg) to create `Docs/gifs/<id>.gif`. It renders off-screen, so it won't get in your way.
 6. **Generated docs:** run `Scripts/generate-docs.sh`. It rewrites the README grids (English and Traditional Chinese), `llms.txt`, `llms-full.txt`, `Docs/motion-catalog.json`, the Agent Skill and the Cursor rule from the catalog. Never edit those by hand; CI runs `Scripts/generate-docs.sh --check`.
 

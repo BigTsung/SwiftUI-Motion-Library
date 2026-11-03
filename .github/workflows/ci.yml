@@ -20,6 +20,9 @@ jobs:
       - name: Generated docs are up to date
         run: Scripts/generate-docs.sh --check
 
+      - name: Every effect compiles from its listed files
+        run: Scripts/check-standalone.sh
+
       - name: MCP server answers
         run: |
           printf '%s\n' \

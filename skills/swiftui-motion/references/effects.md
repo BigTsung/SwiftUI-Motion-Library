@@ -4,7 +4,7 @@ Usage and implementation notes for every effect. Full source: https://raw.github
 
 ## Typewriter
 
-Characters appear one by one with a blinking cursor. Trigger: Appear / Value change. Requires iOS 17+.
+Characters appear one by one with a blinking cursor. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Text/TypewriterText.swift.
 
 ```swift
 TypewriterText("Hello, SwiftUI!", interval: .milliseconds(60))
@@ -15,7 +15,7 @@ How it works: Create a SwiftUI "typewriter" text view (iOS 17+). It reveals a st
 
 ## Scramble / Decode
 
-Random glyphs resolve into the real text from left to right. Trigger: Appear / Value change. Requires iOS 17+.
+Random glyphs resolve into the real text from left to right. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Text/ScrambleText.swift.
 
 ```swift
 ScrambleText("ACCESS GRANTED", duration: 1.0)
@@ -26,7 +26,7 @@ How it works: Create a SwiftUI "decode" text effect (iOS 17+). On appear, every 
 
 ## Shimmer
 
-A band of light sweeps across text or skeleton placeholders. Trigger: Loop. Requires iOS 17+.
+A band of light sweeps across text or skeleton placeholders. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/Shimmer.swift.
 
 ```swift
 Text("Loading…")
@@ -43,7 +43,7 @@ How it works: Create a reusable SwiftUI .shimmer() view modifier (iOS 17+). A so
 
 ## Gradient Sweep
 
-A multi-colour gradient flows through the letters forever. Trigger: Loop. Requires iOS 17+.
+A multi-colour gradient flows through the letters forever. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/GradientSweep.swift.
 
 ```swift
 Text("Motion Library")
@@ -59,7 +59,7 @@ How it works: Create a SwiftUI .gradientSweep(colors:duration:) view modifier (i
 
 ## Blur-in Words
 
-Words come into focus one after another: fade, rise and un-blur. Trigger: Appear / Value change. Requires iOS 17+.
+Words come into focus one after another: fade, rise and un-blur. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Text/BlurInText.swift.
 
 ```swift
 BlurInText("Design is how it works.")
@@ -72,7 +72,7 @@ How it works: Create a SwiftUI BlurInText view (iOS 17+) that reveals a string p
 
 ## Marquee
 
-Text too long for its line scrolls sideways forever, with faded edges. Trigger: Loop. Requires iOS 17+.
+Text too long for its line scrolls sideways forever, with faded edges. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/MarqueeText.swift.
 
 ```swift
 MarqueeText("Now playing: Midnight Drive — Neon Coast")
@@ -86,7 +86,7 @@ How it works: Create a SwiftUI MarqueeText view (iOS 17+) for a single line of t
 
 ## Wave Text
 
-Letters bob in a travelling wave, drawn with a TextRenderer. Trigger: Loop. Requires iOS 18+.
+Letters bob in a travelling wave, drawn with a TextRenderer. Trigger: Loop. Requires iOS 18+. Files: Sources/MotionLibrary/Text/WaveText.swift.
 
 ```swift
 if #available(iOS 18, *) {
@@ -100,7 +100,7 @@ How it works: Create a SwiftUI WaveText view for iOS 18+ (mark it @available(iOS
 
 ## Count Up
 
-A number counts up from zero, and from old to new value on change. Trigger: Appear / Value change. Requires iOS 17+.
+A number counts up from zero, and from old to new value on change. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Text/CountUpText.swift.
 
 ```swift
 CountUpText(value: revenue, prefix: "$")
@@ -113,7 +113,7 @@ How it works: Create a SwiftUI CountUpText view (iOS 17+) with value, duration (
 
 ## Split Text
 
-Letters rise into place one after another with a small overshoot. Trigger: Appear / Value change. Requires iOS 18+.
+Letters rise into place one after another with a small overshoot. Trigger: Appear / Value change. Requires iOS 18+. Files: Sources/MotionLibrary/Text/SplitText.swift.
 
 ```swift
 if #available(iOS 18, *) {
@@ -126,7 +126,7 @@ How it works: Create a SwiftUI SplitText view for iOS 18+ (mark it @available(iO
 
 ## Rotating Text
 
-Words take turns: the current one slides up and out as the next rises in. Trigger: Loop. Requires iOS 17+.
+Words take turns: the current one slides up and out as the next rises in. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/RotatingText.swift.
 
 ```swift
 HStack {
@@ -141,7 +141,7 @@ How it works: Create a SwiftUI RotatingText view (iOS 17+) that cycles through a
 
 ## Glitch
 
-Every few seconds the view tears: an RGB split, sliced rows and jitter. Trigger: Loop. Requires iOS 17+.
+Every few seconds the view tears: an RGB split, sliced rows and jitter. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/Glitch.swift.
 
 ```swift
 Text("SYSTEM FAILURE")
@@ -156,7 +156,7 @@ How it works: Create a SwiftUI .glitch(isActive:intensity:interval:) view modifi
 
 ## Circular Text
 
-Text wrapped around a circle that slowly turns, like a rotating badge. Trigger: Loop. Requires iOS 17+.
+Text wrapped around a circle that slowly turns, like a rotating badge. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/CircularText.swift.
 
 ```swift
 ZStack {
@@ -170,7 +170,7 @@ How it works: Create a SwiftUI CircularText view (iOS 17+) with text, radius (60
 
 ## Focus Text
 
-Focus hops from word to word: sharp and bracketed, the rest blurred. Trigger: Loop. Requires iOS 17+.
+Focus hops from word to word: sharp and bracketed, the rest blurred. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/FocusText.swift.
 
 ```swift
 FocusText("Motion made simple")
@@ -183,7 +183,7 @@ How it works: Create a SwiftUI FocusText view (iOS 17+) that splits a sentence i
 
 ## Highlighter
 
-A marker pen swipes across the text, or underlines it, left to right. Trigger: Appear / Value change. Requires iOS 17+.
+A marker pen swipes across the text, or underlines it, left to right. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Text/Highlighter.swift.
 
 ```swift
 Text("the important part")
@@ -197,7 +197,7 @@ How it works: Create a SwiftUI .highlighter(isActive:color:style:duration:) view
 
 ## Morphing Text
 
-Words melt into each other with a gooey, liquid morph. Trigger: Loop. Requires iOS 17+.
+Words melt into each other with a gooey, liquid morph. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/MorphingText.swift.
 
 ```swift
 MorphingText(["Design", "Build", "Ship"])
@@ -208,7 +208,7 @@ How it works: Create a SwiftUI MorphingText(_ words:interval:morphDuration:color
 
 ## Neon Flicker
 
-A glowing neon tube that stutters on and glitches now and then. Trigger: Loop. Requires iOS 17+.
+A glowing neon tube that stutters on and glitches now and then. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/NeonFlicker.swift.
 
 ```swift
 Text("OPEN")
@@ -220,7 +220,7 @@ How it works: Create a SwiftUI .neon(color:flicker:) view modifier (iOS 17+) for
 
 ## Karaoke Text
 
-A line fills with colour left to right as progress goes from 0 to 1. Trigger: Value change / Scroll. Requires iOS 17+.
+A line fills with colour left to right as progress goes from 0 to 1. Trigger: Value change / Scroll. Requires iOS 17+. Files: Sources/MotionLibrary/Text/KaraokeText.swift.
 
 ```swift
 KaraokeText("Never gonna stop the music", progress: playback, highlight: .pink)
@@ -231,7 +231,7 @@ How it works: Create a SwiftUI KaraokeText(_:progress:highlight:base:feather:) v
 
 ## Weight Wave
 
-Letters swell from thin to black and back in a travelling wave. Trigger: Loop. Requires iOS 17+.
+Letters swell from thin to black and back in a travelling wave. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/WeightWaveText.swift.
 
 ```swift
 WeightWaveText("Variable weight")
@@ -242,7 +242,7 @@ How it works: Create a SwiftUI WeightWaveText(_:speed:wavelength:) view (iOS 17+
 
 ## Exploding Text
 
-Letters blast apart spinning and spring back into place. Trigger: Value change / Tap. Requires iOS 18+.
+Letters blast apart spinning and spring back into place. Trigger: Value change / Tap. Requires iOS 18+. Files: Sources/MotionLibrary/Text/ExplodingText.swift.
 
 ```swift
 ExplodingText("Kaboom!", isExploded: exploded)
@@ -254,7 +254,7 @@ How it works: Create a SwiftUI ExplodingText(_:isExploded:distance:) view (iOS 1
 
 ## Pressable
 
-Button squashes and darkens on press, then springs back with a light haptic. Trigger: Press. Requires iOS 17+.
+Button squashes and darkens on press, then springs back with a light haptic. Trigger: Press. Requires iOS 17+. Files: Sources/MotionLibrary/Button/PressableButtonStyle.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
 Button("Continue") { }
@@ -268,7 +268,7 @@ How it works: Create a SwiftUI ButtonStyle called PressableButtonStyle (iOS 17+)
 
 ## Tap Ripple
 
-A circular ripple expands from the exact tap location. Trigger: Tap. Requires iOS 17+.
+A circular ripple expands from the exact tap location. Trigger: Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Button/Ripple.swift.
 
 ```swift
 Text("Tap")
@@ -281,7 +281,7 @@ How it works: Create a SwiftUI .ripple() view modifier (iOS 17+) that shows a Ma
 
 ## Error Shake
 
-Horizontal "no" shake for wrong input, triggered by a value change. Trigger: Value change. Requires iOS 17+.
+Horizontal "no" shake for wrong input, triggered by a value change. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Button/Shake.swift.
 
 ```swift
 @State private var attempts = 0
@@ -298,7 +298,7 @@ How it works: Create a SwiftUI .shake(trigger:) view modifier (iOS 17+) for erro
 
 ## Magnetic Button
 
-The button drifts toward a nearby pointer or dragging finger, then springs home. Trigger: Hover / Drag. Requires iOS 17+.
+The button drifts toward a nearby pointer or dragging finger, then springs home. Trigger: Hover / Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Button/Magnetic.swift.
 
 ```swift
 Button("Get started") { }
@@ -314,7 +314,7 @@ How it works: Create a SwiftUI .magnetic(strength:radius:) view modifier (iOS 17
 
 ## Hold to Confirm
 
-Liquid fills the button while you hold; the action runs only when it's full. Trigger: Press. Requires iOS 17+.
+Liquid fills the button while you hold; the action runs only when it's full. Trigger: Press. Requires iOS 17+. Files: Sources/MotionLibrary/Button/HoldToConfirmButton.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
 HoldToConfirmButton("Hold to delete") {
@@ -332,7 +332,7 @@ How it works: Create a SwiftUI HoldToConfirmButton (iOS 17+) for destructive act
 
 ## Loading → Success
 
-The button morphs into a spinner, then a green checkmark or a red shake. Trigger: Tap / Value change. Requires iOS 17+.
+The button morphs into a spinner, then a green checkmark or a red shake. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Button/StatusButton.swift, Sources/MotionLibrary/Support/CheckmarkShape.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
 @State private var status = MotionButtonStatus.idle
@@ -351,7 +351,7 @@ How it works: Create a SwiftUI StatusButton (iOS 17+) driven by a status enum: i
 
 ## Glow Border
 
-A rainbow border runs around the view with a soft glow behind it. Trigger: Loop. Requires iOS 17+.
+A rainbow border runs around the view with a soft glow behind it. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Button/GlowBorder.swift.
 
 ```swift
 Text("Upgrade to Pro")
@@ -367,7 +367,7 @@ How it works: Create a SwiftUI .glowBorder(colors:cornerRadius:lineWidth:glowRad
 
 ## Shine
 
-A slanted glint of light sweeps across the button, on cue or on a beat. Trigger: Value change / Loop. Requires iOS 17+.
+A slanted glint of light sweeps across the button, on cue or on a beat. Trigger: Value change / Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Button/Shine.swift.
 
 ```swift
 PremiumBadge()
@@ -382,7 +382,7 @@ How it works: Create two SwiftUI modifiers (iOS 17+): .shine(trigger:color:durat
 
 ## Jelly
 
-A rubbery squash-and-stretch wobble on every tap. Trigger: Tap / Value change. Requires iOS 17+.
+A rubbery squash-and-stretch wobble on every tap. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Button/Jelly.swift.
 
 ```swift
 Button("Boing") { taps += 1 }
@@ -394,7 +394,7 @@ How it works: Create a SwiftUI .jelly(trigger:amount:) view modifier (iOS 17+) u
 
 ## Click Spark
 
-Short spark lines shoot out from the exact point you tapped. Trigger: Tap. Requires iOS 17+.
+Short spark lines shoot out from the exact point you tapped. Trigger: Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Button/ClickSpark.swift.
 
 ```swift
 Button("Launch") { }
@@ -406,7 +406,7 @@ How it works: Create a SwiftUI .clickSpark(color:count:radius:) view modifier (i
 
 ## Like Button
 
-The heart pops in as a ring bursts open and coloured dots fly out. Trigger: Tap. Requires iOS 17+.
+The heart pops in as a ring bursts open and coloured dots fly out. Trigger: Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Button/LikeButton.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
 LikeButton(isLiked: $post.isLiked)
@@ -418,7 +418,7 @@ How it works: Create a SwiftUI LikeButton (iOS 17+) bound to isLiked, with size 
 
 ## Animated Symbol
 
-SF Symbols that keep moving: bounce on a beat, pulse, variable colour. Trigger: Loop. Requires iOS 17+.
+SF Symbols that keep moving: bounce on a beat, pulse, variable colour. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Button/AnimatedSymbol.swift.
 
 ```swift
 AnimatedSymbol("bell.fill")                      // bounces every 1.5 s
@@ -431,7 +431,7 @@ How it works: Create a SwiftUI AnimatedSymbol view (iOS 17+) wrapping Image(syst
 
 ## Liquid Toggle
 
-A switch whose knob stretches like a drop of liquid as it slides. Trigger: Tap. Requires iOS 17+.
+A switch whose knob stretches like a drop of liquid as it slides. Trigger: Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Button/LiquidToggleStyle.swift.
 
 ```swift
 Toggle("Wi-Fi", isOn: $wifi)
@@ -445,7 +445,7 @@ How it works: Create a SwiftUI LiquidToggleStyle (iOS 17+) with a tint (green) a
 
 ## Gooey Menu
 
-A round button splits into a fan of buttons like a drop of liquid. Trigger: Tap. Requires iOS 17+.
+A round button splits into a fan of buttons like a drop of liquid. Trigger: Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Button/GooeyMenu.swift.
 
 ```swift
 GooeyMenu(symbols: ["camera.fill", "photo.fill", "mic.fill"], color: .indigo) { index in
@@ -457,7 +457,7 @@ How it works: Create a SwiftUI GooeyMenu(symbols:color:distance:action:) view (i
 
 ## Slide to Confirm
 
-Drag the knob all the way across to run the action; let go early and it springs back. Trigger: Drag. Requires iOS 17+.
+Drag the knob all the way across to run the action; let go early and it springs back. Trigger: Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Button/SlideToConfirm.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
 SlideToConfirm("Slide to pay", color: .green) {
@@ -470,7 +470,7 @@ How it works: Create a SwiftUI SlideToConfirm(_ title:color:resetAfter:action:) 
 
 ## Download Button
 
-A capsule shrinks into a progress ring, then pops into a checkmark. Trigger: Tap / Value change. Requires iOS 17+.
+A capsule shrinks into a progress ring, then pops into a checkmark. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Button/DownloadButton.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
 DownloadButton(progress: download.progress) {
@@ -482,7 +482,7 @@ How it works: Create a SwiftUI DownloadButton(_ title:progress:color:action:) (i
 
 ## Star Rating
 
-Stars fill one after another with a springy pop and a burst of sparks. Trigger: Tap / Value change. Requires iOS 17+.
+Stars fill one after another with a springy pop and a burst of sparks. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Button/StarRating.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
 StarRating(rating: $rating)
@@ -492,7 +492,7 @@ How it works: Create a SwiftUI StarRating(rating: Binding<Int>, maximum:color:si
 
 ## Bouncy Tab Bar
 
-A pill glides to the selected tab and its icon squashes and hops. Trigger: Tap / Value change. Requires iOS 17+.
+A pill glides to the selected tab and its icon squashes and hops. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Button/BouncyTabBar.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
 BouncyTabBar(selection: $tab, items: [
@@ -506,7 +506,7 @@ How it works: Create a SwiftUI BouncyTabBar(selection: Binding<Int>, items:color
 
 ## Staggered Entrance
 
-List items fade and rise into place one after another. Trigger: Appear. Requires iOS 17+.
+List items fade and rise into place one after another. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Card/StaggeredAppear.swift.
 
 ```swift
 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
@@ -519,7 +519,7 @@ How it works: Create a SwiftUI .staggeredAppear(index:) view modifier (iOS 17+) 
 
 ## 3D Tilt
 
-Card tilts in 3D toward the finger with a moving glare, then springs flat. Trigger: Drag. Requires iOS 17+.
+Card tilts in 3D toward the finger with a moving glare, then springs flat. Trigger: Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Card/Tilt.swift.
 
 ```swift
 CardView()
@@ -530,7 +530,7 @@ How it works: Create a SwiftUI .tiltOnDrag() view modifier (iOS 17+). While the 
 
 ## Scroll Reveal
 
-Rows scale up and come into focus as they enter the visible area. Trigger: Scroll. Requires iOS 17+.
+Rows scale up and come into focus as they enter the visible area. Trigger: Scroll. Requires iOS 17+. Files: Sources/MotionLibrary/Card/ScrollReveal.swift.
 
 ```swift
 ScrollView {
@@ -546,7 +546,7 @@ How it works: Create a SwiftUI .scrollReveal() view modifier (iOS 17+) using scr
 
 ## Flip Card
 
-A two-sided card turns over in 3D with a spring. Trigger: Tap / Value change. Requires iOS 17+.
+A two-sided card turns over in 3D with a spring. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Card/FlipCard.swift.
 
 ```swift
 @State private var flipped = false
@@ -564,7 +564,7 @@ How it works: Create a SwiftUI FlipCard<Front, Back> view (iOS 17+) with isFlipp
 
 ## Swipe Card Stack
 
-Tinder-style deck: drag the top card away and the pile moves up. Trigger: Drag. Requires iOS 17+.
+Tinder-style deck: drag the top card away and the pile moves up. Trigger: Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Card/SwipeCardStack.swift.
 
 ```swift
 SwipeCardStack(profiles) { profile, direction in
@@ -579,7 +579,7 @@ How it works: Create a generic SwiftUI SwipeCardStack (iOS 17+) over a collectio
 
 ## Parallax Carousel
 
-Paging cards whose images slide slower than the cards, for depth. Trigger: Scroll. Requires iOS 17+.
+Paging cards whose images slide slower than the cards, for depth. Trigger: Scroll. Requires iOS 17+. Files: Sources/MotionLibrary/Card/ParallaxCarousel.swift.
 
 ```swift
 ParallaxCarousel(places) { place in
@@ -594,7 +594,7 @@ How it works: Create a generic SwiftUI ParallaxCarousel (iOS 17+) over Identifia
 
 ## Expandable Card
 
-Tap the header and the card springs open, un-blurring its detail. Trigger: Tap. Requires iOS 17+.
+Tap the header and the card springs open, un-blurring its detail. Trigger: Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Card/ExpandableCard.swift.
 
 ```swift
 @State private var isOpen = false
@@ -610,7 +610,7 @@ How it works: Create a SwiftUI ExpandableCard<Header, Detail> (iOS 17+) bound to
 
 ## Hero Expand
 
-A thumbnail grows into a full detail card, morphing with matchedGeometryEffect. Trigger: Tap. Requires iOS 17+.
+A thumbnail grows into a full detail card, morphing with matchedGeometryEffect. Trigger: Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Card/HeroGrid.swift.
 
 ```swift
 HeroGrid(photos, columns: 3) { photo in
@@ -624,7 +624,7 @@ How it works: Create a generic SwiftUI HeroGrid (iOS 17+) over Identifiable item
 
 ## Spotlight Card
 
-A soft glow follows the pointer across the card, like a torch. Trigger: Hover / Drag. Requires iOS 17+.
+A soft glow follows the pointer across the card, like a torch. Trigger: Hover / Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Card/Spotlight.swift.
 
 ```swift
 FeatureCard()
@@ -639,7 +639,7 @@ How it works: Create a SwiftUI .spotlight(color:radius:) view modifier (iOS 17+)
 
 ## Magnifying Dock
 
-Icons swell as the pointer passes over them, like the macOS Dock. Trigger: Hover / Drag. Requires iOS 17+.
+Icons swell as the pointer passes over them, like the macOS Dock. Trigger: Hover / Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Card/MagnifyingDock.swift.
 
 ```swift
 MagnifyingDock(apps) { app in
@@ -652,7 +652,7 @@ How it works: Create a generic SwiftUI MagnifyingDock (iOS 17+) over Identifiabl
 
 ## Jiggle
 
-The home-screen edit-mode wiggle, each item slightly out of step. Trigger: Loop / Value change. Requires iOS 17+.
+The home-screen edit-mode wiggle, each item slightly out of step. Trigger: Loop / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Card/Jiggle.swift.
 
 ```swift
 ForEach(apps) { app in
@@ -665,7 +665,7 @@ How it works: Create a SwiftUI .jiggle(isActive:angle:) view modifier (iOS 17+) 
 
 ## Fan Stack
 
-A pile of cards fans out like a hand of playing cards, and gathers back. Trigger: Tap / Value change. Requires iOS 17+.
+A pile of cards fans out like a hand of playing cards, and gathers back. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Card/FanStack.swift.
 
 ```swift
 FanStack(cards, isSpread: isSpread) { card in
@@ -678,7 +678,7 @@ How it works: Create a generic SwiftUI FanStack (iOS 17+) over Identifiable item
 
 ## Scratch Card
 
-Rub away a scratch-off cover to reveal what's underneath. Trigger: Drag. Requires iOS 17+.
+Rub away a scratch-off cover to reveal what's underneath. Trigger: Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Card/ScratchCard.swift.
 
 ```swift
 PrizeView()
@@ -691,7 +691,7 @@ How it works: Create a SwiftUI .scratchToReveal(_ cover:lineWidth:threshold:onRe
 
 ## Stacking Cards
 
-Cards stick at the top while scrolling and shrink as the next one covers them. Trigger: Scroll. Requires iOS 17+.
+Cards stick at the top while scrolling and shrink as the next one covers them. Trigger: Scroll. Requires iOS 17+. Files: Sources/MotionLibrary/Card/StackingCards.swift.
 
 ```swift
 ScrollView {
@@ -707,7 +707,7 @@ How it works: Create a SwiftUI .stackingCard(top:scale:) view modifier (iOS 17+)
 
 ## Deck Shuffle
 
-A deck splits in two, mixes, and springs back into a messy stack. Trigger: Value change / Tap. Requires iOS 17+.
+A deck splits in two, mixes, and springs back into a messy stack. Trigger: Value change / Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Card/DeckShuffle.swift.
 
 ```swift
 DeckShuffle(cards, trigger: shuffles) { card in
@@ -720,7 +720,7 @@ How it works: Create a generic SwiftUI DeckShuffle(_ items:trigger:spread:conten
 
 ## Looping Carousel
 
-A paging carousel that wraps around forever, with peeking neighbours. Trigger: Drag / Loop. Requires iOS 17+.
+A paging carousel that wraps around forever, with peeking neighbours. Trigger: Drag / Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Card/LoopingCarousel.swift.
 
 ```swift
 LoopingCarousel(banners, autoplay: 3) { banner in
@@ -733,7 +733,7 @@ How it works: Create a SwiftUI LoopingCarousel(_ items:spacing:peek:autoplay:con
 
 ## Drag to Dismiss
 
-Fling a card away; it flies off with your throw or springs back. Trigger: Drag. Requires iOS 17+.
+Fling a card away; it flies off with your throw or springs back. Trigger: Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Card/DragToDismiss.swift.
 
 ```swift
 if showPhoto {
@@ -746,7 +746,7 @@ How it works: Create a SwiftUI .dragToDismiss(isPresented:threshold:) view modif
 
 ## Shrinking Header
 
-The header sticks to the top and shrinks as content scrolls under it. Trigger: Scroll. Requires iOS 17+.
+The header sticks to the top and shrinks as content scrolls under it. Trigger: Scroll. Requires iOS 17+. Files: Sources/MotionLibrary/Card/ScrollHeaders.swift.
 
 ```swift
 ScrollView {
@@ -761,7 +761,7 @@ How it works: Create a SwiftUI .shrinkingHeader(minScale:) view modifier (iOS 17
 
 ## Stretchy Header
 
-A header image stretches when pulled down and drifts with parallax when scrolled. Trigger: Scroll. Requires iOS 17+.
+A header image stretches when pulled down and drifts with parallax when scrolled. Trigger: Scroll. Requires iOS 17+. Files: Sources/MotionLibrary/Card/ScrollHeaders.swift.
 
 ```swift
 ScrollView {
@@ -779,7 +779,7 @@ How it works: Create a SwiftUI .stretchyHeader(parallax:) view modifier (iOS 17+
 
 ## Pulse Rings
 
-Concentric rings expand and fade continuously, like a radar or live dot. Trigger: Loop. Requires iOS 17+.
+Concentric rings expand and fade continuously, like a radar or live dot. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/PulseRings.swift.
 
 ```swift
 ZStack {
@@ -793,7 +793,7 @@ How it works: Create a SwiftUI PulseRings view (iOS 17+). Draw N stroked circles
 
 ## Like Burst
 
-Particles fly outward from the centre when a value changes. Trigger: Tap / Value change. Requires iOS 17+.
+Particles fly outward from the centre when a value changes. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/Burst.swift.
 
 ```swift
 Image(systemName: isLiked ? "heart.fill" : "heart")
@@ -805,7 +805,7 @@ How it works: Create a SwiftUI .burst(trigger:) view modifier (iOS 17+) for "lik
 
 ## Checkmark Draw
 
-A success mark draws itself: circle stroke, fill, then a popping check. Trigger: Value change. Requires iOS 17+.
+A success mark draws itself: circle stroke, fill, then a popping check. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/AnimatedCheckmark.swift, Sources/MotionLibrary/Support/CheckmarkShape.swift.
 
 ```swift
 AnimatedCheckmark(isChecked: isDone)
@@ -818,7 +818,7 @@ How it works: Create a SwiftUI AnimatedCheckmark view (iOS 17+) with isChecked, 
 
 ## Confetti
 
-Confetti bursts out of the view, tumbles under gravity and fades. Trigger: Tap / Value change. Requires iOS 17+.
+Confetti bursts out of the view, tumbles under gravity and fades. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/Confetti.swift.
 
 ```swift
 @State private var orders = 0
@@ -834,7 +834,7 @@ How it works: Create a SwiftUI .confetti(trigger:colors:count:spread:) view modi
 
 ## Loaders
 
-Five looping activity indicators: spinner, dots, bars, orbit and pulse. Trigger: Loop. Requires iOS 17+.
+Five looping activity indicators: spinner, dots, bars, orbit and pulse. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/MotionLoader.swift.
 
 ```swift
 MotionLoader(.spinner)
@@ -848,7 +848,7 @@ How it works: Create a SwiftUI MotionLoader view (iOS 17+) with a style enum (sp
 
 ## Morphing Blob
 
-An organic, lava-lamp blob whose outline never stops changing. Trigger: Loop. Requires iOS 17+.
+An organic, lava-lamp blob whose outline never stops changing. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/MorphingBlob.swift.
 
 ```swift
 MorphingBlob(colors: [.purple, .pink, .orange])
@@ -862,7 +862,7 @@ How it works: Create a SwiftUI MorphingBlob view (iOS 17+) generic over a ShapeS
 
 ## Draw On
 
-Any Shape strokes itself on like a pen, and erases back. Trigger: Appear / Value change. Requires iOS 17+.
+Any Shape strokes itself on like a pen, and erases back. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/DrawOn.swift.
 
 ```swift
 Circle()
@@ -877,7 +877,7 @@ How it works: Create a SwiftUI Shape extension drawOn(isDrawn:style:lineWidth:du
 
 ## Progress Ring
 
-A gradient ring springs to each value as the percentage rolls. Trigger: Value change. Requires iOS 17+.
+A gradient ring springs to each value as the percentage rolls. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/ProgressRing.swift.
 
 ```swift
 ProgressRing(progress: uploaded)
@@ -892,7 +892,7 @@ How it works: Create a SwiftUI ProgressRing (iOS 17+) with progress (0…1), lin
 
 ## Skeleton
 
-A shimmering placeholder of the view's own layout while it loads. Trigger: Loop / Value change. Requires iOS 17+.
+A shimmering placeholder of the view's own layout while it loads. Trigger: Loop / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/Skeleton.swift, Sources/MotionLibrary/Text/Shimmer.swift.
 
 ```swift
 ArticleRow(article)
@@ -903,7 +903,7 @@ How it works: Create a SwiftUI .skeleton(isLoading:) view modifier (iOS 17+). Wh
 
 ## Sliding Tabs
 
-A segmented control whose pill or underline glides to the selection. Trigger: Tap. Requires iOS 17+.
+A segmented control whose pill or underline glides to the selection. Trigger: Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/SlidingTabs.swift.
 
 ```swift
 SlidingTabs(["Day", "Week", "Month"], selection: $range)
@@ -915,7 +915,7 @@ How it works: Create a generic SwiftUI SlidingTabs control (iOS 17+) over Hashab
 
 ## Reading Progress
 
-A bar along the top fills as you scroll through the content. Trigger: Scroll. Requires iOS 17+.
+A bar along the top fills as you scroll through the content. Trigger: Scroll. Requires iOS 17+. Files: Sources/MotionLibrary/Shape/ReadingProgress.swift.
 
 ```swift
 ReadingProgressScrollView(color: .pink) {
@@ -927,7 +927,7 @@ How it works: Create a SwiftUI ReadingProgressScrollView(color:height:content:) 
 
 ## Aurora
 
-Soft, blurred colour blobs drift slowly behind your content. Trigger: Loop. Requires iOS 17+.
+Soft, blurred colour blobs drift slowly behind your content. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/AuroraBackground.swift.
 
 ```swift
 ZStack {
@@ -941,7 +941,7 @@ How it works: Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base c
 
 ## Mesh Gradient
 
-A 3×3 MeshGradient whose points drift so the colours flow like liquid. Trigger: Loop. Requires iOS 18+.
+A 3×3 MeshGradient whose points drift so the colours flow like liquid. Trigger: Loop. Requires iOS 18+. Files: Sources/MotionLibrary/Background/AnimatedMeshGradient.swift.
 
 ```swift
 if #available(iOS 18, *) {
@@ -954,7 +954,7 @@ How it works: Create a SwiftUI AnimatedMeshGradient view for iOS 18+ (mark it @a
 
 ## Retro Grid
 
-A synthwave floor: a perspective grid scrolling toward you. Trigger: Loop. Requires iOS 17+.
+A synthwave floor: a perspective grid scrolling toward you. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/RetroGrid.swift.
 
 ```swift
 ZStack {
@@ -968,7 +968,7 @@ How it works: Create a SwiftUI RetroGrid view (iOS 17+) with color (pink), spaci
 
 ## Border Beam
 
-A short comet of light runs around the card's border forever. Trigger: Loop. Requires iOS 17+.
+A short comet of light runs around the card's border forever. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/BorderBeam.swift.
 
 ```swift
 PlanCard()
@@ -980,7 +980,7 @@ How it works: Create a SwiftUI .borderBeam(cornerRadius:colors:lineWidth:length:
 
 ## Waves
 
-Layered sine waves roll across the bottom, back layers slower and paler. Trigger: Loop. Requires iOS 17+.
+Layered sine waves roll across the bottom, back layers slower and paler. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/WaveBackground.swift.
 
 ```swift
 ZStack(alignment: .top) {
@@ -994,7 +994,7 @@ How it works: Create a SwiftUI WaveBackground view (iOS 17+) with colors (one pe
 
 ## Film Grain
 
-Flickering film grain over any view, from a tiled noise texture. Trigger: Loop. Requires iOS 17+.
+Flickering film grain over any view, from a tiled noise texture. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/Grain.swift, Sources/MotionLibrary/Support/SeededRandom.swift.
 
 ```swift
 LinearGradient(colors: [.orange, .pink], startPoint: .top, endPoint: .bottom)
@@ -1008,7 +1008,7 @@ How it works: Create a SwiftUI .grain(opacity:isAnimated:) view modifier (iOS 17
 
 ## Flashlight
 
-The view goes dark except a soft circle of light around the pointer. Trigger: Hover / Drag. Requires iOS 17+.
+The view goes dark except a soft circle of light around the pointer. Trigger: Hover / Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Background/Flashlight.swift.
 
 ```swift
 TreasureMap()
@@ -1019,7 +1019,7 @@ How it works: Create a SwiftUI .flashlight(radius:darkness:) view modifier (iOS 
 
 ## Lava Lamp
 
-Soft blobs drift up and down, stretching and merging like hot wax. Trigger: Loop. Requires iOS 17+.
+Soft blobs drift up and down, stretching and merging like hot wax. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/LavaLamp.swift.
 
 ```swift
 LavaLamp(colors: [.yellow, .orange, .pink])
@@ -1030,7 +1030,7 @@ How it works: Create a SwiftUI LavaLamp(colors:background:blobs:speed:) view (iO
 
 ## Matrix Rain
 
-Columns of glyphs rain down with bright heads and fading trails. Trigger: Loop. Requires iOS 17+.
+Columns of glyphs rain down with bright heads and fading trails. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/MatrixRain.swift.
 
 ```swift
 MatrixRain(color: .green)
@@ -1042,7 +1042,7 @@ How it works: Create a SwiftUI MatrixRain(color:fontSize:speed:) view (iOS 17+) 
 
 ## Interactive Dot Grid
 
-A grid of dots scatters away from your finger and eases back. Trigger: Drag / Hover / Loop. Requires iOS 17+.
+A grid of dots scatters away from your finger and eases back. Trigger: Drag / Hover / Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/InteractiveDotGrid.swift.
 
 ```swift
 InteractiveDotGrid(spacing: 18)
@@ -1053,7 +1053,7 @@ How it works: Create a SwiftUI InteractiveDotGrid(spacing:color:highlight:radius
 
 ## Meteors
 
-Meteors streak across a starry sky with glowing heads and fading tails. Trigger: Loop. Requires iOS 17+.
+Meteors streak across a starry sky with glowing heads and fading tails. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/Meteors.swift.
 
 ```swift
 Meteors(count: 10)
@@ -1065,7 +1065,7 @@ How it works: Create a SwiftUI Meteors(count:angle:color:showsStars:) view (iOS 
 
 ## Flow Field
 
-Generative curves follow a shifting vector field with dashes flowing along them. Trigger: Loop. Requires iOS 17+.
+Generative curves follow a shifting vector field with dashes flowing along them. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/FlowField.swift.
 
 ```swift
 FlowField(colors: [.cyan, .blue, .purple, .pink])
@@ -1077,7 +1077,7 @@ How it works: Create a SwiftUI FlowField(lines:colors:speed:) view (iOS 17+) dra
 
 ## Rolling Number
 
-Digits roll like an odometer when the value changes. Trigger: Value change. Requires iOS 17+.
+Digits roll like an odometer when the value changes. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/RollingNumber.swift.
 
 ```swift
 RollingNumber(value: score)
@@ -1088,7 +1088,7 @@ How it works: Create a SwiftUI RollingNumber view (iOS 17+) that displays a numb
 
 ## Split-Flap Display
 
-Characters flip through the alphabet like an airport departures board. Trigger: Value change. Requires iOS 17+.
+Characters flip through the alphabet like an airport departures board. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/SplitFlap.swift.
 
 ```swift
 SplitFlapText(departure.time)   // "12:45"
@@ -1098,7 +1098,7 @@ How it works: Create a SwiftUI SplitFlapText(_ text:size:tile:ink:) view (iOS 17
 
 ## Slot Machine
 
-Number reels spin with motion blur and land one after another. Trigger: Value change. Requires iOS 17+.
+Number reels spin with motion blur and land one after another. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/SlotMachineNumber.swift.
 
 ```swift
 SlotMachineNumber(value: score, digits: 3)
@@ -1108,7 +1108,7 @@ How it works: Create a SwiftUI SlotMachineNumber(value:digits:size:) view (iOS 1
 
 ## Price Ticker
 
-Digits roll to the new price as the background flashes green or red. Trigger: Value change. Requires iOS 17+.
+Digits roll to the new price as the background flashes green or red. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/PriceTicker.swift.
 
 ```swift
 PriceTicker(value: stock.price)
@@ -1119,7 +1119,7 @@ How it works: Create a SwiftUI PriceTicker(value:fractionDigits:prefix:) view (i
 
 ## Animated Chart
 
-Bars grow up one after another; a line draws itself left to right. Trigger: Appear / Value change. Requires iOS 17+.
+Bars grow up one after another; a line draws itself left to right. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/AnimatedChart.swift.
 
 ```swift
 GrowingBarChart(values: weekly)
@@ -1133,7 +1133,7 @@ How it works: Create two SwiftUI chart views without Swift Charts (iOS 17+). Gro
 
 ## Needle Gauge
 
-A speedometer needle swings to the value, overshoots and settles. Trigger: Value change. Requires iOS 17+.
+A speedometer needle swings to the value, overshoots and settles. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/NeedleGauge.swift.
 
 ```swift
 NeedleGauge(value: cpuLoad)
@@ -1144,7 +1144,7 @@ How it works: Create a SwiftUI NeedleGauge(value:colors:label:) view (iOS 17+), 
 
 ## Particle Field
 
-Drifting particles linked by faint lines, like a living constellation. Trigger: Loop. Requires iOS 17+.
+Drifting particles linked by faint lines, like a living constellation. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/ParticleField.swift, Sources/MotionLibrary/Support/SeededRandom.swift.
 
 ```swift
 ZStack {
@@ -1159,7 +1159,7 @@ How it works: Create a SwiftUI ParticleField view (iOS 17+) with count (50), col
 
 ## Starfield
 
-Stars stream out of the centre and stretch into streaks: warp speed. Trigger: Loop. Requires iOS 17+.
+Stars stream out of the centre and stretch into streaks: warp speed. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Starfield.swift, Sources/MotionLibrary/Support/SeededRandom.swift.
 
 ```swift
 Starfield()
@@ -1173,7 +1173,7 @@ How it works: Create a SwiftUI Starfield view (iOS 17+) with count (200), speed 
 
 ## Cover Flow
 
-Side items turn away in 3D, shrink and dim; the centre faces you. Trigger: Scroll. Requires iOS 17+.
+Side items turn away in 3D, shrink and dim; the centre faces you. Trigger: Scroll. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/CoverFlow.swift.
 
 ```swift
 CoverFlow(albums) { album in
@@ -1189,7 +1189,7 @@ How it works: Create a generic SwiftUI CoverFlow carousel (iOS 17+) over Identif
 
 ## Float 3D
 
-The view hovers: a gentle bob, a slow 3D sway and a breathing shadow. Trigger: Loop. Requires iOS 17+.
+The view hovers: a gentle bob, a slow 3D sway and a breathing shadow. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Float3D.swift.
 
 ```swift
 Image("product")
@@ -1206,7 +1206,7 @@ How it works: Create a SwiftUI .float3D(height:angle:period:shadow:) view modifi
 
 ## Fireworks
 
-Rockets climb and burst into rings of falling, fading sparks. Trigger: Loop. Requires iOS 17+.
+Rockets climb and burst into rings of falling, fading sparks. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Fireworks.swift, Sources/MotionLibrary/Support/SeededRandom.swift.
 
 ```swift
 ZStack {
@@ -1221,7 +1221,7 @@ How it works: Create a SwiftUI Fireworks view (iOS 17+) with colors, interval (0
 
 ## Snowfall & Rain
 
-Drifting, swaying snowflakes or fast slanted rain, with depth. Trigger: Loop. Requires iOS 17+.
+Drifting, swaying snowflakes or fast slanted rain, with depth. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Snowfall.swift, Sources/MotionLibrary/Support/SeededRandom.swift.
 
 ```swift
 Snowfall()
@@ -1235,7 +1235,7 @@ How it works: Create a SwiftUI Snowfall view (iOS 17+) with a style (.snow or .r
 
 ## Floating Reactions
 
-Live-stream style emoji float up, swaying, every time you react. Trigger: Tap / Value change. Requires iOS 17+.
+Live-stream style emoji float up, swaying, every time you react. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/FloatingReactions.swift.
 
 ```swift
 LiveVideo()
@@ -1248,7 +1248,7 @@ How it works: Create a SwiftUI .floatingReactions(trigger:emojis:height:) view m
 
 ## Warp Tunnel
 
-Rings rush out of the vanishing point toward you: flying down a tunnel. Trigger: Loop. Requires iOS 17+.
+Rings rush out of the vanishing point toward you: flying down a tunnel. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/WarpTunnel.swift.
 
 ```swift
 WarpTunnel()
@@ -1262,7 +1262,7 @@ How it works: Create a SwiftUI WarpTunnel view (iOS 17+) with rings (18), colors
 
 ## Holographic Card
 
-A trading card that tilts toward you with a rainbow foil and moving glare. Trigger: Hover / Drag. Requires iOS 17+.
+A trading card that tilts toward you with a rainbow foil and moving glare. Trigger: Hover / Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Holographic.swift.
 
 ```swift
 Image("card-art")
@@ -1276,7 +1276,7 @@ How it works: Create a SwiftUI .holographic(cornerRadius:maxAngle:) view modifie
 
 ## Physics Emoji
 
-Emoji tumble in with gravity, bounce off each other and pile up. Trigger: Value change / Tap. Requires iOS 17+.
+Emoji tumble in with gravity, bounce off each other and pile up. Trigger: Value change / Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/PhysicsEmoji.swift.
 
 ```swift
 PhysicsEmoji(trigger: drops)
@@ -1288,7 +1288,7 @@ How it works: Create a SwiftUI PhysicsEmoji(trigger:emojis:batch:size:) view (iO
 
 ## Shatter
 
-The view breaks into triangular shards that fly, spin and fall away. Trigger: Value change. Requires iOS 17+.
+The view breaks into triangular shards that fly, spin and fall away. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Shatter.swift.
 
 ```swift
 if !isBroken {
@@ -1301,7 +1301,7 @@ How it works: Create a SwiftUI ShatterTransition (iOS 17+, Transition) with a st
 
 ## 3D Cube
 
-Views swap by turning a cube: one face folds away as the next rotates in. Trigger: Value change. Requires iOS 17+.
+Views swap by turning a cube: one face folds away as the next rotates in. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/CubeTransition.swift.
 
 ```swift
 ZStack {
@@ -1316,7 +1316,7 @@ How it works: Create a SwiftUI CubeTransition (iOS 17+, Transition) with .cube a
 
 ## Dot Globe
 
-A globe of evenly spread dots spins on a tilted axis, with pulsing cities. Trigger: Loop. Requires iOS 17+.
+A globe of evenly spread dots spins on a tilted axis, with pulsing cities. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/DotGlobe.swift.
 
 ```swift
 DotGlobe(dots: 700, color: .cyan)
@@ -1327,7 +1327,7 @@ How it works: Create a SwiftUI DotGlobe(dots:color:accent:speed:) view (iOS 17+)
 
 ## Bubbles
 
-Soap bubbles rise and wobble with rainbow rims and glossy highlights. Trigger: Loop. Requires iOS 17+.
+Soap bubbles rise and wobble with rainbow rims and glossy highlights. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Bubbles.swift.
 
 ```swift
 Bubbles(count: 18)
@@ -1338,7 +1338,7 @@ How it works: Create a SwiftUI Bubbles(count:color:speed:) view (iOS 17+) drawn 
 
 ## Fireflies
 
-Glowing fireflies drift lazily and blink on their own rhythms. Trigger: Loop. Requires iOS 17+.
+Glowing fireflies drift lazily and blink on their own rhythms. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Fireflies.swift.
 
 ```swift
 Fireflies(count: 24)
@@ -1349,7 +1349,7 @@ How it works: Create a SwiftUI Fireflies(count:color:speed:) view (iOS 17+) draw
 
 ## Iris
 
-A circle opens from a point to reveal the view, like a camera iris. Trigger: Appear. Requires iOS 17+.
+A circle opens from a point to reveal the view, like a camera iris. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/MaskTransitions.swift.
 
 ```swift
 if showPhoto {
@@ -1365,7 +1365,7 @@ How it works: Create a custom SwiftUI Transition (iOS 17+, the Transition protoc
 
 ## Blinds
 
-Horizontal slats open together to reveal the view, like Venetian blinds. Trigger: Appear. Requires iOS 17+.
+Horizontal slats open together to reveal the view, like Venetian blinds. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/MaskTransitions.swift.
 
 ```swift
 Banner()
@@ -1379,7 +1379,7 @@ How it works: Create a custom SwiftUI Transition (iOS 17+) called BlindsTransiti
 
 ## Clock Wipe
 
-A wedge sweeps clockwise from twelve o'clock, like a clock hand. Trigger: Appear. Requires iOS 17+.
+A wedge sweeps clockwise from twelve o'clock, like a clock hand. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/MaskTransitions.swift.
 
 ```swift
 Badge()
@@ -1390,7 +1390,7 @@ How it works: Create a custom SwiftUI Transition (iOS 17+) called ClockWipeTrans
 
 ## Pixel Dissolve
 
-The view appears and vanishes in square pixels, in random order. Trigger: Appear. Requires iOS 17+.
+The view appears and vanishes in square pixels, in random order. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/MaskTransitions.swift.
 
 ```swift
 Avatar()
@@ -1404,7 +1404,7 @@ How it works: Create a custom SwiftUI Transition (iOS 17+) called DissolveTransi
 
 ## Poof
 
-The view puffs away like smoke: it swells and blurs out. Trigger: Appear. Requires iOS 17+.
+The view puffs away like smoke: it swells and blurs out. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/StyleTransitions.swift.
 
 ```swift
 ForEach(notes) { note in
@@ -1417,7 +1417,7 @@ How it works: Create a custom SwiftUI Transition (iOS 17+) called PoofTransition
 
 ## Swoosh
 
-The view whooshes in leaning forward, with a motion blur. Trigger: Appear. Requires iOS 17+.
+The view whooshes in leaning forward, with a motion blur. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/StyleTransitions.swift.
 
 ```swift
 if let toast {
@@ -1430,7 +1430,7 @@ How it works: Create a custom SwiftUI Transition (iOS 17+) called SwooshTransiti
 
 ## Film Exposure
 
-The view develops like a photo, from over-exposed white to full colour. Trigger: Appear. Requires iOS 17+.
+The view develops like a photo, from over-exposed white to full colour. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/StyleTransitions.swift.
 
 ```swift
 AsyncImage(url: url) { image in
@@ -1445,7 +1445,7 @@ How it works: Create a custom SwiftUI Transition (iOS 17+) called FilmExposureTr
 
 ## Circular Reveal
 
-New content spreads out in a circle from where you tapped. Trigger: Tap / Value change. Requires iOS 17+.
+New content spreads out in a circle from where you tapped. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/CircularReveal.swift.
 
 ```swift
 CircularReveal(value: isDark, origin: tapPoint) { dark in
@@ -1457,7 +1457,7 @@ How it works: Create a generic SwiftUI CircularReveal(value:origin:duration:cont
 
 ## Liquid Swipe
 
-The next page pours in from the edge behind a bulging liquid wave. Trigger: Value change. Requires iOS 17+.
+The next page pours in from the edge behind a bulging liquid wave. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/LiquidSwipe.swift.
 
 ```swift
 ZStack {
@@ -1471,7 +1471,7 @@ How it works: Create a SwiftUI LiquidSwipeTransition (iOS 17+, Transition) with 
 
 ## Page Turn
 
-The old page swings away like a book page, revealing the next one. Trigger: Value change. Requires iOS 17+.
+The old page swings away like a book page, revealing the next one. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/PageTurn.swift.
 
 ```swift
 ZStack {
@@ -1485,7 +1485,7 @@ How it works: Create a SwiftUI PageTurnTransition (iOS 17+, Transition) with a .
 
 ## Glitch Transition
 
-The view breaks up like a bad signal on its way in or out. Trigger: Value change. Requires iOS 17+.
+The view breaks up like a bad signal on its way in or out. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/GlitchTransition.swift, Sources/MotionLibrary/Support/GlitchSlice.swift.
 
 ```swift
 if showAlert {
@@ -1498,7 +1498,7 @@ How it works: Create a SwiftUI GlitchTransition (iOS 17+, Transition) with .glit
 
 ## Origami Fold
 
-The view folds up into creased panels like a paper map. Trigger: Value change. Requires iOS 17+.
+The view folds up into creased panels like a paper map. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/OrigamiFold.swift, Sources/MotionLibrary/Support/GlitchSlice.swift.
 
 ```swift
 if showTicket {
@@ -1511,7 +1511,7 @@ How it works: Create a SwiftUI OrigamiTransition (iOS 17+, Transition) with .ori
 
 ## Water Ripple
 
-A real ripple distorts the view's pixels outward from a tap. Trigger: Tap / Value change. Requires iOS 17+.
+A real ripple distorts the view's pixels outward from a tap. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionShaders/WaterRipple.swift, Sources/MotionShaders/Shaders/WaterRipple.metal.
 
 ```swift
 import MotionShaders
@@ -1527,7 +1527,7 @@ How it works: Create a SwiftUI .waterRipple(at:trigger:amplitude:duration:) view
 
 ## Pixellate
 
-The view melts into a mosaic of square blocks and back. Trigger: Value change. Requires iOS 17+.
+The view melts into a mosaic of square blocks and back. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionShaders/Pixellate.swift, Sources/MotionShaders/Shaders/Pixellate.metal.
 
 ```swift
 import MotionShaders
@@ -1541,7 +1541,7 @@ How it works: Create a SwiftUI .pixellate(_ size:) view modifier (iOS 17+) as an
 
 ## Chromatic Aberration
 
-Red and blue split sideways like a cheap lens; animate it on a beat. Trigger: Value change / Loop. Requires iOS 17+.
+Red and blue split sideways like a cheap lens; animate it on a beat. Trigger: Value change / Loop. Requires iOS 17+. Files: Sources/MotionShaders/ChromaticAberration.swift, Sources/MotionShaders/Shaders/ChromaticAberration.metal.
 
 ```swift
 import MotionShaders
@@ -1555,7 +1555,7 @@ How it works: Create a SwiftUI .chromaticAberration(_ amount:) view modifier (iO
 
 ## CRT Screen
 
-Curved glass, scanlines, a rolling band and flicker, like an old monitor. Trigger: Loop. Requires iOS 17+.
+Curved glass, scanlines, a rolling band and flicker, like an old monitor. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionShaders/CRT.swift, Sources/MotionShaders/Shaders/CRT.metal.
 
 ```swift
 import MotionShaders
@@ -1569,7 +1569,7 @@ How it works: Create a SwiftUI .crtScreen(curvature:) view modifier (iOS 17+). I
 
 ## Heat Haze
 
-The view shimmers like hot air over a desert road. Trigger: Loop. Requires iOS 17+.
+The view shimmers like hot air over a desert road. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionShaders/HeatHaze.swift, Sources/MotionShaders/Shaders/HeatHaze.metal.
 
 ```swift
 import MotionShaders
@@ -1582,7 +1582,7 @@ How it works: Create a SwiftUI .heatHaze(strength:) view modifier (iOS 17+). Ins
 
 ## Noise Dissolve
 
-The view burns away in organic blotches with a glowing edge. Trigger: Value change. Requires iOS 17+.
+The view burns away in organic blotches with a glowing edge. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionShaders/NoiseDissolve.swift, Sources/MotionShaders/Shaders/NoiseDissolve.metal.
 
 ```swift
 import MotionShaders
