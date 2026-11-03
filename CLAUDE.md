@@ -32,7 +32,8 @@ Scripts/                              # check-build, generate-docs, record-readm
 - `MotionLibrary` must never import `MotionGallery`.
 - `MotionEffect.demo` is `@MainActor`. Call it only from view bodies or `@MainActor` helpers.
 - Catalog `usage` and `prompt` strings use raw multi-line strings `#""" … """#` so key paths like `\.self` don't break.
-- Never hand-edit generated files (README grid between the `effects` markers, llms*.txt, Docs/motion-catalog.json, skills/, .cursor/rules/). Change the catalog and run `Scripts/generate-docs.sh`.
+- Never hand-edit generated files (README grids between the `effects` markers in README.md and README.zh-TW.md, llms*.txt, Docs/motion-catalog.json, skills/, .cursor/rules/). Change the catalog and run `Scripts/generate-docs.sh`.
+- The README is bilingual: `README.md` (English) and `README.zh-TW.md` (Traditional Chinese), each with a language switcher at the top. When you change the prose outside the `effects` markers in one, make the same change in the other. Chinese category and trigger names for the grid live in `ReadmeLanguage` in `Scripts/DocsGenerator/main.swift`.
 
 ## Rules
 

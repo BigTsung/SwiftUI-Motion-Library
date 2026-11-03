@@ -1,7 +1,7 @@
 // Generates every catalog-derived file from `MotionCatalog`, so docs for
 // people and for AI tools never drift from the code:
 //
-//   README.md                              effects grid (between markers)
+//   README.md, README.zh-TW.md             effects grid (between markers)
 //   llms.txt, llms-full.txt                https://llmstxt.org
 //   Docs/motion-catalog.json               structured data (also read by the MCP server)
 //   skills/swiftui-motion/SKILL.md         Agent Skill (Claude Code and others)
@@ -89,24 +89,94 @@ func effectTable(linkSource: Bool) -> String {
 // MARK: - Outputs
 
 /// GitHub's heading anchor: lowercased, punctuation dropped, spaces to hyphens
-/// ("Card & Group" → "card--group").
+/// ("Card & Group" → "card--group", "粒子與 3D" → "粒子與-3d").
 func githubAnchor(_ heading: String) -> String {
     heading.lowercased()
         .filter { $0.isLetter || $0.isNumber || $0 == " " || $0 == "-" }
         .replacingOccurrences(of: " ", with: "-")
 }
 
+/// Icon for a component's card in the README jump index.
+func readmeEmoji(_ component: MotionComponent) -> String {
+    switch component {
+    case .text: "🔤"
+    case .button: "🔘"
+    case .card: "🃏"
+    case .shape: "🔷"
+    case .background: "🌈"
+    case .number: "🔢"
+    case .particle: "✨"
+    case .transition: "🎬"
+    }
+}
+
+/// The languages the README is published in. Only the effects section is
+/// generated; the prose around it is maintained by hand in each file.
+enum ReadmeLanguage {
+    case english, traditionalChinese
+
+    var file: String {
+        switch self {
+        case .english: "README.md"
+        case .traditionalChinese: "README.zh-TW.md"
+        }
+    }
+
+    func title(_ component: MotionComponent) -> String {
+        guard self == .traditionalChinese else { return component.title }
+        switch component {
+        case .text: return "文字"
+        case .button: return "按鈕"
+        case .card: return "卡片與群組"
+        case .shape: return "圖形"
+        case .background: return "背景"
+        case .number: return "數字"
+        case .particle: return "粒子與 3D"
+        case .transition: return "轉場"
+        }
+    }
+
+    func title(_ trigger: MotionTrigger) -> String {
+        guard self == .traditionalChinese else { return trigger.title }
+        switch trigger {
+        case .appear: return "進場"
+        case .tap: return "點擊"
+        case .press: return "按壓"
+        case .drag: return "拖曳"
+        case .hover: return "懸停"
+        case .scroll: return "捲動"
+        case .change: return "數值改變"
+        case .loop: return "循環"
+        }
+    }
+
+    func count(_ n: Int) -> String {
+        switch self {
+        case .english: "\(n) \(n == 1 ? "effect" : "effects")"
+        case .traditionalChinese: "\(n) 個效果"
+        }
+    }
+
+    func summary(effects: Int, categories: Int) -> String {
+        switch self {
+        case .english: "<b>\(effects) effects</b> in \(categories) categories"
+        case .traditionalChinese: "共 <b>\(effects) 個效果</b>，分為 \(categories) 類"
+        }
+    }
+}
+
 /// One 3-column table of GIF cells.
-func gifTable(_ group: [MotionEffect]) -> String {
+func gifTable(_ group: [MotionEffect], _ language: ReadmeLanguage) -> String {
     var rows: [String] = []
     for start in stride(from: 0, to: group.count, by: 3) {
         let cells = group[start..<min(start + 3, group.count)].map { effect in
             let requirement = effect.requirement == .ios17 ? "" : " · \(effect.requirement.title)"
+            let triggers = effect.triggers.map { language.title($0) }.joined(separator: " / ")
             return """
                 <td align="center" valign="top" width="33%">
                 <img src="Docs/gifs/\(effect.id).gif" width="240" alt="\(html(effect.name))"><br>
                 <b>\(html(effect.name))</b><br>
-                <sub>\(html(triggers(effect)))\(requirement)</sub><br>
+                <sub>\(html(triggers))\(requirement)</sub><br>
                 <code>\(html(effect.api))</code>
                 </td>
                 """
@@ -118,20 +188,31 @@ func gifTable(_ group: [MotionEffect]) -> String {
 
 /// The README effects section: a jump index, then one heading and table per
 /// component, in `MotionComponent` order (catalog order within each).
-func readmeGrid() -> String {
-    let groups = MotionComponent.allCases.compactMap { component -> (MotionComponent, [MotionEffect])? in
-        let group = effects.filter { $0.component == component }
-        return group.isEmpty ? nil : (component, group)
+func readmeGrid(_ language: ReadmeLanguage) -> String {
+    // Jump index: a centred 4-column table of category cards.
+    let indexCells = groups.map { component, members in
+        let title = language.title(component)
+        return """
+            <td align="center" width="25%">
+            \(readmeEmoji(component))<br>
+            <a href="#\(githubAnchor(title))"><b>\(html(title))</b></a><br>
+            <sub>\(language.count(members.count))</sub>
+            </td>
+            """
     }
-    let index = groups
-        .map { component, group in "[\(component.title)](#\(githubAnchor(component.title))) (\(group.count))" }
-        .joined(separator: " · ")
-    let sections = groups.map { component, group in
-        "### \(component.title)\n\n" + gifTable(group)
+    let indexRows = stride(from: 0, to: indexCells.count, by: 4).map { start in
+        "<tr>\n" + indexCells[start..<min(start + 4, indexCells.count)].joined(separator: "\n") + "\n</tr>"
+    }
+    let sections = groups.map { component, members in
+        "### \(language.title(component))\n\n" + gifTable(members, language)
     }
     return """
         <!-- effects:start (generated by Scripts/generate-docs.sh; edit MotionCatalog.swift instead) -->
-        **\(effects.count) effects:** \(index)
+        <p align="center">\(language.summary(effects: effects.count, categories: groups.count))</p>
+
+        <table align="center">
+        \(indexRows.joined(separator: "\n"))
+        </table>
 
         \(sections.joined(separator: "\n\n"))
         <!-- effects:end -->
@@ -360,12 +441,12 @@ func emit(_ relativePath: String, _ content: String) {
     try! content.write(to: url, atomically: true, encoding: .utf8)
 }
 
-func replacingReadmeGrid(in readme: String) -> String {
+func replacingReadmeGrid(in readme: String, _ language: ReadmeLanguage) -> String {
     guard let start = readme.range(of: "<!-- effects:start"),
           let end = readme.range(of: "<!-- effects:end -->") else {
-        fatalError("README.md is missing the <!-- effects:start --> / <!-- effects:end --> markers")
+        fatalError("\(language.file) is missing the <!-- effects:start --> / <!-- effects:end --> markers")
     }
-    return readme.replacingCharacters(in: start.lowerBound..<end.upperBound, with: readmeGrid())
+    return readme.replacingCharacters(in: start.lowerBound..<end.upperBound, with: readmeGrid(language))
 }
 
 let ids = effects.map(\.id)
@@ -376,8 +457,10 @@ for effect in effects where effect.api.isEmpty {
     fatalError("\(effect.id) has no `api` in MotionCatalog.swift")
 }
 
-let readmeURL = root.appendingPathComponent("README.md")
-emit("README.md", replacingReadmeGrid(in: try! String(contentsOf: readmeURL, encoding: .utf8)))
+for language in [ReadmeLanguage.english, .traditionalChinese] {
+    let readme = try! String(contentsOf: root.appendingPathComponent(language.file), encoding: .utf8)
+    emit(language.file, replacingReadmeGrid(in: readme, language))
+}
 emit("llms.txt", llmsTxt())
 emit("llms-full.txt", llmsFullTxt())
 emit("Docs/motion-catalog.json", catalogJSON())

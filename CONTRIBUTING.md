@@ -26,7 +26,7 @@ Thanks for helping grow the library! Adding an effect takes three files.
    - `prompt`: an AI prompt (see below), also a raw string.
 4. **Check it compiles:** `Scripts/check-build.sh` builds both targets with just the Command Line Tools (no Xcode needed).
 5. **README preview:** if the demo needs taps, presses or drags, add a case for its `id` to `recording(for:)` in `Scripts/ReadmeGIFs/main.swift` (or drive it from a small scene in code; synthetic clicks are unreliable on `onTapGesture`). Then run `Scripts/record-readme-gifs.sh <id>` (macOS + ffmpeg) to create `Docs/gifs/<id>.gif`. It renders off-screen, so it won't get in your way.
-6. **Generated docs:** run `Scripts/generate-docs.sh`. It rewrites the README grid, `llms.txt`, `llms-full.txt`, `Docs/motion-catalog.json`, the Agent Skill and the Cursor rule from the catalog. Never edit those by hand; CI runs `Scripts/generate-docs.sh --check`.
+6. **Generated docs:** run `Scripts/generate-docs.sh`. It rewrites the README grids (English and Traditional Chinese), `llms.txt`, `llms-full.txt`, `Docs/motion-catalog.json`, the Agent Skill and the Cursor rule from the catalog. Never edit those by hand; CI runs `Scripts/generate-docs.sh --check`.
 
 ## Writing the AI prompt
 
