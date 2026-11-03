@@ -28,6 +28,19 @@ Thanks for helping grow the library! Adding an effect takes three files.
 5. **README preview:** if the demo needs taps, presses or drags, add a case for its `id` to `recording(for:)` in `Scripts/ReadmeGIFs/main.swift` (or drive it from a small scene in code; synthetic clicks are unreliable on `onTapGesture`). Then run `Scripts/record-readme-gifs.sh <id>` (macOS + ffmpeg) to create `Docs/gifs/<id>.gif`. It renders off-screen, so it won't get in your way.
 6. **Generated docs:** run `Scripts/generate-docs.sh`. It rewrites the README grids (English and Traditional Chinese), `llms.txt`, `llms-full.txt`, `Docs/motion-catalog.json`, the Agent Skill and the Cursor rule from the catalog. Never edit those by hand; CI runs `Scripts/generate-docs.sh --check`.
 
+## Scroll-driven effects
+
+Effects that react to the scroll position (`.scroll` trigger) need testing with real scrolling, which neither the canvas nor the GIF recorder gives you:
+
+- Add a full-screen example to `Examples/MotionLibraryDemo/MotionLibraryDemo/ScrollExamples.swift` and a UI test to `MotionLibraryDemoUITests/ScrollEffectsUITests.swift`. The tests drag with a finger and can assert on accessibility frames, which follow `visualEffect` transforms. Run `xcodegen generate` in `Examples/MotionLibraryDemo` after adding files, then:
+
+  ```sh
+  xcodebuild test -project Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj -scheme MotionLibraryDemo \
+    -destination 'platform=iOS Simulator,name=iPhone 17 Pro' CODE_SIGNING_ALLOWED=NO
+  ```
+
+- Record the GIF with `Scripts/record-simulator-gifs.sh <id>` instead of the macOS recorder (which can't animate scrolling), and add the id to `simulatorRecorded` in `Scripts/ReadmeGIFs/main.swift`.
+
 ## Shader effects (Metal)
 
 Shader effects live in the separate `MotionShaders` target so `MotionLibrary` builds without the Metal Toolchain.

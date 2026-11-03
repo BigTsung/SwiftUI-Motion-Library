@@ -674,8 +674,9 @@ guard let outPath = arguments.first else {
 let requested = Array(arguments.dropFirst())
 // Scroll-driven effects can't be recorded here: programmatic scrolling in an
 // off-screen macOS window jumps instead of animating. Their GIFs were recorded
-// from the gallery demos in the iOS Simulator, so a full run leaves them alone
-// (name them explicitly to re-record them here anyway).
+// from the gallery demos in the iOS Simulator by Scripts/record-simulator-gifs.sh,
+// so a full run here leaves them alone (name them explicitly to record them
+// here anyway).
 let simulatorRecorded: Set = ["stacking-cards", "shrinking-header", "stretchy-header", "reading-progress"]
 let ids = requested.isEmpty ? MotionCatalog.all.map(\.id).filter { !simulatorRecorded.contains($0) } : requested
 

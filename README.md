@@ -984,6 +984,7 @@ struct LoginView: View {
 
 - **Fastest:** open `Package.swift` in Xcode, open `Sources/MotionGallery/Views/MotionGalleryView.swift` and use the canvas preview. Every effect file also has its own `#Preview`.
 - **In an app:** add the `MotionGallery` product and show `MotionGalleryView()`.
+- **Demo app:** open `Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj` and run it on a simulator or device (pick your team under Signing to run on a device). It has the gallery plus full-screen examples of the scroll effects (stacking cards, shrinking and stretchy headers, reading progress), and UI tests that scroll them with a finger.
 
 The gallery lets you filter by component and trigger, play with each effect, replay it, and copy the usage code or AI prompt.
 
@@ -1003,10 +1004,12 @@ Docs/                     # README GIFs + motion-catalog.json (generated)
 llms.txt  llms-full.txt   # generated
 skills/  .cursor/rules/   # Agent Skill and Cursor rule (generated)
 mcp/                      # zero-dependency MCP server
+Examples/MotionLibraryDemo/  # iOS demo app + scroll UI tests
 Scripts/
   check-build.sh          # compile without Xcode
   generate-docs.sh        # regenerate everything derived from the catalog
   record-readme-gifs.sh   # record the README GIFs (off-screen)
+  record-simulator-gifs.sh  # GIFs that need real scrolling (iOS Simulator)
 ```
 
 ## Contributing

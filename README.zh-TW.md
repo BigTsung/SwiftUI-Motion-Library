@@ -984,6 +984,7 @@ struct LoginView: View {
 
 - **最快的方式**：用 Xcode 打開 `Package.swift`，開啟 `Sources/MotionGallery/Views/MotionGalleryView.swift`，用 Canvas 預覽。每個效果的原始碼檔案也都有自己的 `#Preview`。
 - **在 App 裡**：加入 `MotionGallery` product，顯示 `MotionGalleryView()`。
+- **範例 App**：打開 `Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj`，在模擬器或實機上執行（要跑在實機上，請在 Signing 選你的 Team）。裡面有完整的 Gallery、捲動效果的全螢幕範例（堆疊卡片、縮小標頭、彈性標頭、閱讀進度），以及用手指實際捲動它們的 UI 測試。
 
 Gallery 可以依元件和觸發時機篩選，操作、重播每個效果，並複製用法程式碼或 AI 提示詞。
 
@@ -1003,10 +1004,12 @@ Docs/                     # README GIF + motion-catalog.json（自動產生）
 llms.txt  llms-full.txt   # 自動產生
 skills/  .cursor/rules/   # Agent Skill 和 Cursor rule（自動產生）
 mcp/                      # 零依賴的 MCP server
+Examples/MotionLibraryDemo/  # iOS 範例 App + 捲動效果 UI 測試
 Scripts/
   check-build.sh          # 不需要 Xcode 也能編譯檢查
   generate-docs.sh        # 重新產生所有由 catalog 衍生的檔案
   record-readme-gifs.sh   # 錄製 README GIF（螢幕外渲染）
+  record-simulator-gifs.sh  # 需要真實捲動的 GIF（iOS 模擬器）
 ```
 
 ## 參與貢獻

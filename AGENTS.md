@@ -27,7 +27,8 @@ llms.txt, llms-full.txt               # generated
 skills/swiftui-motion/                # generated Agent Skill
 .cursor/rules/swiftui-motion.mdc      # generated Cursor rule
 mcp/server.mjs                        # zero-dependency MCP server (reads the JSON)
-Scripts/                              # check-build, generate-docs, record-readme-gifs
+Examples/MotionLibraryDemo/           # iOS demo app (XcodeGen project.yml + committed .xcodeproj) + scroll UI tests
+Scripts/                              # check-build, generate-docs, record-readme-gifs, record-simulator-gifs
 ```
 
 - `MotionLibrary` must never import `MotionGallery`.
@@ -40,12 +41,13 @@ Scripts/                              # check-build, generate-docs, record-readm
 
 - Pure SwiftUI. No third-party dependencies in either target.
 - Don't raise the deployment targets without asking the maintainer.
+- The demo app's `.xcodeproj` is generated from `Examples/MotionLibraryDemo/project.yml`: edit the YAML and run `xcodegen generate` in that folder, never the project file. New source files in its folders need a regenerate too.
 - Keep public API names short and SwiftUI-like (`.shimmer()`, not `.applyShimmerEffect()`).
 - Every effect file ends with a `#Preview`.
 - Don't rename existing catalog `id`s or public API (it's a library; breaking changes need a major version).
 - Shader effects go in `Sources/MotionShaders/<Name>.swift` + `Shaders/<Name>.metal`, with `sourceFile: "MotionShaders/<Name>.swift"` in the catalog (paths starting with `MotionShaders/` are resolved from `Sources/`). The scripts use Xcode's toolchain when Xcode is installed (it can compile Metal); with only the Command Line Tools the shaders are swapped for a placeholder so the Swift still compiles.
 - Keyframes must have a positive duration (a 0 s keyframe crashes), and never feed a raw clock value into `dashPhase` (Core Graphics walks the dash pattern up to it and hangs): wrap it to one dash period.
-- Scroll-driven effects: test them with real scrolling on iOS (a simulator UI test drag works). In `visualEffect`, apply `scaleEffect` before the pinning `offset`, or the scale shrinks the offset and the view drifts away. Don't rely on a `PreferenceKey` getting out of an iOS `ScrollView`: drive the effect from `visualEffect` geometry instead. The macOS GIF recorder can't animate scrolling, so the GIFs for stacking-cards, shrinking-header, stretchy-header and reading-progress were recorded from the gallery demos in the iOS Simulator, and a full recorder run skips them.
+- Scroll-driven effects: test them with real scrolling on iOS. Add a full-screen example and a UI test to `Examples/MotionLibraryDemo` (its tests drag with a finger and assert on accessibility frames, which follow `visualEffect` transforms), and run them with `xcodebuild test -project Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj -scheme MotionLibraryDemo -destination 'platform=iOS Simulator,name=iPhone 17 Pro' CODE_SIGNING_ALLOWED=NO`. In `visualEffect`, apply `scaleEffect` before the pinning `offset`, or the scale shrinks the offset and the view drifts away. Don't rely on a `PreferenceKey` getting out of an iOS `ScrollView`: drive the effect from `visualEffect` geometry instead. The macOS GIF recorder can't animate scrolling, so record these GIFs with `Scripts/record-simulator-gifs.sh <id>` (and add the id to `simulatorRecorded` in `Scripts/ReadmeGIFs/main.swift`).
 - After adding or changing an effect, run `Scripts/generate-docs.sh` (README grid, llms.txt, Skill, Cursor rule, catalog JSON) and record its GIF.
 
 ## Verifying changes
@@ -56,6 +58,7 @@ Full Xcode isn't required. The `#Preview` macro needs Xcode's plugin, so the scr
 Scripts/check-build.sh            # compile MotionLibrary + MotionGallery for macOS
 Scripts/generate-docs.sh          # regenerate catalog-derived files (--check in CI)
 Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
+Scripts/record-simulator-gifs.sh  # GIFs that need real scrolling, recorded in the iOS Simulator
 ```
 
 With Xcode, also build for iOS and visionOS (`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme MotionLibrary-Package -destination 'generic/platform=iOS Simulator' -derivedDataPath .build/xcode build`, same with `visionOS Simulator`) and check effects in the canvas. `sensoryFeedback` needs visionOS 26, so use the internal `.haptic(…)` helpers instead.
@@ -63,7 +66,7 @@ With Xcode, also build for iOS and visionOS (`DEVELOPER_DIR=/Applications/Xcode.
 ## Roadmap (suggested next tasks)
 
 1. ~~Make v0.1 compile~~ (done for macOS; still check iOS in Xcode and tune demo sizes in the grid).
-2. **Demo app:** add `Examples/MotionLibraryDemo` (an Xcode app project depending on the local package) that shows `MotionGalleryView()`, so people can run it on a device.
+2. ~~Demo app~~ (done: `Examples/MotionLibraryDemo`, the gallery plus full-screen scroll examples and their UI tests).
 3. ~~Reduce Motion~~ (done: every looping or large-movement effect falls back to a fade or a static state).
 4. **More effects.** v0.2 added gradient sweep, blur-in, marquee, wave text, magnetic, hold-to-confirm, status button, glow border, flip, swipe stack, parallax carousel, expandable card, checkmark, confetti, loaders, morphing blob, particle field, starfield, cover flow and float 3D. v0.3 added 40 more (count-up, split text, rotating text, glitch, circular text, focus text, highlighter, shine, jelly, click spark, like button, animated symbol, liquid toggle, hero expand, spotlight card, magnifying dock, jiggle, fan stack, draw-on, progress ring, skeleton, sliding tabs, mesh gradient, retro grid, border beam, waves, film grain, flashlight, fireworks, snowfall, floating reactions, warp tunnel, holographic card) and the Transition component (iris, blinds, clock wipe, pixel dissolve, poof, swoosh, film exposure). v0.4 added 45 more (morphing text, neon, karaoke, weight wave, exploding text, gooey menu, slide to confirm, download button, star rating, bouncy tab bar, scratch card, stacking cards, deck shuffle, looping carousel, drag to dismiss, shrinking/stretchy headers, reading progress, lava lamp, matrix rain, dot grid, meteors, flow field, split-flap, slot machine, price ticker, animated chart, needle gauge, physics emoji, shatter, cube, dot globe, bubbles, fireflies, circular reveal, liquid swipe, page turn, glitch transition, origami) and the Shader component in the separate `MotionShaders` product (water ripple, pixellate, chromatic aberration, CRT, heat haze, noise dissolve). Still open:
    - Cursor / Pointer (iPad & macOS): hover lift (`.hoverEffect`)
