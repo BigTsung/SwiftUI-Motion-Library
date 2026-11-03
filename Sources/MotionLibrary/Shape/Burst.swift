@@ -59,11 +59,13 @@ private struct BurstParticles: View {
         return Circle()
             .fill(color)
             .frame(width: size, height: size)
+            // Scale before offsetting, otherwise the scale also shrinks the
+            // travel distance and the particles never leave the icon.
+            .scaleEffect(exploded ? 0.3 : 1)
             .offset(
                 x: exploded ? CGFloat(cos(angle)) * distance : 0,
                 y: exploded ? CGFloat(sin(angle)) * distance : 0
             )
-            .scaleEffect(exploded ? 0.3 : 1)
             .opacity(exploded ? 0 : 1)
     }
 }

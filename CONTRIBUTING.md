@@ -20,7 +20,7 @@ Thanks for helping grow the library! Adding an effect takes three files.
    - `triggers`: every `MotionTrigger` that applies.
    - `usage`: a copy-paste snippet, written as a raw string `#""" … """#`.
    - `prompt`: an AI prompt (see below), also a raw string.
-4. Add a row to the effects table in `README.md`.
+4. **README preview:** if the demo needs taps, presses or drags, add a case for its `id` to `recording(for:)` in `Scripts/ReadmeGIFs/main.swift`. Then run `Scripts/record-readme-gifs.sh <id>` (macOS + ffmpeg) to create `Docs/gifs/<id>.gif`, and add a cell for it to the effects grid in `README.md`.
 
 ## Writing the AI prompt
 

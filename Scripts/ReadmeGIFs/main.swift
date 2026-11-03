@@ -1,0 +1,392 @@
+// Records a short animated GIF of every gallery demo for the README.
+//
+// Not part of the package. `Scripts/record-readme-gifs.sh` copies the sources
+// into a temporary package, adds this file as an executable target, builds it
+// and turns the captured frames into GIFs with ffmpeg.
+//
+// Usage: Recorder <frames-dir> [effect-id ...]
+
+import AppKit
+import SwiftUI
+import MotionGallery
+
+// MARK: - Stage
+
+let fps = 30.0
+let defaultStage = CGSize(width: 360, height: 220)
+
+/// A synthetic input step, in stage coordinates (origin top-left, points).
+enum Step {
+    case down(CGPoint)
+    case up(CGPoint)
+    case move(CGPoint)
+    case click(CGPoint)
+}
+
+struct Recording {
+    var duration: Double
+    /// Appear effects are recorded from the moment the demo is mounted; every
+    /// other demo gets time to settle first so the GIF doesn't start blank.
+    var appear = false
+    var stage: CGSize = defaultStage
+    var steps: [(at: Double, step: Step)] = []
+    /// Replaces the catalog demo when the effect needs to be driven in code
+    /// (for example a programmatic scroll).
+    var scene: (@MainActor () -> AnyView)?
+}
+
+private func center(_ stage: CGSize = defaultStage) -> CGPoint {
+    CGPoint(x: stage.width / 2, y: stage.height / 2)
+}
+
+/// A drag that circles around the stage centre, so the tilt goes in every direction.
+private func circularDrag(start: Double, length: Double, radius: CGFloat) -> [(at: Double, step: Step)] {
+    let c = center()
+    var steps: [(at: Double, step: Step)] = [(start, .down(c))]
+    let count = Int(length * fps)
+    for i in 1...count {
+        let t = Double(i) / Double(count)
+        // Ease the radius in and out so the card starts and ends near flat.
+        let r = radius * CGFloat(sin(t * .pi))
+        let angle = t * 2 * .pi * 1.25
+        let p = CGPoint(x: c.x + r * CGFloat(cos(angle)), y: c.y + r * CGFloat(sin(angle)))
+        steps.append((start + t * length, .move(p)))
+    }
+    steps.append((start + length + 0.02, .up(steps.last!.step.point)))
+    return steps
+}
+
+private extension Step {
+    var point: CGPoint {
+        switch self {
+        case let .down(p), let .up(p), let .move(p), let .click(p): p
+        }
+    }
+}
+
+@MainActor
+func recording(for id: String) -> Recording {
+    let c = center()
+    switch id {
+    case "typewriter":
+        return Recording(duration: 3.2, appear: true)
+    case "scramble":
+        return Recording(duration: 2.4, appear: true)
+    case "shimmer":
+        return Recording(duration: 3.0)
+    case "pressable":
+        return Recording(duration: 2.8, steps: [
+            (0.5, .down(c)), (1.1, .up(c)),
+            (1.6, .down(c)), (2.0, .up(c)),
+        ])
+    case "ripple":
+        return Recording(duration: 2.8, steps: [
+            (0.4, .click(CGPoint(x: c.x - 45, y: c.y - 12))),
+            (1.1, .click(CGPoint(x: c.x + 50, y: c.y + 14))),
+            (1.8, .click(c)),
+        ])
+    case "shake":
+        return Recording(duration: 2.6, steps: [
+            (0.4, .click(c)),
+            (1.5, .click(c)),
+        ])
+    case "staggered-appear":
+        return Recording(duration: 2.0, appear: true)
+    case "tilt":
+        return Recording(duration: 3.4, steps: circularDrag(start: 0.3, length: 2.4, radius: 110))
+    case "scroll-reveal":
+        let stage = CGSize(width: 360, height: 300)
+        return Recording(duration: 4.6, stage: stage, scene: { AnyView(ScrollRevealScene()) })
+    case "pulse-rings":
+        return Recording(duration: 3.0)
+    case "burst":
+        // Like, unlike, like again.
+        return Recording(duration: 2.8, steps: [
+            (0.4, .click(c)),
+            (1.4, .click(c)),
+            (1.8, .click(c)),
+        ])
+    case "aurora":
+        return Recording(duration: 4.0, scene: {
+            AnyView(MotionCatalog.all.first { $0.id == "aurora" }!.demo().padding(20))
+        })
+    case "rolling-number":
+        // The "+" and "−" buttons sit under the number.
+        let plus = CGPoint(x: c.x + 22, y: c.y + 30)
+        let minus = CGPoint(x: c.x - 22, y: c.y + 30)
+        return Recording(duration: 3.2, steps: [
+            (0.4, .click(plus)),
+            (1.2, .click(plus)),
+            (2.0, .click(minus)),
+        ])
+    default:
+        return Recording(duration: 3.0)
+    }
+}
+
+/// Same content as the catalog demo, scrolled in code so the GIF shows rows
+/// revealing on the way down and back up.
+struct ScrollRevealScene: View {
+    @State private var position: Int? = 0
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 8) {
+                ForEach(0..<20, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.blue.gradient)
+                        .frame(height: 44)
+                        .overlay(Text("Row \(index + 1)").font(.caption.bold()).foregroundStyle(.white))
+                        .scrollReveal()
+                        .id(index)
+                }
+            }
+            .scrollTargetLayout()
+            .padding(.horizontal, 12)
+        }
+        .scrollPosition(id: $position, anchor: .top)
+        .scrollIndicators(.hidden)
+        .frame(width: 240, height: 280)
+        .task {
+            // 0.6 s settle time + 0.4 s into the recording.
+            try? await Task.sleep(for: .seconds(1.0))
+            withAnimation(.easeInOut(duration: 1.8)) { position = 12 }
+            try? await Task.sleep(for: .seconds(2.2))
+            withAnimation(.easeInOut(duration: 1.6)) { position = 0 }
+        }
+    }
+}
+
+// MARK: - Window and capture
+
+final class StageWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
+struct StageView: View {
+    let size: CGSize
+    let content: AnyView
+
+    var body: some View {
+        ZStack {
+            Color(white: 0.97)
+            content
+        }
+        .frame(width: size.width, height: size.height)
+        .environment(\.colorScheme, .light)
+        // Render controls as if the window were frontmost (prominent buttons
+        // turn grey in inactive windows).
+        .environment(\.controlActiveState, .key)
+        .tint(.blue)
+        .accentColor(.blue)
+    }
+}
+
+typealias CGWindowListCreateImageFn = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
+
+/// `CGWindowListCreateImage` is unavailable to Swift in the macOS 15+ SDK but
+/// still works for the caller's own windows without screen-recording permission.
+let windowListCreateImage: CGWindowListCreateImageFn? = {
+    guard let handle = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_NOW),
+          let symbol = dlsym(handle, "CGWindowListCreateImage") else { return nil }
+    return unsafeBitCast(symbol, to: CGWindowListCreateImageFn.self)
+}()
+
+@MainActor
+func captureWindow(_ window: NSWindow) -> CGImage? {
+    let includingWindow: UInt32 = 1 << 3
+    let boundsIgnoreFraming: UInt32 = 1 << 0
+    let bestResolution: UInt32 = 1 << 3
+    return windowListCreateImage?(.null, includingWindow, UInt32(window.windowNumber), boundsIgnoreFraming | bestResolution)?
+        .takeRetainedValue()
+}
+
+func writePNG(_ image: CGImage, to url: URL) {
+    let rep = NSBitmapImageRep(cgImage: image)
+    try? rep.representation(using: .png, properties: [:])?.write(to: url)
+}
+
+@MainActor
+final class Recorder {
+    let outDir: URL
+    let ids: [String]
+    let ioQueue = DispatchQueue(label: "png-writer")
+    let ioGroup = DispatchGroup()
+    /// One window for every recording: a freshly created window isn't always
+    /// key in time, and then the first synthetic mouse-down is swallowed.
+    let window: StageWindow
+    let host: NSHostingView<StageView>
+
+    init(outDir: URL, ids: [String]) {
+        self.outDir = outDir
+        self.ids = ids
+        window = StageWindow(
+            contentRect: CGRect(origin: CGPoint(x: 80, y: 120), size: defaultStage),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        window.appearance = NSAppearance(named: .aqua)
+        window.isReleasedWhenClosed = false
+        window.hasShadow = false
+        // Stay above every other window: an occluded window stops rendering
+        // animation frames, and the capture comes out frozen.
+        window.level = .statusBar
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        host = NSHostingView(rootView: StageView(size: defaultStage, content: AnyView(EmptyView())))
+        window.contentView = host
+    }
+
+    func run() async {
+        for id in ids {
+            guard let effect = MotionCatalog.all.first(where: { $0.id == id }) else {
+                print("unknown effect id: \(id)")
+                continue
+            }
+            await record(effect)
+        }
+        await withCheckedContinuation { done in
+            ioGroup.notify(queue: .main) { done.resume() }
+        }
+        NSApp.terminate(nil)
+    }
+
+    func record(_ effect: MotionEffect) async {
+        let plan = recording(for: effect.id)
+        let dir = outDir.appendingPathComponent(effect.id)
+        try? FileManager.default.removeItem(at: dir)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
+        // Synthetic events occasionally miss SwiftUI's tap and drag gestures
+        // (AppKit also looks at the real mouse state), which leaves a frozen
+        // recording. Detect that and try again.
+        let maxAttempts = plan.steps.isEmpty ? 1 : 10
+        var frames: [CGImage] = []
+        for attempt in 1...maxAttempts {
+            frames = await capture(effect, plan: plan)
+            guard !plan.steps.isEmpty else { break }
+            let changed = changedFrameCount(frames)
+            if changed >= frames.count / 5 { break }
+            if attempt == maxAttempts {
+                print("WARNING: \(effect.id) looks frozen after \(maxAttempts) attempts; record it again")
+                break
+            }
+            print("  \(effect.id): only \(changed)/\(frames.count) frames moved, retrying")
+        }
+
+        for (index, image) in frames.enumerated() {
+            let url = dir.appendingPathComponent(String(format: "%04d.png", index))
+            ioGroup.enter()
+            ioQueue.async { [ioGroup] in
+                writePNG(image, to: url)
+                ioGroup.leave()
+            }
+        }
+        print("recorded \(effect.id) (\(frames.count) frames)")
+    }
+
+    private func capture(_ effect: MotionEffect, plan: Recording) async -> [CGImage] {
+        let size = plan.stage
+        host.rootView = StageView(size: size, content: AnyView(EmptyView()))
+        window.setContentSize(size)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        try? await Task.sleep(for: .seconds(0.3))
+        // Prime the window with a click on the empty stage.
+        send(.click(CGPoint(x: 4, y: 4)), to: window, stageHeight: size.height)
+        try? await Task.sleep(for: .seconds(0.2))
+
+        // Mount the demo now so appear animations are captured from the start.
+        host.rootView = StageView(size: size, content: plan.scene?() ?? effect.demo())
+        if !plan.appear {
+            try? await Task.sleep(for: .seconds(0.6))
+        }
+
+        var frames: [CGImage] = []
+        var pending = plan.steps.sorted { $0.at < $1.at }
+        let start = Date()
+        let frameCount = Int(plan.duration * fps)
+        for frame in 0..<frameCount {
+            let target = start.addingTimeInterval(Double(frame) / fps)
+            let wait = target.timeIntervalSinceNow
+            if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+
+            let elapsed = -start.timeIntervalSinceNow
+            while let next = pending.first, next.at <= elapsed {
+                pending.removeFirst()
+                send(next.step, to: window, stageHeight: size.height)
+            }
+
+            guard let image = captureWindow(window) else {
+                print("capture failed for \(effect.id)")
+                break
+            }
+            frames.append(image)
+        }
+        // Let a pending click's mouse-up land before the next recording.
+        try? await Task.sleep(for: .seconds(0.2))
+        return frames
+    }
+
+    /// Number of frames whose pixels differ from the first frame.
+    private func changedFrameCount(_ frames: [CGImage]) -> Int {
+        func bytes(_ image: CGImage) -> Data? {
+            image.dataProvider?.data as Data?
+        }
+        guard let first = frames.first.flatMap(bytes) else { return 0 }
+        return frames.dropFirst().filter { bytes($0) != first }.count
+    }
+
+    private var eventNumber = 0
+
+    func send(_ step: Step, to window: NSWindow, stageHeight: CGFloat) {
+        func event(_ type: NSEvent.EventType, _ p: CGPoint) -> NSEvent? {
+            eventNumber += 1
+            return NSEvent.mouseEvent(
+                with: type,
+                location: CGPoint(x: p.x, y: stageHeight - p.y),
+                modifierFlags: [],
+                timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: window.windowNumber,
+                context: nil,
+                eventNumber: eventNumber,
+                clickCount: 1,
+                pressure: type == .leftMouseUp ? 0 : 1
+            )
+        }
+        // Post through the app's event queue (like real input) rather than
+        // calling window.sendEvent directly.
+        func post(_ event: NSEvent?) {
+            if let event { NSApp.postEvent(event, atStart: false) }
+        }
+        switch step {
+        case let .down(p): post(event(.leftMouseDown, p))
+        case let .up(p): post(event(.leftMouseUp, p))
+        case let .move(p): post(event(.leftMouseDragged, p))
+        case let .click(p):
+            post(event(.leftMouseDown, p))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                post(event(.leftMouseUp, p))
+            }
+        }
+    }
+}
+
+// MARK: - Entry point
+
+let arguments = CommandLine.arguments.dropFirst()
+guard let outPath = arguments.first else {
+    print("usage: Recorder <frames-dir> [effect-id ...]")
+    exit(1)
+}
+let requested = Array(arguments.dropFirst())
+let ids = requested.isEmpty ? MotionCatalog.all.map(\.id) : requested
+
+let app = NSApplication.shared
+app.setActivationPolicy(.accessory)
+MainActor.assumeIsolated {
+    let recorder = Recorder(outDir: URL(fileURLWithPath: outPath), ids: ids)
+    Task { @MainActor in await recorder.run() }
+}
+app.run()

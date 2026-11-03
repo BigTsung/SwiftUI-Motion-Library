@@ -21,21 +21,98 @@ Every effect ships with:
 
 ## Effects (v0.1)
 
-| Component | Effect | Trigger | API |
-|---|---|---|---|
-| Text | Typewriter | Appear / Change | `TypewriterText("…")` |
-| Text | Scramble / Decode | Appear / Change | `ScrambleText("…")` |
-| Text | Shimmer | Loop | `.shimmer()` |
-| Button | Pressable | Press | `.buttonStyle(.pressable)` |
-| Button | Tap Ripple | Tap | `.ripple()` |
-| Button | Error Shake | Value change | `.shake(trigger:)` |
-| Card & Group | Staggered Entrance | Appear | `.staggeredAppear(index:)` |
-| Card & Group | 3D Tilt | Drag | `.tiltOnDrag()` |
-| Card & Group | Scroll Reveal | Scroll | `.scrollReveal()` |
-| Shape | Pulse Rings | Loop | `PulseRings()` |
-| Shape | Like Burst | Tap / Change | `.burst(trigger:)` |
-| Background | Aurora | Loop | `AuroraBackground()` |
-| Number | Rolling Number | Value change | `RollingNumber(value:)` |
+<table>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/typewriter.gif" width="240" alt="Typewriter"><br>
+<b>Typewriter</b><br>
+<sub>Text · Appear / Change</sub><br>
+<code>TypewriterText(&quot;…&quot;)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/scramble.gif" width="240" alt="Scramble / Decode"><br>
+<b>Scramble / Decode</b><br>
+<sub>Text · Appear / Change</sub><br>
+<code>ScrambleText(&quot;…&quot;)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/shimmer.gif" width="240" alt="Shimmer"><br>
+<b>Shimmer</b><br>
+<sub>Text · Loop</sub><br>
+<code>.shimmer()</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/pressable.gif" width="240" alt="Pressable"><br>
+<b>Pressable</b><br>
+<sub>Button · Press</sub><br>
+<code>.buttonStyle(.pressable)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/ripple.gif" width="240" alt="Tap Ripple"><br>
+<b>Tap Ripple</b><br>
+<sub>Button · Tap</sub><br>
+<code>.ripple()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/shake.gif" width="240" alt="Error Shake"><br>
+<b>Error Shake</b><br>
+<sub>Button · Value change</sub><br>
+<code>.shake(trigger:)</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/staggered-appear.gif" width="240" alt="Staggered Entrance"><br>
+<b>Staggered Entrance</b><br>
+<sub>Card & Group · Appear</sub><br>
+<code>.staggeredAppear(index:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/tilt.gif" width="240" alt="3D Tilt"><br>
+<b>3D Tilt</b><br>
+<sub>Card & Group · Drag</sub><br>
+<code>.tiltOnDrag()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/scroll-reveal.gif" width="240" alt="Scroll Reveal"><br>
+<b>Scroll Reveal</b><br>
+<sub>Card & Group · Scroll</sub><br>
+<code>.scrollReveal()</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/pulse-rings.gif" width="240" alt="Pulse Rings"><br>
+<b>Pulse Rings</b><br>
+<sub>Shape · Loop</sub><br>
+<code>PulseRings()</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/burst.gif" width="240" alt="Like Burst"><br>
+<b>Like Burst</b><br>
+<sub>Shape · Tap / Change</sub><br>
+<code>.burst(trigger:)</code>
+</td>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/aurora.gif" width="240" alt="Aurora"><br>
+<b>Aurora</b><br>
+<sub>Background · Loop</sub><br>
+<code>AuroraBackground()</code>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<img src="Docs/gifs/rolling-number.gif" width="240" alt="Rolling Number"><br>
+<b>Rolling Number</b><br>
+<sub>Number · Value change</sub><br>
+<code>RollingNumber(value:)</code>
+</td>
+</tr>
+</table>
+
+The previews are recorded from the gallery demos with `Scripts/record-readme-gifs.sh` (macOS, needs ffmpeg). Run it again after changing an effect.
 
 ## Requirements
 
@@ -123,6 +200,10 @@ MIT. Use it in commercial apps, no attribution required (but appreciated ⭐).
 - **Gallery 即時預覽**：可以直接操作、重播
 - **用法程式碼**：一鍵複製
 - **AI 提示詞**：描述外觀和實作手法，貼給 AI 就能改出自己的版本
+
+### 效果預覽
+
+每個效果的 GIF 動圖請看上方的 [Effects](#effects-v01) 表格。
 
 ### 安裝
 
