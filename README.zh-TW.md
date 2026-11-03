@@ -1,28 +1,131 @@
-<p align="center"><a href="README.md">English</a> · <b>繁體中文</b></p>
+<div align="center">
 
 # SwiftUI Motion Library
 
-**可以瀏覽、直接複製使用的 SwiftUI 動態效果收藏庫：每個效果都有即時預覽、用法程式碼和 AI 提示詞。**
+**可以直接複製使用的 SwiftUI 動態效果，依元件和觸發時機瀏覽。**<br>
+每個效果都有即時 Demo、用法程式碼和 AI 提示詞。純 SwiftUI，零依賴。<br>
+<sub>🌐 English speakers: see the <a href="README.md">English README</a></sub>
 
-靈感來自網頁前端的動態效果收藏站，做給想直接套用精緻效果、不想花一整個下午調 spring 參數的 SwiftUI 開發者。
+<a href="https://swift.org"><img alt="Swift 5.9" src="https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white"></a> <img alt="iOS 17 · macOS 14 · visionOS 1" src="https://img.shields.io/badge/iOS%2017%20%C2%B7%20macOS%2014%20%C2%B7%20visionOS%201-555?style=for-the-badge"> <img alt="Swift Package Manager" src="https://img.shields.io/badge/SPM-compatible-2E7DF7?style=for-the-badge"> <a href="#授權"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-2EA44F?style=for-the-badge"></a> <a href="README.md"><img alt="English" src="https://img.shields.io/badge/README-English-555?style=for-the-badge"></a>
 
----
+🤖 **為 AI 編碼工具而做。** `llms.txt`、Agent Skill、Cursor rule 和 MCP server<br>
+都和 Gallery 從同一份 catalog 產生。[看怎麼用 ↓](#請-ai-助理幫你加)
 
-## 為什麼做這個
+🆕 **2026-11-04 · v0.4**：新增 45 個效果，以及選用的 `MotionShaders` product。[看著色器效果 ↓](#著色器)<br>
+🆕 **2026-11-04 · 範例 App**：包含 Gallery、捲動效果全螢幕範例和 UI 測試的 iOS App。[打開它 ↓](#方式二clone-下來瀏覽-gallery)
+
+</div>
+
+## ✨ 精選效果
+
+<table>
+<tr>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/holo-card.gif" width="240" alt="Holographic Card"><br><b>Holographic Card</b><br><sub>卡片 · 懸停 / 拖曳</sub><br><code>.holographic()</code></td>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/slide-to-confirm.gif" width="240" alt="Slide to Confirm"><br><b>Slide to Confirm</b><br><sub>按鈕 · 拖曳</sub><br><code>SlideToConfirm(_:action:)</code></td>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/liquid-swipe.gif" width="240" alt="Liquid Swipe"><br><b>Liquid Swipe</b><br><sub>轉場 · 數值改變</sub><br><code>.transition(.liquidSwipe)</code></td>
+</tr>
+<tr>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/mesh-gradient.gif" width="240" alt="Mesh Gradient"><br><b>Mesh Gradient</b><br><sub>背景 · 循環 · iOS 18+</sub><br><code>AnimatedMeshGradient()</code></td>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/dot-globe.gif" width="240" alt="Dot Globe"><br><b>Dot Globe</b><br><sub>粒子與 3D · 循環</sub><br><code>DotGlobe()</code></td>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/water-ripple.gif" width="240" alt="Water Ripple"><br><b>Water Ripple</b><br><sub>著色器 · 點擊 / 數值改變</sub><br><code>.waterRippleOnTap()</code></td>
+</tr>
+</table>
+
+<div align="center">
+
+每張預覽都是從 Gallery 本身的 Demo 錄製的。<br>
+[**所有效果 ↓**](#效果) · [**開始使用 ↓**](#使用方式) · [**參與貢獻 ↓**](#參與貢獻)
+
+</div>
+
+## 👋 為什麼做這個
 
 網頁前端有很完整的動態效果收藏站，依照「動的是什麼」和「什麼時候動」分類。SwiftUI 雖然有不少很棒的單一效果 repo 和幾個專注的套件，卻一直沒有一個地方可以用 **元件 × 觸發時機** 瀏覽效果、直接試玩、把程式碼帶走。這個 repo 想成為那個地方。
 
 每個效果都包含：
 
-- **可重用的 API**：`View`、`ViewModifier` 或 `ButtonStyle`，沒有任何外部依賴。
-- **即時 Demo**：在內建的 Gallery 裡可以直接操作。
-- **用法程式碼**：可以直接複製。
-- **AI 提示詞**：描述外觀和實作手法，貼給 Claude、ChatGPT 或 Copilot 就能改出自己的版本。
-- **支援減少動態效果（Reduce Motion）**：會循環或大幅移動的效果，都會自動改成淡入淡出或靜止狀態。
+- 🧩 **可重用的 API**：`View`、`ViewModifier` 或 `ButtonStyle`，沒有任何外部依賴。
+- ▶️ **即時 Demo**：在內建的 Gallery 裡可以直接操作。
+- 📋 **用法程式碼**：可以直接複製。
+- 🤖 **AI 提示詞**：描述外觀和實作手法，貼給 Claude、ChatGPT 或 Copilot 就能改出自己的版本。
+- ♿️ **支援減少動態效果（Reduce Motion）**：會循環或大幅移動的效果，都會自動改成淡入淡出或靜止狀態。
 
-效果依元件分類：文字、按鈕、卡片、圖形、背景、數字、粒子與 3D、轉場，以及 Metal 著色器。
+## 使用方式
+
+加入套件後，一行程式碼套用效果，或讓 AI 助理幫你挑。
+
+### 方式一：Swift Package Manager（推薦）
+
+在 Xcode 選 **File → Add Package Dependencies…**，輸入本 repo 的網址；或在 `Package.swift` 加入：
+
+```swift
+.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", branch: "main")
+```
+
+```swift
+.product(name: "MotionLibrary", package: "SwiftUI-Motion-Library"),   // 效果本體
+.product(name: "MotionShaders", package: "SwiftUI-Motion-Library"),   // 選用：Metal 著色器效果
+.product(name: "MotionGallery", package: "SwiftUI-Motion-Library"),   // 選用：瀏覽介面
+```
+
+### 方式二：clone 下來瀏覽 Gallery
+
+- **最快的方式**：用 Xcode 打開 `Package.swift`，開啟 `Sources/MotionGallery/Views/MotionGalleryView.swift`，用 Canvas 預覽。每個效果的原始碼檔案也都有自己的 `#Preview`。
+- **在 App 裡**：加入 `MotionGallery` product，顯示 `MotionGalleryView()`。
+- **範例 App**：打開 `Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj`，在模擬器或實機上執行（要跑在實機上，請在 Signing 選你的 Team）。裡面有完整的 Gallery、捲動效果的全螢幕範例（堆疊卡片、縮小標頭、彈性標頭、閱讀進度），以及用手指實際捲動它們的 UI 測試。
+
+Gallery 可以依元件和觸發時機篩選，操作、重播每個效果，並複製用法程式碼或 AI 提示詞。
+
+### 接著用一行程式碼套用
+
+```swift
+import MotionLibrary
+
+struct LoginView: View {
+    @State private var attempts = 0
+    @State private var password = ""
+
+    var body: some View {
+        VStack(spacing: 24) {
+            TypewriterText("Welcome back")
+                .font(.largeTitle.bold())
+
+            SecureField("Password", text: $password)
+                .textFieldStyle(.roundedBorder)
+                .shake(trigger: attempts)
+
+            Button("Sign in") { attempts += 1 }
+                .buttonStyle(.pressable)
+        }
+        .padding()
+        .background(AuroraBackground().ignoresSafeArea())
+    }
+}
+```
+
+### 請 AI 助理幫你加
+
+這個 library 就是設計給 AI 助理使用的：跟 AI 說「加一個長按刪除的按鈕」，它會用一行 `MotionLibrary` 完成，而不是手寫 80 行調過的動畫。
+
+| 格式 | 適用 | 使用方式 |
+|---|---|---|
+| [`llms.txt`](llms.txt) / [`llms-full.txt`](llms-full.txt) | 任何 AI 助理 | 給它 raw 網址，或直接貼上檔案。`llms-full.txt` 包含每個效果的用法、原理和完整原始碼。 |
+| [Agent Skill](skills/swiftui-motion) | Claude Code 和其他支援 Skill 的 Agent | 把 `skills/swiftui-motion` 複製到 `~/.claude/skills/` 或專案的 `.claude/skills/`。 |
+| [Cursor rule](.cursor/rules/swiftui-motion.mdc) | Cursor | 複製到專案的 `.cursor/rules/`。 |
+| [MCP server](mcp) | Claude Code、Claude Desktop、Cursor、VS Code… | `claude mcp add swiftui-motion -- node /path/to/mcp/server.mjs`。提供 `list_motion_effects`、`get_motion_effect` 兩個工具。 |
+| [`motion-catalog.json`](Docs/motion-catalog.json) | 你自己的工具 | 所有效果的結構化資料。 |
+
+以上全部由 `Scripts/generate-docs.sh` 從 catalog 自動產生，內容過期時 CI 會失敗。
+
+### 開始之前
+
+- iOS 17+、macOS 14+、visionOS 1+、Xcode 15+。
+- 少數效果需要 iOS 18（macOS 15、visionOS 2），在下方表格中有標示，程式碼裡也有 `@available`。
+- 著色器類效果（水波紋、馬賽克、CRT…）放在獨立的 `MotionShaders` product，因為它們是 Metal 著色器：Xcode 26 之後的 Metal Toolchain 要另外下載（**Settings → Components**）。`MotionLibrary` 本身不需要任何額外元件。Gallery 會同時依賴兩者。
 
 ## 效果
+
+效果依元件分類：文字、按鈕、卡片、圖形、背景、數字、粒子與 3D、轉場，以及 Metal 著色器。
 
 <!-- effects:start (generated by Scripts/generate-docs.sh; edit MotionCatalog.swift instead) -->
 <p align="center">共 <b>118 個效果</b>，分為 9 類</p>
@@ -919,76 +1022,12 @@
 
 預覽 GIF 是用 `Scripts/record-readme-gifs.sh`（macOS，需要 ffmpeg）從 Gallery 的 Demo 錄製的。它在螢幕外渲染，錄製時你可以照常工作。
 
-## 搭配 AI 編碼工具使用
+## 參與貢獻
 
-這個 library 就是設計給 AI 助理使用的：跟 AI 說「加一個長按刪除的按鈕」，它會用一行 `MotionLibrary` 完成，而不是手寫 80 行調過的動畫。
+非常歡迎新增效果！請看 [CONTRIBUTING.md](CONTRIBUTING.md)。每個效果就是一個原始碼檔案、一個 Demo 畫面和一筆 catalog 資料。
 
-| 格式 | 適用 | 使用方式 |
-|---|---|---|
-| [`llms.txt`](llms.txt) / [`llms-full.txt`](llms-full.txt) | 任何 AI 助理 | 給它 raw 網址，或直接貼上檔案。`llms-full.txt` 包含每個效果的用法、原理和完整原始碼。 |
-| [Agent Skill](skills/swiftui-motion) | Claude Code 和其他支援 Skill 的 Agent | 把 `skills/swiftui-motion` 複製到 `~/.claude/skills/` 或專案的 `.claude/skills/`。 |
-| [Cursor rule](.cursor/rules/swiftui-motion.mdc) | Cursor | 複製到專案的 `.cursor/rules/`。 |
-| [MCP server](mcp) | Claude Code、Claude Desktop、Cursor、VS Code… | `claude mcp add swiftui-motion -- node /path/to/mcp/server.mjs`。提供 `list_motion_effects`、`get_motion_effect` 兩個工具。 |
-| [`motion-catalog.json`](Docs/motion-catalog.json) | 你自己的工具 | 所有效果的結構化資料。 |
-
-以上全部由 `Scripts/generate-docs.sh` 從 catalog 自動產生，內容過期時 CI 會失敗。
-
-## 系統需求
-
-iOS 17+、macOS 14+、visionOS 1+、Xcode 15+。少數效果需要 iOS 18（macOS 15、visionOS 2），在上方表格中有標示，程式碼裡也有 `@available`。
-
-## 安裝
-
-Swift Package Manager：在 Xcode 選 **File → Add Package Dependencies…**，輸入本 repo 的網址；或在 `Package.swift` 加入：
-
-```swift
-.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", branch: "main")
-```
-
-```swift
-.product(name: "MotionLibrary", package: "SwiftUI-Motion-Library"),   // 效果本體
-.product(name: "MotionShaders", package: "SwiftUI-Motion-Library"),   // 選用：Metal 著色器效果
-.product(name: "MotionGallery", package: "SwiftUI-Motion-Library"),   // 選用：瀏覽介面
-```
-
-著色器類效果（水波紋、馬賽克、CRT…）放在獨立的 `MotionShaders` product，因為它們是 Metal 著色器：Xcode 26 之後的 Metal Toolchain 要另外下載（**Settings → Components**）。`MotionLibrary` 本身不需要任何額外元件。Gallery 會同時依賴兩者。
-
-## 快速開始
-
-```swift
-import MotionLibrary
-
-struct LoginView: View {
-    @State private var attempts = 0
-    @State private var password = ""
-
-    var body: some View {
-        VStack(spacing: 24) {
-            TypewriterText("Welcome back")
-                .font(.largeTitle.bold())
-
-            SecureField("Password", text: $password)
-                .textFieldStyle(.roundedBorder)
-                .shake(trigger: attempts)
-
-            Button("Sign in") { attempts += 1 }
-                .buttonStyle(.pressable)
-        }
-        .padding()
-        .background(AuroraBackground().ignoresSafeArea())
-    }
-}
-```
-
-## 瀏覽 Gallery
-
-- **最快的方式**：用 Xcode 打開 `Package.swift`，開啟 `Sources/MotionGallery/Views/MotionGalleryView.swift`，用 Canvas 預覽。每個效果的原始碼檔案也都有自己的 `#Preview`。
-- **在 App 裡**：加入 `MotionGallery` product，顯示 `MotionGalleryView()`。
-- **範例 App**：打開 `Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj`，在模擬器或實機上執行（要跑在實機上，請在 Signing 選你的 Team）。裡面有完整的 Gallery、捲動效果的全螢幕範例（堆疊卡片、縮小標頭、彈性標頭、閱讀進度），以及用手指實際捲動它們的 UI 測試。
-
-Gallery 可以依元件和觸發時機篩選，操作、重播每個效果，並複製用法程式碼或 AI 提示詞。
-
-## 專案結構
+<details>
+<summary><b>專案結構</b></summary>
 
 ```
 Sources/
@@ -1012,10 +1051,17 @@ Scripts/
   record-simulator-gifs.sh  # 需要真實捲動的 GIF（iOS 模擬器）
 ```
 
-## 參與貢獻
-
-非常歡迎新增效果！請看 [CONTRIBUTING.md](CONTRIBUTING.md)。每個效果就是一個原始碼檔案、一個 Demo 畫面和一筆 catalog 資料。
+</details>
 
 ## 授權
 
 MIT。可以用在商業 App，不需要標示出處（但很歡迎給顆 ⭐）。
+
+---
+
+<div align="center">
+
+⭐ **給這個 repo 一顆星**，如果它幫你省下一個下午調 spring 參數<br>
+🧩 **[新增一個效果](CONTRIBUTING.md)**：一個原始碼檔案、一個 Demo、一筆 catalog 資料
+
+</div>

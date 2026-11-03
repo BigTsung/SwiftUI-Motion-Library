@@ -1,28 +1,131 @@
-<p align="center"><b>English</b> · <a href="README.zh-TW.md">繁體中文</a></p>
+<div align="center">
 
 # SwiftUI Motion Library
 
-**A browsable collection of copy-paste SwiftUI motion effects, each with live preview, usage code and an AI prompt.**
+**Copy-paste SwiftUI motion effects, browsable by component and trigger.**<br>
+Each one comes with a live demo, usage code and an AI prompt. Pure SwiftUI, zero dependencies.<br>
+<sub>🇹🇼 中文使用者請看 <a href="README.zh-TW.md">繁體中文說明</a></sub>
 
-Inspired by web motion galleries, built for SwiftUI developers who would rather drop in a polished effect than spend an afternoon tuning springs.
+<a href="https://swift.org"><img alt="Swift 5.9" src="https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white"></a> <img alt="iOS 17 · macOS 14 · visionOS 1" src="https://img.shields.io/badge/iOS%2017%20%C2%B7%20macOS%2014%20%C2%B7%20visionOS%201-555?style=for-the-badge"> <img alt="Swift Package Manager" src="https://img.shields.io/badge/SPM-compatible-2E7DF7?style=for-the-badge"> <a href="#license"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-2EA44F?style=for-the-badge"></a> <a href="README.zh-TW.md"><img alt="繁體中文" src="https://img.shields.io/badge/README-%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87-555?style=for-the-badge"></a>
 
----
+🤖 **Made for AI coding tools.** `llms.txt`, an Agent Skill, a Cursor rule and an MCP server<br>
+are generated from the same catalog as the gallery. [See how ↓](#ask-your-ai-assistant)
 
-## Why
+🆕 **2026-11-04 · v0.4**: 45 new effects and the optional `MotionShaders` product. [See the shaders ↓](#shader)<br>
+🆕 **2026-11-04 · Demo app**: an iOS app with the gallery, full-screen scroll examples and their UI tests. [Open it ↓](#option-2-clone-and-browse-the-gallery)
+
+</div>
+
+## ✨ Highlights
+
+<table>
+<tr>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/holo-card.gif" width="240" alt="Holographic Card"><br><b>Holographic Card</b><br><sub>Card · Hover / Drag</sub><br><code>.holographic()</code></td>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/slide-to-confirm.gif" width="240" alt="Slide to Confirm"><br><b>Slide to Confirm</b><br><sub>Button · Drag</sub><br><code>SlideToConfirm(_:action:)</code></td>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/liquid-swipe.gif" width="240" alt="Liquid Swipe"><br><b>Liquid Swipe</b><br><sub>Transition · Value change</sub><br><code>.transition(.liquidSwipe)</code></td>
+</tr>
+<tr>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/mesh-gradient.gif" width="240" alt="Mesh Gradient"><br><b>Mesh Gradient</b><br><sub>Background · Loop · iOS 18+</sub><br><code>AnimatedMeshGradient()</code></td>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/dot-globe.gif" width="240" alt="Dot Globe"><br><b>Dot Globe</b><br><sub>Particle &amp; 3D · Loop</sub><br><code>DotGlobe()</code></td>
+<td width="33%" align="center" valign="top"><img src="Docs/gifs/water-ripple.gif" width="240" alt="Water Ripple"><br><b>Water Ripple</b><br><sub>Shader · Tap / Value change</sub><br><code>.waterRippleOnTap()</code></td>
+</tr>
+</table>
+
+<div align="center">
+
+Every preview is recorded from the gallery's own demos.<br>
+[**All effects ↓**](#effects) · [**Use it ↓**](#how-to-use) · [**Contribute ↓**](#contributing)
+
+</div>
+
+## 👋 Why
 
 Web developers have huge motion galleries organised by *what* you animate and *when*. SwiftUI has great one-off repos and a few focused packages, but no single place to browse effects by **component × trigger**, try them, and take the code. This repo aims to be that place.
 
 Every effect ships with:
 
-- **A reusable API**: a `View`, `ViewModifier` or `ButtonStyle`, with no dependencies.
-- **A live demo** in the bundled gallery.
-- **Usage code** you can copy.
-- **An AI prompt** that describes the look and the technique, so you can paste it into Claude, ChatGPT or Copilot to adapt it.
-- **Reduce Motion support** for anything that loops or moves a lot.
+- 🧩 **A reusable API**: a `View`, `ViewModifier` or `ButtonStyle`, with no dependencies.
+- ▶️ **A live demo** in the bundled gallery.
+- 📋 **Usage code** you can copy.
+- 🤖 **An AI prompt** that describes the look and the technique, so you can paste it into Claude, ChatGPT or Copilot to adapt it.
+- ♿️ **Reduce Motion support** for anything that loops or moves a lot.
 
-Effects are grouped by component: text, buttons, cards, shapes, backgrounds, numbers, particles & 3D, transitions and Metal shaders.
+## How to use
+
+Add the package, then use an effect in one line or let your AI assistant pick one.
+
+### Option 1: Swift Package Manager (recommended)
+
+In Xcode, **File → Add Package Dependencies…** and enter this repository's URL, or in `Package.swift`:
+
+```swift
+.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", branch: "main")
+```
+
+```swift
+.product(name: "MotionLibrary", package: "SwiftUI-Motion-Library"),   // the effects
+.product(name: "MotionShaders", package: "SwiftUI-Motion-Library"),   // optional Metal shader effects
+.product(name: "MotionGallery", package: "SwiftUI-Motion-Library"),   // optional browser UI
+```
+
+### Option 2: clone and browse the gallery
+
+- **Fastest:** open `Package.swift` in Xcode, open `Sources/MotionGallery/Views/MotionGalleryView.swift` and use the canvas preview. Every effect file also has its own `#Preview`.
+- **In an app:** add the `MotionGallery` product and show `MotionGalleryView()`.
+- **Demo app:** open `Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj` and run it on a simulator or device (pick your team under Signing to run on a device). It has the gallery plus full-screen examples of the scroll effects (stacking cards, shrinking and stretchy headers, reading progress), and UI tests that scroll them with a finger.
+
+The gallery lets you filter by component and trigger, play with each effect, replay it, and copy the usage code or AI prompt.
+
+### Then write it in one line
+
+```swift
+import MotionLibrary
+
+struct LoginView: View {
+    @State private var attempts = 0
+    @State private var password = ""
+
+    var body: some View {
+        VStack(spacing: 24) {
+            TypewriterText("Welcome back")
+                .font(.largeTitle.bold())
+
+            SecureField("Password", text: $password)
+                .textFieldStyle(.roundedBorder)
+                .shake(trigger: attempts)
+
+            Button("Sign in") { attempts += 1 }
+                .buttonStyle(.pressable)
+        }
+        .padding()
+        .background(AuroraBackground().ignoresSafeArea())
+    }
+}
+```
+
+### Ask your AI assistant
+
+The library is built to be picked up by AI assistants, so "add a hold-to-delete button" turns into one line of `MotionLibrary` instead of 80 lines of hand-tuned animation.
+
+| Format | For | How |
+|---|---|---|
+| [`llms.txt`](llms.txt) / [`llms-full.txt`](llms-full.txt) | Any assistant | Point it at the raw URL, or paste the file. `llms-full.txt` has every effect's usage, technique and source. |
+| [Agent Skill](skills/swiftui-motion) | Claude Code and other skill-aware agents | Copy `skills/swiftui-motion` into `~/.claude/skills/` or your project's `.claude/skills/`. |
+| [Cursor rule](.cursor/rules/swiftui-motion.mdc) | Cursor | Copy it into your project's `.cursor/rules/`. |
+| [MCP server](mcp) | Claude Code, Claude Desktop, Cursor, VS Code… | `claude mcp add swiftui-motion -- node /path/to/mcp/server.mjs`. Tools: `list_motion_effects`, `get_motion_effect`. |
+| [`motion-catalog.json`](Docs/motion-catalog.json) | Your own tools | Every effect as structured data. |
+
+All of these are generated from the catalog by `Scripts/generate-docs.sh`, and CI fails if they fall out of date.
+
+### Before you start
+
+- iOS 17+, macOS 14+, visionOS 1+, Xcode 15+.
+- A few effects need iOS 18 (macOS 15, visionOS 2); they are marked in the grid and `@available` in code.
+- The Shader effects (water ripple, pixellate, CRT…) live in the separate `MotionShaders` product because they are Metal shaders: Xcode 26 and later download the Metal Toolchain on demand (**Settings → Components**). `MotionLibrary` itself needs nothing extra. The gallery depends on both.
 
 ## Effects
+
+Effects are grouped by component: text, buttons, cards, shapes, backgrounds, numbers, particles & 3D, transitions and Metal shaders.
 
 <!-- effects:start (generated by Scripts/generate-docs.sh; edit MotionCatalog.swift instead) -->
 <p align="center"><b>118 effects</b> in 9 categories</p>
@@ -919,76 +1022,12 @@ Effects are grouped by component: text, buttons, cards, shapes, backgrounds, num
 
 The previews are recorded from the gallery demos with `Scripts/record-readme-gifs.sh` (macOS, needs ffmpeg). It renders off-screen, so you can keep working while it runs.
 
-## Use it with AI coding tools
+## Contributing
 
-The library is built to be picked up by AI assistants, so "add a hold-to-delete button" turns into one line of `MotionLibrary` instead of 80 lines of hand-tuned animation.
+New effects are very welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Each effect is one source file, one demo view and one catalog entry.
 
-| Format | For | How |
-|---|---|---|
-| [`llms.txt`](llms.txt) / [`llms-full.txt`](llms-full.txt) | Any assistant | Point it at the raw URL, or paste the file. `llms-full.txt` has every effect's usage, technique and source. |
-| [Agent Skill](skills/swiftui-motion) | Claude Code and other skill-aware agents | Copy `skills/swiftui-motion` into `~/.claude/skills/` or your project's `.claude/skills/`. |
-| [Cursor rule](.cursor/rules/swiftui-motion.mdc) | Cursor | Copy it into your project's `.cursor/rules/`. |
-| [MCP server](mcp) | Claude Code, Claude Desktop, Cursor, VS Code… | `claude mcp add swiftui-motion -- node /path/to/mcp/server.mjs`. Tools: `list_motion_effects`, `get_motion_effect`. |
-| [`motion-catalog.json`](Docs/motion-catalog.json) | Your own tools | Every effect as structured data. |
-
-All of these are generated from the catalog by `Scripts/generate-docs.sh`, and CI fails if they fall out of date.
-
-## Requirements
-
-iOS 17+, macOS 14+, visionOS 1+, Xcode 15+. A few effects need iOS 18 (macOS 15, visionOS 2); they are marked in the grid and `@available` in code.
-
-## Installation
-
-Swift Package Manager: **File → Add Package Dependencies…** and enter this repository's URL, or:
-
-```swift
-.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", branch: "main")
-```
-
-```swift
-.product(name: "MotionLibrary", package: "SwiftUI-Motion-Library"),   // the effects
-.product(name: "MotionShaders", package: "SwiftUI-Motion-Library"),   // optional Metal shader effects
-.product(name: "MotionGallery", package: "SwiftUI-Motion-Library"),   // optional browser UI
-```
-
-The Shader effects (water ripple, pixellate, CRT…) live in the separate `MotionShaders` product because they are Metal shaders: Xcode 26 and later download the Metal Toolchain on demand (**Settings → Components**). `MotionLibrary` itself needs nothing extra. The gallery depends on both.
-
-## Quick start
-
-```swift
-import MotionLibrary
-
-struct LoginView: View {
-    @State private var attempts = 0
-    @State private var password = ""
-
-    var body: some View {
-        VStack(spacing: 24) {
-            TypewriterText("Welcome back")
-                .font(.largeTitle.bold())
-
-            SecureField("Password", text: $password)
-                .textFieldStyle(.roundedBorder)
-                .shake(trigger: attempts)
-
-            Button("Sign in") { attempts += 1 }
-                .buttonStyle(.pressable)
-        }
-        .padding()
-        .background(AuroraBackground().ignoresSafeArea())
-    }
-}
-```
-
-## Browse the gallery
-
-- **Fastest:** open `Package.swift` in Xcode, open `Sources/MotionGallery/Views/MotionGalleryView.swift` and use the canvas preview. Every effect file also has its own `#Preview`.
-- **In an app:** add the `MotionGallery` product and show `MotionGalleryView()`.
-- **Demo app:** open `Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj` and run it on a simulator or device (pick your team under Signing to run on a device). It has the gallery plus full-screen examples of the scroll effects (stacking cards, shrinking and stretchy headers, reading progress), and UI tests that scroll them with a finger.
-
-The gallery lets you filter by component and trigger, play with each effect, replay it, and copy the usage code or AI prompt.
-
-## Project layout
+<details>
+<summary><b>Project layout</b></summary>
 
 ```
 Sources/
@@ -1012,10 +1051,17 @@ Scripts/
   record-simulator-gifs.sh  # GIFs that need real scrolling (iOS Simulator)
 ```
 
-## Contributing
-
-New effects are very welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Each effect is one source file, one demo view and one catalog entry.
+</details>
 
 ## License
 
 MIT. Use it in commercial apps, no attribution required (but appreciated ⭐).
+
+---
+
+<div align="center">
+
+⭐ **Star this repo** if it saved you an afternoon of tuning springs<br>
+🧩 **[Add an effect](CONTRIBUTING.md)**: one source file, one demo, one catalog entry
+
+</div>
