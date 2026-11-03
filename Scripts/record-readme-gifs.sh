@@ -57,9 +57,10 @@ for dir in "$FRAMES"/*/; do
     ls "$dir"/*.png >/dev/null 2>&1 || continue
     # Captured at 2x and kept at 2x for crisp text on retina screens (the README
     # shows them at 1x). Soft gradients band badly with ordered dithering, so
-    # the aurora is downscaled and error-diffused instead.
+    # the aurora is downscaled to its 240 pt display width and error-diffused
+    # instead; it is all blur, so the lower resolution doesn't show.
     case "$id" in
-        aurora) filter="fps=20,scale=iw/2:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=full[p];[b][p]paletteuse=dither=sierra2_4a" ;;
+        aurora) filter="fps=15,scale=iw/3:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=full[p];[b][p]paletteuse=dither=sierra2_4a" ;;
         *)      filter="fps=25,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" ;;
     esac
     ffmpeg -loglevel error -y -framerate 30 -i "$dir/%04d.png" -vf "$filter" -loop 0 "$OUT/$id.gif"
