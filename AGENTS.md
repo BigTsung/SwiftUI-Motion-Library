@@ -64,6 +64,7 @@ SWIFT_FLAGS="-swift-version 6 -default-isolation MainActor" Scripts/check-standa
 Scripts/generate-docs.sh          # regenerate catalog-derived files (--check to verify)
 Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
 Scripts/record-simulator-gifs.sh  # GIFs that need real scrolling, recorded in the iOS Simulator
+Scripts/round-gif-corners.py      # transparent rounded corners (both recorders run it; needs Pillow and NumPy)
 Scripts/record-readme-gifs.sh hero  # Docs/hero.gif, the README's top mosaic (Scripts/ReadmeGIFs/Hero.swift)
 swift Scripts/make-social-preview.swift  # Docs/social-preview.png, upload in Settings → Social preview
 ```

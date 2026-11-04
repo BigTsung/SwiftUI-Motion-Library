@@ -24,6 +24,7 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 command -v ffmpeg >/dev/null || { echo "ffmpeg not found (brew install ffmpeg)"; exit 1; }
+python3 -c "import PIL, numpy" 2>/dev/null || { echo "Pillow and NumPy not found (pip3 install pillow numpy)"; exit 1; }
 
 PKG="$("$ROOT/Scripts/stage-package.sh" Recorder=Scripts/ReadmeGIFs)"
 
@@ -63,6 +64,10 @@ for dir in "$FRAMES"/*/; do
     # synthetic taps or drags missed. Hashes the frames in memory.
     distinct="$(ffmpeg -loglevel error -i "$dest" -f framemd5 - | grep -v '^#' | awk -F, '{print $6}' | sort -u | wc -l | tr -d ' ')"
     [ "$distinct" -gt 1 ] || frozen="${frozen:-} $id"
+    # Rounded corners, after the check (ffmpeg misreads the rounded GIFs).
+    # Not the hero: every pixel of it moves, so re-encoding nearly doubles it,
+    # and its panel is GitHub's dark page colour anyway.
+    [ "$id" = hero ] || python3 "$ROOT/Scripts/round-gif-corners.py" "$dest" >/dev/null
 done
 
 if [ -n "${frozen:-}" ]; then

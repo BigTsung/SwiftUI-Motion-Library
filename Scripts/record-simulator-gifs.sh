@@ -84,5 +84,6 @@ for id in "${ids[@]}"; do
     # Same look as Scripts/record-readme-gifs.sh: 720 × 440 px (2x), 25 fps.
     filter="$crop,scale=720:440:flags=lanczos,fps=25,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle"
     ffmpeg -loglevel error -y -ss "$start" -t "$length" -i "$video" -vf "$filter" -loop 0 "$OUT/$id.gif"
+    python3 "$ROOT/Scripts/round-gif-corners.py" "$OUT/$id.gif" >/dev/null
     echo "  $OUT/$id.gif ($(du -h "$OUT/$id.gif" | cut -f1), ${length}s loop)"
 done
