@@ -209,19 +209,11 @@ func readmeEmoji(_ component: MotionComponent) -> String {
 enum ReadmeLanguage {
     case english, traditionalChinese
 
-    /// Label of the collapsible usage code under each GIF.
-    var usageLabel: String {
-        switch self {
-        case .english: "Usage"
-        case .traditionalChinese: "用法"
-        }
-    }
-
     /// Lead-in to the extra files an effect needs without the package.
     var copyLabel: String {
         switch self {
-        case .english: "Copying instead of using the package? Also copy"
-        case .traditionalChinese: "不用套件、直接複製檔案？還要一起複製"
+        case .english: "Copying the file? Also copy"
+        case .traditionalChinese: "直接複製檔案時，還需要"
         }
     }
 
@@ -276,12 +268,12 @@ enum ReadmeLanguage {
     }
 }
 
-/// Under the usage code: the extra files to copy when not using the package.
+/// Under the API: the extra files to copy when not using the package.
 func copyNote(_ effect: MotionEffect, _ language: ReadmeLanguage) -> String {
     let extra = dependencies(of: effect) + (effect.shaderPath.map { [$0] } ?? [])
     guard !extra.isEmpty else { return "" }
     let links = extra.map { "<a href=\"\(repoURL)/blob/main/\($0)\">\(($0 as NSString).lastPathComponent)</a>" }
-    return "<sub>\(language.copyLabel) \(links.joined(separator: ", "))</sub>\n"
+    return "<br><sub>\(language.copyLabel) \(links.joined(separator: ", "))</sub>"
 }
 
 /// One 3-column table of GIF cells.
@@ -296,14 +288,7 @@ func gifTable(_ group: [MotionEffect], _ language: ReadmeLanguage) -> String {
                 <img src="Docs/gifs/\(effect.id).gif" width="240" alt="\(html(effect.name))"><br>
                 <a href="\(sourceURL(effect))"><b>\(html(effect.name))</b></a><br>
                 <sub>\(html(triggers))\(requirement)</sub><br>
-                <code>\(html(effect.api))</code>
-                <details><summary>\(language.usageLabel)</summary>
-
-                ```swift
-                \(effect.usage)
-                ```
-
-                \(copyNote(effect, language))</details>
+                <code>\(html(effect.api))</code>\(copyNote(effect, language))
                 </td>
                 """
         }

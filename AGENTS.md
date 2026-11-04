@@ -32,7 +32,7 @@ Scripts/                              # check-build, check-standalone, generate-
 ```
 
 - `MotionLibrary` must never import `MotionGallery`.
-- Every effect must stay copyable on its own: helpers shared by several effects live in `Sources/MotionLibrary/Support/`, never inside another effect's file. `Scripts/generate-docs.sh` detects each effect's extra files (`files` in the catalog JSON, the note under each README usage block) and `Scripts/check-standalone.sh` type-checks every effect from just those files.
+- Every effect must stay copyable on its own: helpers shared by several effects live in `Sources/MotionLibrary/Support/`, never inside another effect's file. `Scripts/generate-docs.sh` detects each effect's extra files (`files` in the catalog JSON, the note in each README cell) and `Scripts/check-standalone.sh` type-checks every effect from just those files.
 - `MotionEffect.demo` is `@MainActor`. Call it only from view bodies or `@MainActor` helpers.
 - Catalog `usage` and `prompt` strings use raw multi-line strings `#""" … """#` so key paths like `\.self` don't break.
 - Never hand-edit generated files (README grids between the `effects` markers in README.md and README.zh-TW.md, llms*.txt, Docs/motion-catalog.json, skills/, .cursor/rules/). Change the catalog and run `Scripts/generate-docs.sh`.
