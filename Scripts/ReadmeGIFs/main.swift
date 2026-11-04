@@ -90,6 +90,8 @@ private extension Step {
 func recording(for id: String) -> Recording {
     let c = center()
     switch id {
+    case "hero":
+        return Recording(duration: heroLoop, appear: true, stage: heroStage, scene: { AnyView(HeroScene()) })
     case "typewriter":
         return Recording(duration: 3.2, appear: true)
     case "scramble":
@@ -563,11 +565,15 @@ final class Recorder {
 
     func run() async {
         for id in ids {
+            if id == "hero" {
+                await record(id) { AnyView(HeroScene()) }
+                continue
+            }
             guard let effect = MotionCatalog.all.first(where: { $0.id == id }) else {
                 print("unknown effect id: \(id)")
                 continue
             }
-            await record(effect)
+            await record(effect.id) { effect.demo() }
         }
         await withCheckedContinuation { done in
             ioGroup.notify(queue: .main) { done.resume() }
@@ -575,9 +581,9 @@ final class Recorder {
         NSApp.terminate(nil)
     }
 
-    func record(_ effect: MotionEffect) async {
-        let plan = recording(for: effect.id)
-        let dir = outDir.appendingPathComponent(effect.id)
+    func record(_ id: String, demo: @MainActor () -> AnyView) async {
+        let plan = recording(for: id)
+        let dir = outDir.appendingPathComponent(id)
         try? FileManager.default.removeItem(at: dir)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
 
@@ -587,15 +593,15 @@ final class Recorder {
         let maxAttempts = plan.steps.isEmpty ? 1 : 10
         var frames: [CGImage] = []
         for attempt in 1...maxAttempts {
-            frames = await capture(effect, plan: plan)
+            frames = await capture(id, demo: demo, plan: plan)
             guard !plan.steps.isEmpty else { break }
             let changed = changedFrameCount(frames)
             if changed >= frames.count / 5 { break }
             if attempt == maxAttempts {
-                print("WARNING: \(effect.id) looks frozen after \(maxAttempts) attempts; record it again")
+                print("WARNING: \(id) looks frozen after \(maxAttempts) attempts; record it again")
                 break
             }
-            print("  \(effect.id): only \(changed)/\(frames.count) frames moved, retrying")
+            print("  \(id): only \(changed)/\(frames.count) frames moved, retrying")
         }
 
         for (index, image) in frames.enumerated() {
@@ -606,10 +612,10 @@ final class Recorder {
                 ioGroup.leave()
             }
         }
-        print("recorded \(effect.id) (\(frames.count) frames)")
+        print("recorded \(id) (\(frames.count) frames)")
     }
 
-    private func capture(_ effect: MotionEffect, plan: Recording) async -> [CGImage] {
+    private func capture(_ id: String, demo: @MainActor () -> AnyView, plan: Recording) async -> [CGImage] {
         let size = plan.stage
         host.rootView = StageView(size: size, content: AnyView(EmptyView()))
         window.setContentSize(size)
@@ -622,7 +628,7 @@ final class Recorder {
         try? await Task.sleep(for: .seconds(0.2))
 
         // Mount the demo now so appear animations are captured from the start.
-        host.rootView = StageView(size: size, content: plan.scene?() ?? effect.demo())
+        host.rootView = StageView(size: size, content: plan.scene?() ?? demo())
         if !plan.appear {
             try? await Task.sleep(for: .seconds(0.6))
         }
@@ -644,7 +650,7 @@ final class Recorder {
 
             let windowImage = captureWindow(window)
             guard let image = windowCapture ? windowImage : captureView(host) else {
-                print("capture failed for \(effect.id)")
+                print("capture failed for \(id)")
                 break
             }
             frames.append(image)

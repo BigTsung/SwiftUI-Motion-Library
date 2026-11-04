@@ -28,7 +28,7 @@ skills/swiftui-motion/                # generated Agent Skill
 .cursor/rules/swiftui-motion.mdc      # generated Cursor rule
 mcp/server.mjs                        # zero-dependency MCP server (reads the JSON)
 Examples/MotionLibraryDemo/           # iOS demo app (XcodeGen project.yml + committed .xcodeproj) + scroll UI tests
-Scripts/                              # check-build, check-standalone, generate-docs, record-readme-gifs, record-simulator-gifs, make-hero, make-social-preview
+Scripts/                              # check-build, check-standalone, generate-docs, record-readme-gifs, record-simulator-gifs, make-social-preview
 ```
 
 - `MotionLibrary` must never import `MotionGallery`.
@@ -64,7 +64,7 @@ SWIFT_FLAGS="-swift-version 6 -default-isolation MainActor" Scripts/check-standa
 Scripts/generate-docs.sh          # regenerate catalog-derived files (--check to verify)
 Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
 Scripts/record-simulator-gifs.sh  # GIFs that need real scrolling, recorded in the iOS Simulator
-Scripts/make-hero.sh              # Docs/hero.gif, the README's top mosaic (rerun after re-recording its GIFs)
+Scripts/record-readme-gifs.sh hero  # Docs/hero.gif, the README's top mosaic (Scripts/ReadmeGIFs/Hero.swift)
 swift Scripts/make-social-preview.swift  # Docs/social-preview.png, upload in Settings → Social preview
 ```
 

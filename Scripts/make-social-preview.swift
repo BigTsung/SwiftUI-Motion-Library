@@ -7,14 +7,12 @@ import SwiftUI
 
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
 
-/// (effect id, frame index): a frame where the effect is mid-motion.
-let tiles: [(String, Int)] = [
-    ("holo-card", 30), ("disintegrate", 55), ("liquid-fill-text", 40),
-    ("like-button", 14), ("dot-globe", 20), ("kaleidoscope", 30),
-]
+/// The frame of Docs/hero.gif to show: the card is mid-crumble and the
+/// liquid is rising.
+let heroFrame = 22
 
-func gifFrame(_ id: String, _ index: Int) -> NSImage? {
-    let url = root.appendingPathComponent("Docs/gifs/\(id).gif")
+func gifFrame(_ path: String, _ index: Int) -> NSImage? {
+    let url = root.appendingPathComponent(path)
     guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
     let i = min(index, CGImageSourceGetCount(source) - 1)
     guard let image = CGImageSourceCreateImageAtIndex(source, i, nil) else { return nil }
@@ -23,51 +21,26 @@ func gifFrame(_ id: String, _ index: Int) -> NSImage? {
 
 struct Preview: View {
     var body: some View {
-        HStack(spacing: 48) {
-            VStack(alignment: .leading, spacing: 22) {
-                Text("SwiftUI\nMotion Library")
-                    .font(.system(size: 64, weight: .heavy, design: .rounded))
+        VStack(spacing: 26) {
+            VStack(spacing: 10) {
+                Text("SwiftUI Motion Library")
+                    .font(.system(size: 62, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
-                    .lineSpacing(-4)
-                Text("Drop-in motion effects.\nCopy, paste, ship.")
-                    .font(.system(size: 28, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.75))
-                HStack(spacing: 10) {
-                    ForEach(["iOS", "macOS", "visionOS", "Metal"], id: \.self) { tag in
-                        Text(tag)
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.9))
-                            .padding(.horizontal, 14).padding(.vertical, 7)
-                            .background(.white.opacity(0.12), in: Capsule())
-                    }
-                }
-                .padding(.top, 8)
+                Text("Drop-in motion effects for iOS, macOS & visionOS · Copy, paste, ship")
+                    .font(.system(size: 26, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
             }
-            .frame(width: 470, alignment: .leading)
-
-            Grid(horizontalSpacing: 14, verticalSpacing: 14) {
-                ForEach(0..<3) { row in
-                    GridRow {
-                        ForEach(0..<2) { column in
-                            let (id, index) = tiles[row * 2 + column]
-                            if let image = gifFrame(id, index) {
-                                Image(nsImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .scaleEffect(1.35)
-                                    .frame(width: 290, height: 170)
-                                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                            }
-                        }
-                    }
-                }
+            // Shown at its native 1x size so it stays sharp.
+            if let hero = gifFrame("Docs/hero.gif", heroFrame) {
+                Image(nsImage: hero)
+                    .frame(width: hero.size.width, height: hero.size.height)
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             }
         }
-        .padding(.horizontal, 60)
         .frame(width: 1280, height: 640)
         .background(
-            LinearGradient(colors: [Color(red: 0.07, green: 0.08, blue: 0.13), Color(red: 0.18, green: 0.10, blue: 0.30)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: [Color(red: 0.05, green: 0.07, blue: 0.09), Color(red: 0.13, green: 0.08, blue: 0.22)],
+                           startPoint: .top, endPoint: .bottom)
         )
     }
 }

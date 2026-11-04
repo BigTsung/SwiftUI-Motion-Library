@@ -6,9 +6,9 @@
 每個效果都有即時 Demo、用法程式碼和 AI 提示詞。純 SwiftUI，零依賴。<br>
 <sub>🌐 English speakers: see the <a href="README.md">English README</a></sub>
 
-<img src="Docs/hero.gif" width="760" alt="全像卡片、沙化消散、液體填充文字、按讚、點陣地球和萬花筒效果">
-
 <a href="https://swift.org"><img alt="Swift 5.9" src="https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white"></a> <img alt="iOS 17 · macOS 14 · visionOS 1" src="https://img.shields.io/badge/iOS%2017%20%C2%B7%20macOS%2014%20%C2%B7%20visionOS%201-555?style=for-the-badge"> <img alt="Swift Package Manager" src="https://img.shields.io/badge/SPM-compatible-2E7DF7?style=for-the-badge"> <a href="#授權"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-2EA44F?style=for-the-badge"></a> <a href="README.md"><img alt="English" src="https://img.shields.io/badge/README-English-555?style=for-the-badge"></a>
+
+<img src="Docs/hero.gif" width="844" alt="熔岩燈、沙化消散、曲速隧道、復古網格、液體填充文字和 Voronoi 色塊的動態展示">
 
 🤖 **為 AI 編碼工具而做。** `llms.txt`、Agent Skill、Cursor rule 和 MCP server<br>
 都和 Gallery 從同一份 catalog 產生。[看怎麼用 ↓](#請-ai-助理幫你加)<br>

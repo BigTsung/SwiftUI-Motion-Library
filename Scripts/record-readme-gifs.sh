@@ -44,7 +44,12 @@ for dir in "$FRAMES"/*/; do
     # shows them at 1x). Soft gradients band badly with ordered dithering, so
     # the aurora is downscaled to its 240 pt display width and error-diffused
     # instead; it is all blur, so the lower resolution doesn't show.
+    dest="$OUT/$id.gif"
     case "$id" in
+        # The README's top mosaic (Scripts/ReadmeGIFs/Hero.swift): every tile
+        # moves, so keep it at 1x and 20 fps to stay small.
+        hero)   dest="$ROOT/Docs/hero.gif"
+                filter="fps=20,scale=iw/2:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=192:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" ;;
         aurora) filter="fps=15,scale=iw/3:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=full[p];[b][p]paletteuse=dither=sierra2_4a" ;;
         # Whole-frame motion (every pixel changes every frame) makes huge GIFs
         # at 2x; at 1x they still look sharp at the 240 pt README size.
@@ -52,11 +57,11 @@ for dir in "$FRAMES"/*/; do
                 filter="fps=15,scale=iw/2:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle" ;;
         *)      filter="fps=25,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" ;;
     esac
-    ffmpeg -loglevel error -y -framerate 30 -i "$dir/%04d.png" -vf "$filter" -loop 0 "$OUT/$id.gif"
-    echo "  $OUT/$id.gif ($(du -h "$OUT/$id.gif" | cut -f1))"
+    ffmpeg -loglevel error -y -framerate 30 -i "$dir/%04d.png" -vf "$filter" -loop 0 "$dest"
+    echo "  $dest ($(du -h "$dest" | cut -f1))"
     # Every effect moves, so a GIF whose frames are all identical means the
     # synthetic taps or drags missed. Hashes the frames in memory.
-    distinct="$(ffmpeg -loglevel error -i "$OUT/$id.gif" -f framemd5 - | grep -v '^#' | awk -F, '{print $6}' | sort -u | wc -l | tr -d ' ')"
+    distinct="$(ffmpeg -loglevel error -i "$dest" -f framemd5 - | grep -v '^#' | awk -F, '{print $6}' | sort -u | wc -l | tr -d ' ')"
     [ "$distinct" -gt 1 ] || frozen="${frozen:-} $id"
 done
 
