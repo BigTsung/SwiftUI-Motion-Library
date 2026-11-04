@@ -54,4 +54,13 @@ for dir in "$FRAMES"/*/; do
     esac
     ffmpeg -loglevel error -y -framerate 30 -i "$dir/%04d.png" -vf "$filter" -loop 0 "$OUT/$id.gif"
     echo "  $OUT/$id.gif ($(du -h "$OUT/$id.gif" | cut -f1))"
+    # Every effect moves, so a GIF whose frames are all identical means the
+    # synthetic taps or drags missed. Hashes the frames in memory.
+    distinct="$(ffmpeg -loglevel error -i "$OUT/$id.gif" -f framemd5 - | grep -v '^#' | awk -F, '{print $6}' | sort -u | wc -l | tr -d ' ')"
+    [ "$distinct" -gt 1 ] || frozen="${frozen:-} $id"
 done
+
+if [ -n "${frozen:-}" ]; then
+    echo "FROZEN (every frame identical, record again):$frozen"
+    exit 1
+fi
