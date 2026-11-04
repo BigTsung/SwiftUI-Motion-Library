@@ -145,7 +145,7 @@ func html(_ text: String) -> String {
 }
 
 /// The current release. Bump it together with the git tag.
-let packageVersion = "0.5.0"
+let packageVersion = "0.6.0"
 
 let installSnippet = """
     ```swift

@@ -14,6 +14,7 @@
 都和 Gallery 從同一份 catalog 產生。[看怎麼用 ↓](#請-ai-助理幫你加)<br>
 **AI agent 請從 [`llms.txt`](https://raw.githubusercontent.com/BigTsung/SwiftUI-Motion-Library/main/llms.txt) 開始讀**：所有效果、API 和各自需要的檔案都在裡面。
 
+🆕 **2026-11-04 · v0.6**：支援 Swift 6（複製的效果在 Swift 6 App 也能直接編譯），API 也更一致：`speed` 一律改為倍率。[更新說明](https://github.com/BigTsung/SwiftUI-Motion-Library/releases/tag/0.6.0)<br>
 🆕 **2026-11-04 · 新增 27 個效果**：拉繩開關、膠囊展開、Hover Lift、鳥群、墨水軌跡，以及 Genie、沙化消散、玻璃放大鏡等 10 個著色器。[看著色器效果 ↓](#著色器)<br>
 🆕 **2026-11-04 · v0.4**：新增 45 個效果，以及選用的 `MotionShaders` product。[看著色器效果 ↓](#著色器)<br>
 🆕 **2026-11-04 · 範例 App**：包含 Gallery、捲動效果全螢幕範例和 UI 測試的 iOS App。[打開它 ↓](#方式二clone-下來瀏覽-gallery)
@@ -63,7 +64,7 @@
 在 Xcode 選 **File → Add Package Dependencies…**，輸入本 repo 的網址；或在 `Package.swift` 加入：
 
 ```swift
-.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.5.0")
+.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.6.0")
 ```
 
 ```swift

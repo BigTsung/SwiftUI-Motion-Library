@@ -3277,7 +3277,7 @@
       "usage" : "import MotionShaders\n\nVoronoiCells(colors: [.indigo, .purple, .pink, .orange, .teal])\n    .ignoresSafeArea()"
     }
   ],
-  "install" : "```swift\n// Package.swift\n.package(url: \"https://github.com/BigTsung/SwiftUI-Motion-Library\", from: \"0.5.0\")\n// target dependencies\n.product(name: \"MotionLibrary\", package: \"SwiftUI-Motion-Library\")\n```\n\nThen `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects marked iOS 18+ are `@available(iOS 18, macOS 15, visionOS 2, *)`.\n\nIn an Xcode app project, add the package with **File → Add Package Dependencies…** rather than editing `project.pbxproj` by hand. To use one effect without the package, copy its source file plus any files listed under \"Files\" for it (shared helpers such as `Support/Haptics.swift`); every effect compiles from just those files.",
+  "install" : "```swift\n// Package.swift\n.package(url: \"https://github.com/BigTsung/SwiftUI-Motion-Library\", from: \"0.6.0\")\n// target dependencies\n.product(name: \"MotionLibrary\", package: \"SwiftUI-Motion-Library\")\n```\n\nThen `import MotionLibrary`. Requires iOS 17, macOS 14 or visionOS 1; effects marked iOS 18+ are `@available(iOS 18, macOS 15, visionOS 2, *)`.\n\nIn an Xcode app project, add the package with **File → Add Package Dependencies…** rather than editing `project.pbxproj` by hand. To use one effect without the package, copy its source file plus any files listed under \"Files\" for it (shared helpers such as `Support/Haptics.swift`); every effect compiles from just those files.",
   "name" : "SwiftUI Motion Library",
   "repository" : "https://github.com/BigTsung/SwiftUI-Motion-Library"
 }

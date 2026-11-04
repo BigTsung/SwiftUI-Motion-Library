@@ -14,6 +14,7 @@ Each one comes with a live demo, usage code and an AI prompt. Pure SwiftUI, zero
 are generated from the same catalog as the gallery. [See how ↓](#ask-your-ai-assistant)<br>
 **AI agents:** start at [`llms.txt`](https://raw.githubusercontent.com/BigTsung/SwiftUI-Motion-Library/main/llms.txt): every effect, its API and the files it needs.
 
+🆕 **2026-11-04 · v0.6**: Swift 6 ready (copied effects compile in Swift 6 apps) and a tidier API: `speed` is now always a multiplier. [Release notes](https://github.com/BigTsung/SwiftUI-Motion-Library/releases/tag/0.6.0)<br>
 🆕 **2026-11-04 · 27 new effects**: pull cord, island pill, hover lift, flock, ink trail, and 10 shaders including genie, disintegrate and glass lens. [See the shaders ↓](#shader)<br>
 🆕 **2026-11-04 · v0.4**: 45 new effects and the optional `MotionShaders` product. [See the shaders ↓](#shader)<br>
 🆕 **2026-11-04 · Demo app**: an iOS app with the gallery, full-screen scroll examples and their UI tests. [Open it ↓](#option-2-clone-and-browse-the-gallery)
@@ -63,7 +64,7 @@ Add the package, then use an effect in one line or let your AI assistant pick on
 In Xcode, **File → Add Package Dependencies…** and enter this repository's URL, or in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.5.0")
+.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.6.0")
 ```
 
 ```swift

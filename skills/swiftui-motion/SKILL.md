@@ -11,7 +11,7 @@ description: "Adds polished SwiftUI animations from SwiftUI Motion Library: anim
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.5.0")
+.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.6.0")
 // target dependencies
 .product(name: "MotionLibrary", package: "SwiftUI-Motion-Library")
 ```
