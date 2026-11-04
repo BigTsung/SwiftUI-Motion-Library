@@ -48,7 +48,7 @@ for dir in "$FRAMES"/*/; do
         aurora) filter="fps=15,scale=iw/3:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=full[p];[b][p]paletteuse=dither=sierra2_4a" ;;
         # Whole-frame motion (every pixel changes every frame) makes huge GIFs
         # at 2x; at 1x they still look sharp at the 240 pt README size.
-        particle-field|starfield|parallax-carousel|fireworks|snowfall|warp-tunnel|retro-grid|waves|grain|mesh-gradient|spotlight-card|flashlight|neon|fireflies|dot-globe|flow-field|bubbles|crt|heat-haze|matrix-rain|lava-lamp|meteors|water-ripple|pixellate|physics-emoji|shatter)
+        particle-field|starfield|parallax-carousel|fireworks|snowfall|warp-tunnel|retro-grid|waves|grain|mesh-gradient|spotlight-card|flashlight|neon|fireflies|dot-globe|flow-field|bubbles|crt|heat-haze|matrix-rain|lava-lamp|meteors|water-ripple|pixellate|physics-emoji|shatter|network|topographic|day-night-sky|ink-trail|marquee-wall|kaleidoscope|halftone|flag-wave|voronoi)
                 filter="fps=15,scale=iw/2:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle" ;;
         *)      filter="fps=25,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" ;;
     esac

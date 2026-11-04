@@ -1,6 +1,6 @@
 # SwiftUI Motion Library
 
-> 118 copy-paste SwiftUI motion effects (text, buttons, cards, shapes, loaders, backgrounds, particles and 3D) as small, dependency-free views and modifiers. Effects with large or looping motion respect Reduce Motion.
+> 145 copy-paste SwiftUI motion effects (text, buttons, cards, shapes, loaders, backgrounds, particles and 3D) as small, dependency-free views and modifiers. Effects with large or looping motion respect Reduce Motion.
 
 Use the library API instead of hand-writing these animations. Install with Swift Package Manager:
 
@@ -36,6 +36,7 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 - [Karaoke Text](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/KaraokeText.swift): A line fills with colour left to right as progress goes from 0 to 1. API: `KaraokeText(_:progress:)`. Trigger: Value change / Scroll.
 - [Weight Wave](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/WeightWaveText.swift): Letters swell from thin to black and back in a travelling wave. API: `WeightWaveText(_:)`. Trigger: Loop.
 - [Exploding Text](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/ExplodingText.swift): Letters blast apart spinning and spring back into place. API: `ExplodingText(_:isExploded:)`. Trigger: Value change / Tap. Requires iOS 18+.
+- [Liquid Fill Text](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/LiquidFillText.swift): A wavy water line rises inside the letters as progress grows. API: `LiquidFillText(_:progress:)`. Trigger: Value change / Loop.
 
 ## Button
 
@@ -57,6 +58,7 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 - [Download Button](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/DownloadButton.swift): A capsule shrinks into a progress ring, then pops into a checkmark. API: `DownloadButton(progress:action:)`. Trigger: Tap / Value change. Copying it without the package also needs `Haptics.swift`.
 - [Star Rating](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/StarRating.swift): Stars fill one after another with a springy pop and a burst of sparks. API: `StarRating(rating:)`. Trigger: Tap / Value change. Copying it without the package also needs `Haptics.swift`.
 - [Bouncy Tab Bar](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/BouncyTabBar.swift): A pill glides to the selected tab and its icon squashes and hops. API: `BouncyTabBar(selection:items:)`. Trigger: Tap / Value change. Copying it without the package also needs `Haptics.swift`.
+- [Pull Cord](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/PullCord.swift): A lamp cord toggle: pull the knob down, it clicks and springs back swinging. API: `PullCord(isOn:)`. Trigger: Drag / Tap. Copying it without the package also needs `Haptics.swift`.
 
 ## Card & Group
 
@@ -79,6 +81,10 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 - [Drag to Dismiss](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/DragToDismiss.swift): Fling a card away; it flies off with your throw or springs back. API: `.dragToDismiss(isPresented:)`. Trigger: Drag.
 - [Shrinking Header](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/ScrollHeaders.swift): The header sticks to the top and shrinks as content scrolls under it. API: `.shrinkingHeader()`. Trigger: Scroll.
 - [Stretchy Header](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/ScrollHeaders.swift): A header image stretches when pulled down and drifts with parallax when scrolled. API: `.stretchyHeader()`. Trigger: Scroll.
+- [Island Pill](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/IslandPill.swift): A black pill springs open into a card and back, its contents blurring across. API: `IslandPill(isExpanded:compact:expanded:)`. Trigger: Tap / Value change.
+- [Hover Lift](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/HoverLift.swift): Cards rise, grow and lean towards the pointer on iPad and Mac. API: `.hoverLift(isActive:)`. Trigger: Hover.
+- [Marquee Wall](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/MarqueeWall.swift): A tilted wall of cards, columns scrolling endlessly up and down. API: `MarqueeWall(count:columns:content:)`. Trigger: Loop.
+- [Photo Develop](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/PhotoDevelop.swift): The view develops like an instant photo, from murky dark to full colour. API: `.photoDevelop()`. Trigger: Appear / Value change.
 
 ## Shape
 
@@ -108,6 +114,9 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 - [Interactive Dot Grid](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/InteractiveDotGrid.swift): A grid of dots scatters away from your finger and eases back. API: `InteractiveDotGrid()`. Trigger: Drag / Hover / Loop.
 - [Meteors](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/Meteors.swift): Meteors streak across a starry sky with glowing heads and fading tails. API: `Meteors()`. Trigger: Loop.
 - [Flow Field](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/FlowField.swift): Generative curves follow a shifting vector field with dashes flowing along them. API: `FlowField()`. Trigger: Loop.
+- [Network](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/NetworkBackground.swift): Drifting points link up with lines when close, and gather at your finger. API: `NetworkBackground()`. Trigger: Loop / Hover / Drag.
+- [Topographic Lines](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/TopographicLines.swift): Contour lines of a shifting landscape flow like a living map. API: `TopographicLines()`. Trigger: Loop.
+- [Day & Night Sky](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/DayNightSky.swift): A sky runs from starry night through dawn, noon and sunset, sun and moon arcing over. API: `DayNightSky(time:)`. Trigger: Loop / Value change.
 
 ## Number
 
@@ -117,6 +126,8 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 - [Price Ticker](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Number/PriceTicker.swift): Digits roll to the new price as the background flashes green or red. API: `PriceTicker(value:)`. Trigger: Value change.
 - [Animated Chart](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Number/AnimatedChart.swift): Bars grow up one after another; a line draws itself left to right. API: `GrowingBarChart(values:) / DrawingLineChart(values:)`. Trigger: Appear / Value change.
 - [Needle Gauge](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Number/NeedleGauge.swift): A speedometer needle swings to the value, overshoots and settles. API: `NeedleGauge(value:)`. Trigger: Value change.
+- [Contribution Grid](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Number/ContributionGrid.swift): Activity squares pop in column by column, shaded by how busy each day was. API: `ContributionGrid(values:)`. Trigger: Appear / Value change.
+- [Analog Clock](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Number/AnalogClock.swift): A clock with a sweeping second hand; set a time and the hands spring to it. API: `AnalogClock(date:)`. Trigger: Loop / Value change.
 
 ## Particle & 3D
 
@@ -135,6 +146,10 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 - [Dot Globe](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/DotGlobe.swift): A globe of evenly spread dots spins on a tilted axis, with pulsing cities. API: `DotGlobe()`. Trigger: Loop.
 - [Bubbles](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/Bubbles.swift): Soap bubbles rise and wobble with rainbow rims and glossy highlights. API: `Bubbles()`. Trigger: Loop.
 - [Fireflies](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/Fireflies.swift): Glowing fireflies drift lazily and blink on their own rhythms. API: `Fireflies()`. Trigger: Loop.
+- [Flock](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/Flock.swift): Little arrows swim together like birds or fish, and chase your finger. API: `Flock()`. Trigger: Loop / Drag / Hover.
+- [Ink Trail](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/InkTrail.swift): The pointer or finger leaves puffs of ink that swell, drift up and fade. API: `.inkTrail(color:)`. Trigger: Drag / Hover.
+- [Rain on Glass](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/RainOnGlass.swift): Raindrops cling to a window while bigger drops slide down in fits and starts. API: `RainOnGlass()`. Trigger: Loop.
+- [Orbits](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/Orbits.swift): Planets circle a glowing star on tilted orbits, passing behind it and in front. API: `Orbits(colors:)`. Trigger: Loop.
 
 ## Transition
 
@@ -150,6 +165,8 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 - [Page Turn](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Transition/PageTurn.swift): The old page swings away like a book page, revealing the next one. API: `.transition(.pageTurn)`. Trigger: Value change.
 - [Glitch Transition](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Transition/GlitchTransition.swift): The view breaks up like a bad signal on its way in or out. API: `.transition(.glitch)`. Trigger: Value change. Copying it without the package also needs `GlitchSlice.swift`.
 - [Origami Fold](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Transition/OrigamiFold.swift): The view folds up into creased panels like a paper map. API: `.transition(.origami)`. Trigger: Value change. Copying it without the package also needs `GlitchSlice.swift`.
+- [Ink Bleed](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Transition/InkBleed.swift): New content spreads in like a blot of ink on wet paper, with a ragged edge. API: `.transition(.inkBleed)`. Trigger: Value change.
+- [Zoom Blur](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Transition/ZoomBlur.swift): Content rushes in from the camera, blurred and trailed by echoes, then snaps sharp. API: `.transition(.zoomBlur)`. Trigger: Value change.
 
 ## Shader
 
@@ -159,6 +176,16 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 - [CRT Screen](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/CRT.swift): Curved glass, scanlines, a rolling band and flicker, like an old monitor. API: `.crtScreen()`. Trigger: Loop. Copying it without the package also needs `CRT.metal`.
 - [Heat Haze](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/HeatHaze.swift): The view shimmers like hot air over a desert road. API: `.heatHaze(strength:)`. Trigger: Loop. Copying it without the package also needs `HeatHaze.metal`.
 - [Noise Dissolve](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/NoiseDissolve.swift): The view burns away in organic blotches with a glowing edge. API: `.noiseDissolve(_:) / .transition(.noiseDissolve)`. Trigger: Value change. Copying it without the package also needs `NoiseDissolve.metal`.
+- [Disintegrate](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Disintegrate.swift): The view crumbles into grains of sand that blow away on the wind. API: `.disintegrate(_:) / .transition(.disintegrate)`. Trigger: Value change. Copying it without the package also needs `Disintegrate.metal`.
+- [Genie](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Genie.swift): The view pinches and pours into a point below it, like minimising a window. API: `.genie(_:toward:) / .transition(.genie)`. Trigger: Value change. Copying it without the package also needs `Genie.metal`.
+- [Glass Lens](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/GlassLens.swift): A round glass lens magnifies what's under it, bending light at its rim. API: `.glassLensOnDrag() / .glassLens(at:)`. Trigger: Drag / Hover. Copying it without the package also needs `GlassLens.metal`.
+- [Swirl](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Swirl.swift): The view twists around a point like water going down a drain. API: `.swirlOnDrag() / .swirl(at:strength:)`. Trigger: Drag / Value change. Copying it without the package also needs `Swirl.metal`.
+- [Kaleidoscope](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Kaleidoscope.swift): One wedge of the view mirrored round the centre, turning into new patterns. API: `.kaleidoscope(segments:)`. Trigger: Loop / Value change. Copying it without the package also needs `Kaleidoscope.metal`.
+- [Halftone](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Halftone.swift): The view is printed in round dots, bigger where it's darker, like newsprint. API: `.halftone(dotSize:)`. Trigger: Value change. Copying it without the package also needs `Halftone.metal`.
+- [Dither](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Dither.swift): Chunky pixels in a few flat colours with a Bayer cross-hatch, like a retro handheld. API: `.dither(pixelSize:palette:)`. Trigger: Value change. Copying it without the package also needs `Dither.metal`.
+- [Thermal Vision](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Thermal.swift): Brightness turns into heat colours, from cold indigo to white hot. API: `.thermal(_:)`. Trigger: Value change. Copying it without the package also needs `Thermal.metal`.
+- [Flag Wave](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/FlagWave.swift): The view ripples like a flag on a pole, its folds catching the light. API: `.flagWave()`. Trigger: Loop. Copying it without the package also needs `FlagWave.metal`.
+- [Voronoi Cells](https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Voronoi.swift): Slowly drifting cells like stained glass, with soft seams between them. API: `VoronoiCells(colors:)`. Trigger: Loop. Copying it without the package also needs `Voronoi.metal`.
 
 ## Reference
 

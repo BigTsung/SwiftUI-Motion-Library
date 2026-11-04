@@ -1,6 +1,6 @@
 # SwiftUI Motion Library: full reference
 
-> Every effect with its API, usage, an implementation description and the complete source. Generated from the catalog; 118 effects.
+> Every effect with its API, usage, an implementation description and the complete source. Generated from the catalog; 145 effects.
 
 ## Install
 
@@ -2156,6 +2156,128 @@ private struct ExplodingTextPreview: View {
     if #available(iOS 18, macOS 15, visionOS 2, *) {
         ExplodingTextPreview()
     }
+}
+```
+
+---
+
+## Liquid Fill Text (`liquid-fill-text`)
+
+A wavy water line rises inside the letters as progress grows.
+
+- API: `LiquidFillText(_:progress:)`
+- Component: Text
+- Trigger: Value change / Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Text/LiquidFillText.swift
+- Files: Sources/MotionLibrary/Text/LiquidFillText.swift
+
+### Usage
+
+```swift
+LiquidFillText("\(Int(level * 100))%", progress: level, color: .cyan)
+    .font(.system(size: 64, weight: .black, design: .rounded))
+```
+
+### How it works
+
+Create a SwiftUI LiquidFillText(_:progress:color:waveHeight:) view (iOS 17+). Draw the Text in the colour at 15 % opacity as an empty glass, then overlay a TimelineView(.animation) with a ZStack of two wave shapes, masked by the same Text: a back wave in the colour at 45 % (phase = time × 2.2 + 1.3, amplitude 0.8 × waveHeight) and a front wave in the full colour (phase = time × 3, amplitude waveHeight, default 6 pt). The wave Shape has level, phase and amplitude, animates level, and fills everything below y = baseline + amplitude × sin(x / width × 3π + phase). A line of text has descender room below the glyphs and space above the caps, so fill between bottom = maxY − 0.2 × height + 2 × amplitude and top = minY + 0.12 × height − 2 × amplitude: baseline = bottom − (bottom − top) × level, so 0 is empty and 1 full. Clamp progress to 0…1 and animate level changes with .spring(duration: 0.9, bounce: 0.25). With Reduce Motion on, pause the timeline (the level still animates). Hide the overlay from accessibility; the label is the text.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Text that fills with liquid: a wavy water line rises inside the glyphs as
+/// `progress` goes from 0 to 1, with a second, lighter wave behind it.
+///
+/// ```swift
+/// LiquidFillText("72%", progress: 0.72, color: .cyan)
+///     .font(.system(size: 64, weight: .black, design: .rounded))
+/// ```
+public struct LiquidFillText: View {
+    private let text: String
+    private let progress: Double
+    private let color: Color
+    private let waveHeight: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - text: The string to fill.
+    ///   - progress: Fill level, 0 (empty) to 1 (full). Changes animate.
+    ///   - color: Colour of the liquid.
+    ///   - waveHeight: Height of the waves, in points.
+    public init(_ text: String, progress: Double, color: Color = .blue, waveHeight: CGFloat = 6) {
+        self.text = text
+        self.progress = min(1, max(0, progress))
+        self.color = color
+        self.waveHeight = waveHeight
+    }
+
+    public var body: some View {
+        Text(text)
+            .foregroundStyle(color.opacity(0.15))
+            .overlay {
+                TimelineView(.animation(paused: reduceMotion)) { timeline in
+                    let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+                    ZStack {
+                        LiquidWave(level: progress, phase: time * 2.2 + 1.3, amplitude: waveHeight * 0.8)
+                            .fill(color.opacity(0.45))
+                        LiquidWave(level: progress, phase: time * 3, amplitude: waveHeight)
+                            .fill(color)
+                    }
+                    .animation(.spring(duration: 0.9, bounce: 0.25), value: progress)
+                }
+                .mask { Text(text) }
+                .accessibilityHidden(true)
+            }
+            .accessibilityLabel(text)
+    }
+}
+
+/// A sine-wave water line at `level` (0 = bottom, 1 = top), filled below.
+struct LiquidWave: Shape {
+    var level: Double
+    var phase: Double
+    var amplitude: CGFloat
+
+    var animatableData: Double {
+        get { level }
+        set { level = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        // A line of text has room for descenders below the glyphs and accents
+        // above them; fill between roughly the baseline and the cap height,
+        // going a wave's height past both so 0 is empty and 1 full.
+        let bottom = rect.maxY - rect.height * 0.2 + amplitude * 2
+        let top = rect.minY + rect.height * 0.12 - amplitude * 2
+        let baseline = bottom - (bottom - top) * level
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        let steps = max(8, Int(rect.width / 4))
+        for step in 0...steps {
+            let x = rect.minX + rect.width * CGFloat(step) / CGFloat(steps)
+            let angle = Double(x / max(rect.width, 1)) * 2 * .pi * 1.5 + phase
+            path.addLine(to: CGPoint(x: x, y: baseline + amplitude * sin(angle)))
+        }
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var progress = 0.3
+        var body: some View {
+            LiquidFillText("72%", progress: progress, color: .cyan)
+                .font(.system(size: 80, weight: .black, design: .rounded))
+                .onTapGesture { progress = progress > 0.8 ? 0.1 : progress + 0.3 }
+        }
+    }
+    return Demo()
 }
 ```
 
@@ -4997,6 +5119,189 @@ extension View {
 
 ---
 
+## Pull Cord (`pull-cord`)
+
+A lamp cord toggle: pull the knob down, it clicks and springs back swinging.
+
+- API: `PullCord(isOn:)`
+- Component: Button
+- Trigger: Drag / Tap
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/PullCord.swift
+- Files: Sources/MotionLibrary/Button/PullCord.swift, Sources/MotionLibrary/Support/Haptics.swift
+
+### Usage
+
+```swift
+HStack(alignment: .top) {
+    Image(systemName: lightsOn ? "lightbulb.max.fill" : "lightbulb")
+    PullCord(isOn: $lightsOn)
+}
+```
+
+### How it works
+
+Create a SwiftUI PullCord(isOn:length:color:) toggle (iOS 17+). A VStack(spacing: 0) of a 2 pt wide Rectangle (height length + stretch, default length 70) and a 16 × 26 Capsule knob, yellow with a yellow shadow (radius 8) when on. Rotate the whole cord with .rotationEffect(swing, anchor: .top) inside a 60 pt wide frame with room below to stretch. A DragGesture(minimumDistance: 0) sets stretch = 1.6c × (1 − e^(−pull / 1.6c)) with c = 0.45 × length (rubber-band resistance) and swing = −translation.width / 6 clamped to ±18°. On release, toggle when stretch passed c or the drag was a tap (moved < 4 pt), play a light haptic, then spring stretch back to 0 with .spring(duration: 0.55, bounce: 0.6) and swing back with .spring(duration: 0.9, bounce: 0.7). With Reduce Motion on, no swing and an ease-out return. Make it one accessibility element with the button trait, value On/Off and an action that toggles.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A toggle you pull like a lamp cord: drag the knob down, it stretches with
+/// rubber-band resistance, and past the catch point it clicks, flips the
+/// value and springs back up, swinging. A tap also toggles it.
+///
+/// ```swift
+/// PullCord(isOn: $lightsOn)
+/// ```
+public struct PullCord: View {
+    @Binding private var isOn: Bool
+    private let length: CGFloat
+    private let color: Color
+
+    @State private var stretch: CGFloat = 0
+    @State private var swing: Double = 0
+    @State private var clicks = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - isOn: The value the cord toggles.
+    ///   - length: Length of the cord at rest, in points.
+    ///   - color: Colour of the cord and knob.
+    public init(isOn: Binding<Bool>, length: CGFloat = 70, color: Color = .primary) {
+        _isOn = isOn
+        self.length = length
+        self.color = color
+    }
+
+    private var catchPoint: CGFloat { length * 0.45 }
+
+    public var body: some View {
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(color.opacity(0.7))
+                .frame(width: 2, height: length + stretch)
+            Capsule()
+                .fill(isOn ? Color.yellow : color)
+                .overlay(Capsule().strokeBorder(color.opacity(0.4), lineWidth: 1))
+                .frame(width: 16, height: 26)
+                .shadow(color: isOn ? .yellow.opacity(0.7) : .clear, radius: 8)
+        }
+        .rotationEffect(.degrees(swing), anchor: .top)
+        .frame(width: 60, height: length + 26 + catchPoint * 1.6, alignment: .top)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    // Rubber band: easy at first, then stiffer.
+                    let pull = max(0, value.translation.height)
+                    stretch = catchPoint * 1.6 * (1 - exp(-pull / (catchPoint * 1.6)))
+                    swing = reduceMotion ? 0 : Double(-value.translation.width / 6).clamped(to: -18...18)
+                }
+                .onEnded { value in
+                    let pulled = stretch > catchPoint || (abs(value.translation.height) < 4 && abs(value.translation.width) < 4)
+                    if pulled { toggle() }
+                    withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .spring(duration: 0.55, bounce: 0.6)) {
+                        stretch = 0
+                    }
+                    if reduceMotion {
+                        swing = 0
+                    } else {
+                        // Swing out a little the other way, then settle.
+                        withAnimation(.spring(duration: 0.9, bounce: 0.7)) { swing = 0 }
+                    }
+                }
+        )
+        .haptic(.lightImpact, trigger: clicks)
+        .accessibilityElement()
+        .accessibilityLabel("Pull cord")
+        .accessibilityValue(isOn ? "On" : "Off")
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { toggle() }
+    }
+
+    private func toggle() {
+        isOn.toggle()
+        clicks += 1
+    }
+}
+
+private extension Double {
+    func clamped(to range: ClosedRange<Double>) -> Double { Swift.min(range.upperBound, Swift.max(range.lowerBound, self)) }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var on = false
+        var body: some View {
+            ZStack(alignment: .top) {
+                (on ? Color.yellow.opacity(0.15) : Color.black.opacity(0.05))
+                PullCord(isOn: $on)
+            }
+            .frame(width: 200, height: 220)
+        }
+    }
+    return Demo()
+}
+
+// MARK: - Haptics.swift
+// Needed by this effect: save it as its own file next to the one above.
+
+import SwiftUI
+
+/// The haptics the package plays. `SensoryFeedback` and `sensoryFeedback`
+/// need visionOS 26, but the package supports visionOS 1, so call sites use
+/// this enum and `.haptic(…)`, which does nothing on visionOS (it has no
+/// haptics anyway).
+enum Haptic: Equatable {
+    case success
+    case error
+    case lightImpact
+
+    #if !os(visionOS)
+    var feedback: SensoryFeedback {
+        switch self {
+        case .success: .success
+        case .error: .error
+        case .lightImpact: .impact(weight: .light)
+        }
+    }
+    #endif
+}
+
+extension View {
+    /// Plays `haptic` every time `trigger` changes.
+    func haptic<T: Equatable>(_ haptic: Haptic, trigger: T) -> some View {
+        #if os(visionOS)
+        self
+        #else
+        sensoryFeedback(haptic.feedback, trigger: trigger)
+        #endif
+    }
+
+    /// Plays `haptic` when `trigger` changes and `condition` returns true.
+    func haptic<T: Equatable>(_ haptic: Haptic, trigger: T, condition: @escaping (T, T) -> Bool) -> some View {
+        #if os(visionOS)
+        self
+        #else
+        sensoryFeedback(haptic.feedback, trigger: trigger, condition: condition)
+        #endif
+    }
+
+    /// Plays the haptic returned by `haptic` (if any) when `trigger` changes.
+    func haptic<T: Equatable>(trigger: T, _ haptic: @escaping (T, T) -> Haptic?) -> some View {
+        #if os(visionOS)
+        self
+        #else
+        sensoryFeedback(trigger: trigger) { old, new in haptic(old, new)?.feedback }
+        #endif
+    }
+}
+```
+
+---
+
 ## Staggered Entrance (`staggered-appear`)
 
 List items fade and rise into place one after another.
@@ -7349,6 +7654,500 @@ public extension View {
             }
         }
     }
+}
+```
+
+---
+
+## Island Pill (`island-pill`)
+
+A black pill springs open into a card and back, its contents blurring across.
+
+- API: `IslandPill(isExpanded:compact:expanded:)`
+- Component: Card & Group
+- Trigger: Tap / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/IslandPill.swift
+- Files: Sources/MotionLibrary/Card/IslandPill.swift
+
+### Usage
+
+```swift
+IslandPill(isExpanded: showsPlayer) {
+    Image(systemName: "waveform")
+} expanded: {
+    NowPlayingView()
+}
+.onTapGesture { showsPlayer.toggle() }
+```
+
+### How it works
+
+Create a SwiftUI IslandPill(isExpanded:compactSize:expandedSize:color:compact:expanded:) view (iOS 17+): a black shape that morphs between a pill (default 126 × 37, corner radius half its height) and a card (default 340 × 160, corner radius min(44, height / 2)), using a continuous RoundedRectangle as background and clip shape. Inside, a ZStack holds both contents: the compact one fades out while blurring to 8 pt and scaling to 1.6; the expanded one fades in from blur 10 pt and scale 0.6 (anchored top). Force the dark colour scheme inside. Animate every change of isExpanded with .spring(duration: 0.5, bounce: 0.32). With Reduce Motion on, skip the blur and scale and use .easeInOut(duration: 0.25).
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A black pill that springs open into a larger rounded card and back, like a
+/// live activity growing out of the top of the screen. The compact and
+/// expanded contents cross-fade with a blur while the shape morphs.
+///
+/// ```swift
+/// IslandPill(isExpanded: showsPlayer) {
+///     Image(systemName: "waveform")
+/// } expanded: {
+///     NowPlayingView()
+/// }
+/// ```
+public struct IslandPill<Compact: View, Expanded: View>: View {
+    private let isExpanded: Bool
+    private let compactSize: CGSize
+    private let expandedSize: CGSize
+    private let color: Color
+    private let compact: Compact
+    private let expanded: Expanded
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - isExpanded: Shows the expanded content when true. Changes animate.
+    ///   - compactSize: Size of the closed pill.
+    ///   - expandedSize: Size of the open card.
+    ///   - color: Fill of the pill.
+    ///   - compact: Content of the closed pill.
+    ///   - expanded: Content of the open card.
+    public init(
+        isExpanded: Bool,
+        compactSize: CGSize = CGSize(width: 126, height: 37),
+        expandedSize: CGSize = CGSize(width: 340, height: 160),
+        color: Color = .black,
+        @ViewBuilder compact: () -> Compact,
+        @ViewBuilder expanded: () -> Expanded
+    ) {
+        self.isExpanded = isExpanded
+        self.compactSize = compactSize
+        self.expandedSize = expandedSize
+        self.color = color
+        self.compact = compact()
+        self.expanded = expanded()
+    }
+
+    public var body: some View {
+        let size = isExpanded ? expandedSize : compactSize
+        let radius = isExpanded ? min(44, expandedSize.height / 2) : compactSize.height / 2
+        ZStack {
+            compact
+                .opacity(isExpanded ? 0 : 1)
+                .blur(radius: isExpanded && !reduceMotion ? 8 : 0)
+                .scaleEffect(isExpanded && !reduceMotion ? 1.6 : 1)
+            expanded
+                .opacity(isExpanded ? 1 : 0)
+                .blur(radius: isExpanded || reduceMotion ? 0 : 10)
+                .scaleEffect(isExpanded || reduceMotion ? 1 : 0.6, anchor: .top)
+        }
+        .frame(width: size.width, height: size.height)
+        .background(color, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+        .environment(\.colorScheme, .dark)
+        .animation(reduceMotion ? .easeInOut(duration: 0.25) : .spring(duration: 0.5, bounce: 0.32), value: isExpanded)
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var open = false
+        var body: some View {
+            IslandPill(isExpanded: open) {
+                HStack {
+                    Image(systemName: "music.note")
+                    Spacer()
+                    Image(systemName: "waveform").foregroundStyle(.green)
+                }
+                .padding(.horizontal, 14)
+                .foregroundStyle(.white)
+            } expanded: {
+                HStack(spacing: 14) {
+                    RoundedRectangle(cornerRadius: 12).fill(.orange.gradient).frame(width: 64, height: 64)
+                    VStack(alignment: .leading) {
+                        Text("Now Playing").font(.headline)
+                        Text("Motion Library").foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(20)
+                .foregroundStyle(.white)
+            }
+            .onTapGesture { open.toggle() }
+            .frame(height: 220, alignment: .top)
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Hover Lift (`hover-lift`)
+
+Cards rise, grow and lean towards the pointer on iPad and Mac.
+
+- API: `.hoverLift(isActive:)`
+- Component: Card & Group
+- Trigger: Hover
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/HoverLift.swift
+- Files: Sources/MotionLibrary/Card/HoverLift.swift
+
+### Usage
+
+```swift
+LazyVGrid(columns: columns) {
+    ForEach(projects) { project in
+        ProjectCard(project)
+            .hoverLift()
+    }
+}
+```
+
+### How it works
+
+Create a SwiftUI .hoverLift(scale:tilt:cornerRadius:) view modifier (iOS 17+) for pointer hover on iPad and Mac. Track the pointer with .onContinuousHover(coordinateSpace: .local) and the view size with a background GeometryReader. While hovered, scale to 1.05, offset y −4 and deepen the shadow (black 22 %, radius 18, y 12; at rest 8 %, radius 6, y 3), all with .spring(duration: 0.35, bounce: 0.3). Lean towards the pointer: with lean = location / size × 2 − 1, apply rotation3DEffect(tilt × lean.x around y) and (−tilt × lean.y around x), tilt 6°, perspective 0.6, animated with .interactiveSpring(duration: 0.25). With Reduce Motion on, don't move or scale; brighten by 0.05 instead. Add isActive (default false) to lift the view without a pointer too, for the focused or selected card. On visionOS, where apps can't see the gaze, use .contentShape(.hoverEffect, RoundedRectangle(cornerRadius:)) and the system .hoverEffect().
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Lifts the view towards the pointer on hover (iPad trackpad or mouse, Mac):
+/// it grows a little, rises, casts a deeper shadow and leans slightly
+/// towards the pointer. On visionOS, where apps can't see the gaze, it uses
+/// the system hover effect instead.
+struct HoverLiftModifier: ViewModifier {
+    var scale: CGFloat
+    var tilt: Double
+    var cornerRadius: CGFloat
+    var isActive: Bool
+
+    @State private var location: CGPoint?
+    @State private var size: CGSize = .zero
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        #if os(visionOS)
+        content
+            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .hoverEffect()
+            .scaleEffect(isActive && !reduceMotion ? scale : 1)
+            .animation(.spring(duration: 0.35, bounce: 0.3), value: isActive)
+        #else
+        let hovering = location != nil || isActive
+        // -1…1 from the centre, for the lean.
+        let lean = location.map { CGPoint(x: size.width > 0 ? $0.x / size.width * 2 - 1 : 0, y: size.height > 0 ? $0.y / size.height * 2 - 1 : 0) } ?? .zero
+        let moves = !reduceMotion
+        content
+            .scaleEffect(hovering && moves ? scale : 1)
+            .rotation3DEffect(.degrees(moves ? tilt * Double(lean.x) : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
+            .rotation3DEffect(.degrees(moves ? -tilt * Double(lean.y) : 0), axis: (x: 1, y: 0, z: 0), perspective: 0.6)
+            .offset(y: hovering && moves ? -4 : 0)
+            .shadow(color: .black.opacity(hovering ? 0.22 : 0.08), radius: hovering ? 18 : 6, y: hovering ? 12 : 3)
+            .brightness(hovering && !moves ? 0.05 : 0)
+            .animation(.spring(duration: 0.35, bounce: 0.3), value: hovering)
+            .animation(.interactiveSpring(duration: 0.25), value: lean)
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { size = proxy.size }
+                        .onChange(of: proxy.size) { _, new in size = new }
+                }
+            }
+            .onContinuousHover(coordinateSpace: .local) { phase in
+                switch phase {
+                case let .active(point): location = point
+                case .ended: location = nil
+                }
+            }
+        #endif
+    }
+}
+
+public extension View {
+    /// Lifts the view under the pointer: it scales up, rises, deepens its
+    /// shadow and leans towards the pointer. For iPad pointers and the Mac;
+    /// visionOS gets the system hover highlight.
+    ///
+    /// ```swift
+    /// ProjectCard(project)
+    ///     .hoverLift()
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - scale: Scale while hovered.
+    ///   - tilt: Maximum lean towards the pointer, in degrees.
+    ///   - cornerRadius: Corner radius of the hover shape on visionOS.
+    ///   - isActive: Also lifts the view while true, for example for the
+    ///     focused or selected card (without the lean, which follows the pointer).
+    func hoverLift(scale: CGFloat = 1.05, tilt: Double = 6, cornerRadius: CGFloat = 16, isActive: Bool = false) -> some View {
+        modifier(HoverLiftModifier(scale: scale, tilt: tilt, cornerRadius: cornerRadius, isActive: isActive))
+    }
+}
+
+#Preview {
+    HStack(spacing: 20) {
+        ForEach(0..<3) { index in
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill([Color.orange, .pink, .indigo][index].gradient)
+                .frame(width: 90, height: 120)
+                .hoverLift()
+        }
+    }
+    .padding(40)
+}
+```
+
+---
+
+## Marquee Wall (`marquee-wall`)
+
+A tilted wall of cards, columns scrolling endlessly up and down.
+
+- API: `MarqueeWall(count:columns:content:)`
+- Component: Card & Group
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/MarqueeWall.swift
+- Files: Sources/MotionLibrary/Card/MarqueeWall.swift
+
+### Usage
+
+```swift
+MarqueeWall(count: shots.count, columns: 4) { index in
+    Image(shots[index]).resizable().scaledToFill()
+}
+.frame(height: 320)
+.clipped()
+```
+
+### How it works
+
+Create a SwiftUI MarqueeWall(count:columns:itemSize:spacing:speed:angle:content:) view (iOS 17+), the scrolling showcase wall from landing pages. Each of the columns (default 4) shows perColumn = max(3, ceil(count / columns)) items twice in a VStack, cards of itemSize (110 × 140) with 14 pt continuous corners and 12 pt spacing, so the loop height is perColumn × (height + spacing). In TimelineView(.animation), distance = (time × speed × (1 + 0.15 × (column % 3))) mod loopHeight (speed 24 pt/s); even columns offset by −distance (moving up), odd ones by distance − loopHeight (moving down). Lay the columns in an HStack, rotate the whole thing by −14° and let the caller clip it. Disable hit testing. With Reduce Motion on, pause the timeline.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A tilted wall of cards whose columns scroll endlessly in alternating
+/// directions, the showcase backdrop of portfolio and landing pages.
+///
+/// ```swift
+/// MarqueeWall(count: 12, columns: 4) { index in
+///     Image("shot-\(index)").resizable().scaledToFill()
+/// }
+/// .frame(height: 300)
+/// .clipped()
+/// ```
+public struct MarqueeWall<Content: View>: View {
+    private let count: Int
+    private let columns: Int
+    private let itemSize: CGSize
+    private let spacing: CGFloat
+    private let speed: Double
+    private let angle: Angle
+    private let content: (Int) -> Content
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - count: Number of distinct items; they're shared out between the columns.
+    ///   - columns: Number of columns.
+    ///   - itemSize: Size of each card.
+    ///   - spacing: Gap between cards.
+    ///   - speed: Scroll speed, in points per second.
+    ///   - angle: Rotation of the whole wall.
+    ///   - content: Builds the card for an index in `0..<count`.
+    public init(
+        count: Int,
+        columns: Int = 4,
+        itemSize: CGSize = CGSize(width: 110, height: 140),
+        spacing: CGFloat = 12,
+        speed: Double = 24,
+        angle: Angle = .degrees(-14),
+        @ViewBuilder content: @escaping (Int) -> Content
+    ) {
+        self.count = max(1, count)
+        self.columns = max(1, columns)
+        self.itemSize = itemSize
+        self.spacing = spacing
+        self.speed = speed
+        self.angle = angle
+        self.content = content
+    }
+
+    public var body: some View {
+        // Each column shows its items twice over, so the loop is seamless.
+        let perColumn = max(3, Int(ceil(Double(count) / Double(columns))))
+        let loopHeight = CGFloat(perColumn) * (itemSize.height + spacing)
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            HStack(alignment: .top, spacing: spacing) {
+                ForEach(0..<columns, id: \.self) { column in
+                    let distance = CGFloat((time * speed * (1 + Double(column % 3) * 0.15)).truncatingRemainder(dividingBy: Double(loopHeight)))
+                    let offset = column.isMultiple(of: 2) ? -distance : distance - loopHeight
+                    VStack(spacing: spacing) {
+                        ForEach(0..<(perColumn * 2), id: \.self) { row in
+                            content((column * perColumn + row % perColumn) % count)
+                                .frame(width: itemSize.width, height: itemSize.height)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                    }
+                    .offset(y: offset)
+                    .frame(height: loopHeight, alignment: .top)
+                }
+            }
+            .rotationEffect(angle)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+#Preview {
+    let colors: [Color] = [.orange, .pink, .purple, .blue, .teal, .green, .yellow, .red]
+    return MarqueeWall(count: 8, columns: 4, itemSize: CGSize(width: 80, height: 100)) { index in
+        Rectangle().fill(colors[index].gradient)
+    }
+    .frame(width: 340, height: 240)
+    .clipped()
+    .background(.black)
+}
+```
+
+---
+
+## Photo Develop (`photo-develop`)
+
+The view develops like an instant photo, from murky dark to full colour.
+
+- API: `.photoDevelop()`
+- Component: Card & Group
+- Trigger: Appear / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/PhotoDevelop.swift
+- Files: Sources/MotionLibrary/Card/PhotoDevelop.swift
+
+### Usage
+
+```swift
+Image("snapshot")
+    .resizable()
+    .scaledToFill()
+    .frame(width: 200, height: 200)
+    .photoDevelop(trigger: shotCount)
+```
+
+### How it works
+
+Create a SwiftUI .photoDevelop(trigger:duration:) view modifier (iOS 17+) that develops the view like an instant photo on appear and whenever trigger changes. Reset progress to 0 without animation, then animate it to 1 with .easeOut(duration: 3.5). Apply the look in an Animatable modifier so each quality keeps its own pace: light = min(1, 1.6p), colour = max(0, (p − 0.25) / 0.75), focus = min(1, 1.3p); .saturation(colour), .contrast(0.55 + 0.45 × light), .brightness(−0.45 × (1 − light)), .blur(radius: 5 × (1 − focus)), and an overlay LinearGradient from blue-grey (0.2, 0.25, 0.35) to brown (0.35, 0.25, 0.18) with opacity 0.75 × (1 − colour) and .blendMode(.multiply). With Reduce Motion on, develop over 0.4 s.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// The view develops like an instant photo: it starts as a dark, murky,
+/// blue-brown smudge and over a few seconds the light, contrast, colour and
+/// focus come in.
+struct PhotoDevelopModifier<Trigger: Equatable>: ViewModifier {
+    var trigger: Trigger
+    var duration: Double
+
+    @State private var progress: Double = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .modifier(DevelopEffect(progress: progress))
+            .onAppear(perform: develop)
+            .onChange(of: trigger) { develop() }
+    }
+
+    private func develop() {
+        var reset = Transaction()
+        reset.disablesAnimations = true
+        withTransaction(reset) { progress = 0 }
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.4) : .easeOut(duration: duration)) { progress = 1 }
+    }
+}
+
+/// The look at a point of the development, 0 (blank) to 1 (developed).
+/// Animatable, so each quality keeps its own pace during the animation.
+struct DevelopEffect: ViewModifier, Animatable {
+    var progress: Double
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        // Each quality arrives at its own pace: light first, colour last.
+        let light = min(1, progress * 1.6)
+        let colour = max(0, (progress - 0.25) / 0.75)
+        let focus = min(1, progress * 1.3)
+        content
+            .saturation(colour)
+            .contrast(0.55 + 0.45 * light)
+            .brightness(-0.45 * (1 - light))
+            .blur(radius: 5 * (1 - focus))
+            .overlay {
+                // The murky blue-brown cast of an undeveloped print.
+                LinearGradient(colors: [Color(red: 0.2, green: 0.25, blue: 0.35), Color(red: 0.35, green: 0.25, blue: 0.18)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .opacity(0.75 * (1 - colour))
+                    .blendMode(.multiply)
+                    .allowsHitTesting(false)
+            }
+    }
+}
+
+public extension View {
+    /// Develops the view like an instant photo on appear, and again whenever
+    /// `trigger` changes.
+    ///
+    /// ```swift
+    /// Image("snapshot")
+    ///     .resizable()
+    ///     .scaledToFill()
+    ///     .photoDevelop()
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - trigger: Develops the photo again whenever it changes.
+    ///   - duration: Seconds from blank to fully developed.
+    func photoDevelop(trigger: some Equatable = 0, duration: Double = 3.5) -> some View {
+        modifier(PhotoDevelopModifier(trigger: trigger, duration: duration))
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var shots = 0
+        var body: some View {
+            VStack(spacing: 0) {
+                LinearGradient(colors: [.orange, .pink, .purple], startPoint: .top, endPoint: .bottom)
+                    .overlay(Image(systemName: "sun.max.fill").font(.system(size: 50)).foregroundStyle(.yellow))
+                    .frame(width: 160, height: 160)
+                    .photoDevelop(trigger: shots)
+                Color.white.frame(height: 40)
+            }
+            .padding([.top, .horizontal], 10)
+            .background(.white)
+            .shadow(radius: 6)
+            .onTapGesture { shots += 1 }
+        }
+    }
+    return Demo()
 }
 ```
 
@@ -10106,6 +10905,443 @@ public struct FlowField: View {
 
 ---
 
+## Network (`network`)
+
+Drifting points link up with lines when close, and gather at your finger.
+
+- API: `NetworkBackground()`
+- Component: Background
+- Trigger: Loop / Hover / Drag
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/NetworkBackground.swift
+- Files: Sources/MotionLibrary/Background/NetworkBackground.swift
+
+### Usage
+
+```swift
+NetworkBackground(color: .cyan)
+    .background(.black)
+    .ignoresSafeArea()
+```
+
+### How it works
+
+Create a SwiftUI NetworkBackground(count:linkDistance:color:interactive:) view (iOS 17+): a plexus of drifting points. In TimelineView(.animation) + Canvas, point i starts at a hashed position, moves at 6–20 pt/s in a hashed direction, and wraps around the edges with 20 pt of slack. Join every pair closer than linkDistance (70 pt) with a line of opacity 0.55 × (1 − d / linkDistance) and width 0.6 + 0.6 × that strength, then draw each point as a 3.6 pt dot. Track the pointer with onContinuousHover and a DragGesture(minimumDistance: 0); points within 110 pt are pulled towards it by (1 − d / 110) × 0.45 of the gap, so the web gathers under the finger. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Drifting points that link up with thin lines whenever two come close, like
+/// a constellation or a network map. Points near the pointer or finger are
+/// pulled towards it, so the web gathers where you touch.
+///
+/// ```swift
+/// NetworkBackground(color: .cyan)
+///     .background(.black)
+///     .ignoresSafeArea()
+/// ```
+public struct NetworkBackground: View {
+    private let count: Int
+    private let linkDistance: CGFloat
+    private let color: Color
+    private let interactive: Bool
+
+    @State private var pointer: CGPoint?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - count: Number of points.
+    ///   - linkDistance: Points closer than this are joined, in points.
+    ///   - color: Colour of points and lines.
+    ///   - interactive: Pull points towards the pointer or a drag.
+    public init(count: Int = 46, linkDistance: CGFloat = 70, color: Color = .white, interactive: Bool = true) {
+        self.count = max(2, count)
+        self.linkDistance = linkDistance
+        self.color = color
+        self.interactive = interactive
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            Canvas { context, size in
+                let points = (0..<count).map { position(of: $0, time: time, size: size) }
+                for i in points.indices {
+                    for j in (i + 1)..<points.count {
+                        let distance = hypot(points[i].x - points[j].x, points[i].y - points[j].y)
+                        guard distance < linkDistance else { continue }
+                        var line = Path()
+                        line.move(to: points[i])
+                        line.addLine(to: points[j])
+                        let strength = 1 - distance / linkDistance
+                        context.stroke(line, with: .color(color.opacity(0.55 * strength)), lineWidth: 0.6 + strength * 0.6)
+                    }
+                }
+                for point in points {
+                    context.fill(Path(ellipseIn: CGRect(x: point.x - 1.8, y: point.y - 1.8, width: 3.6, height: 3.6)), with: .color(color.opacity(0.9)))
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .onContinuousHover { phase in
+            guard interactive else { return }
+            if case let .active(location) = phase { pointer = location } else { pointer = nil }
+        }
+        .gesture(interactive ? DragGesture(minimumDistance: 0)
+            .onChanged { pointer = $0.location }
+            .onEnded { _ in pointer = nil } : nil)
+        .accessibilityHidden(true)
+    }
+
+    private func position(of index: Int, time: Double, size: CGSize) -> CGPoint {
+        let speed = 6 + Self.hash(index, 3) * 14 // points per second
+        let heading = Self.hash(index, 4) * 2 * .pi
+        let x = wrap(Self.hash(index, 1) * size.width + cos(heading) * speed * time, size.width)
+        let y = wrap(Self.hash(index, 2) * size.height + sin(heading) * speed * time, size.height)
+        var point = CGPoint(x: x, y: y)
+        if let pointer {
+            let dx = pointer.x - point.x, dy = pointer.y - point.y
+            let distance = hypot(dx, dy)
+            let reach: CGFloat = 110
+            if distance < reach, distance > 0.1 {
+                let pull = (1 - distance / reach) * 0.45
+                point.x += dx * pull
+                point.y += dy * pull
+            }
+        }
+        return point
+    }
+
+    /// Wraps into -20…length+20, so points leave one edge and enter the other.
+    private func wrap(_ value: Double, _ length: CGFloat) -> CGFloat {
+        let span = Double(length) + 40
+        let r = (value + 20).truncatingRemainder(dividingBy: span)
+        return CGFloat((r < 0 ? r + span : r) - 20)
+    }
+
+    private static func hash(_ a: Int, _ b: Int) -> Double {
+        var x = UInt64(truncatingIfNeeded: a &* 73_856_093 ^ b &* 19_349_663 &+ 0x51ED)
+        x = (x ^ (x >> 33)) &* 0xff51_afd7_ed55_8ccd
+        x ^= x >> 33
+        return Double(x % 10_000) / 10_000
+    }
+}
+
+#Preview {
+    NetworkBackground(color: .cyan)
+        .frame(width: 340, height: 240)
+        .background(Color(red: 0.03, green: 0.05, blue: 0.12))
+}
+```
+
+---
+
+## Topographic Lines (`topographic`)
+
+Contour lines of a shifting landscape flow like a living map.
+
+- API: `TopographicLines()`
+- Component: Background
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/TopographicLines.swift
+- Files: Sources/MotionLibrary/Background/TopographicLines.swift
+
+### Usage
+
+```swift
+TopographicLines(color: .green)
+    .background(Color(white: 0.06))
+```
+
+### How it works
+
+Create a SwiftUI TopographicLines(levels:scale:color:speed:) view (iOS 17+). In TimelineView(.animation(minimumInterval: 1/30)) + Canvas, sample a height field on an 8 pt grid: h = 0.65 × noise(x + t, y − 0.6t) + 0.35 × noise(2.1x − 0.8t, 2.1y + 7), with x, y in units of scale (90 pt), t = time × speed (0.12), and noise a smoothstep-interpolated value noise from an integer hash. For each of levels (14) thresholds spread over 0.18…0.82, trace the contour with marching squares (16 cases, edge crossings linearly interpolated, saddles drawn as two segments) into one Path and stroke it: every fifth line at 1.4 pt and 85 % opacity, the others 0.7 pt at 45 %. With Reduce Motion on, pause the timeline.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Contour lines of a slowly shifting landscape, like a topographic map
+/// coming alive: hills swell and sink and the lines flow around them, with
+/// every fifth line drawn heavier.
+///
+/// ```swift
+/// TopographicLines(color: .green)
+///     .background(Color(white: 0.06))
+/// ```
+public struct TopographicLines: View {
+    private let levels: Int
+    private let scale: Double
+    private let color: Color
+    private let speed: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - levels: Number of contour lines between the lowest and highest ground.
+    ///   - scale: Size of the hills, in points.
+    ///   - color: Colour of the lines.
+    ///   - speed: How fast the landscape shifts.
+    public init(levels: Int = 14, scale: Double = 90, color: Color = .primary, speed: Double = 0.12) {
+        self.levels = max(1, levels)
+        self.scale = max(10, scale)
+        self.color = color
+        self.speed = speed
+    }
+
+    public var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 10_000) * speed
+            Canvas { context, size in
+                let cell: CGFloat = 8
+                let columns = Int(size.width / cell) + 2, rows = Int(size.height / cell) + 2
+                // Height field on the grid corners.
+                var field = [Double](repeating: 0, count: columns * rows)
+                for row in 0..<rows {
+                    for column in 0..<columns {
+                        let x = Double(column) * cell / scale, y = Double(row) * cell / scale
+                        field[row * columns + column] = Self.noise(x + time, y - time * 0.6) * 0.65 + Self.noise(x * 2.1 - time * 0.8, y * 2.1 + 7) * 0.35
+                    }
+                }
+                for level in 1...levels {
+                    let threshold = 0.18 + 0.64 * Double(level) / Double(levels + 1)
+                    var path = Path()
+                    for row in 0..<(rows - 1) {
+                        for column in 0..<(columns - 1) {
+                            Self.contour(in: &path, field: field, columns: columns, column: column, row: row, cell: cell, threshold: threshold)
+                        }
+                    }
+                    let major = level % 5 == 0
+                    context.stroke(path, with: .color(color.opacity(major ? 0.85 : 0.45)), lineWidth: major ? 1.4 : 0.7)
+                }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+
+    /// Marching squares: the segment(s) where the field crosses `threshold`
+    /// inside one grid cell.
+    private static func contour(in path: inout Path, field: [Double], columns: Int, column: Int, row: Int, cell: CGFloat, threshold t: Double) {
+        let a = field[row * columns + column], b = field[row * columns + column + 1]
+        let c = field[(row + 1) * columns + column + 1], d = field[(row + 1) * columns + column]
+        let index = (a > t ? 8 : 0) | (b > t ? 4 : 0) | (c > t ? 2 : 0) | (d > t ? 1 : 0)
+        guard index != 0, index != 15 else { return }
+        let x = CGFloat(column) * cell, y = CGFloat(row) * cell
+        func lerp(_ v1: Double, _ v2: Double) -> CGFloat { CGFloat((t - v1) / (v2 - v1)) }
+        let top = CGPoint(x: x + cell * lerp(a, b), y: y)
+        let right = CGPoint(x: x + cell, y: y + cell * lerp(b, c))
+        let bottom = CGPoint(x: x + cell * lerp(d, c), y: y + cell)
+        let left = CGPoint(x: x, y: y + cell * lerp(a, d))
+        func segment(_ p: CGPoint, _ q: CGPoint) { path.move(to: p); path.addLine(to: q) }
+        switch index {
+        case 1, 14: segment(left, bottom)
+        case 2, 13: segment(bottom, right)
+        case 3, 12: segment(left, right)
+        case 4, 11: segment(top, right)
+        case 5: segment(left, top); segment(bottom, right)
+        case 6, 9: segment(top, bottom)
+        case 7, 8: segment(left, top)
+        case 10: segment(top, right); segment(left, bottom)
+        default: break
+        }
+    }
+
+    /// Smooth value noise in 0…1.
+    private static func noise(_ x: Double, _ y: Double) -> Double {
+        let ix = floor(x), iy = floor(y)
+        let fx = x - ix, fy = y - iy
+        let ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy)
+        let a = hash(ix, iy), b = hash(ix + 1, iy), c = hash(ix, iy + 1), d = hash(ix + 1, iy + 1)
+        return (a + (b - a) * ux) + ((c + (d - c) * ux) - (a + (b - a) * ux)) * uy
+    }
+
+    private static func hash(_ x: Double, _ y: Double) -> Double {
+        var h = UInt64(bitPattern: Int64(x) &* 374_761_393 &+ Int64(y) &* 668_265_263)
+        h = (h ^ (h >> 13)) &* 1_274_126_177
+        h ^= h >> 16
+        return Double(h % 10_000) / 10_000
+    }
+}
+
+#Preview {
+    TopographicLines(color: .mint)
+        .frame(width: 340, height: 240)
+        .background(Color(white: 0.06))
+}
+```
+
+---
+
+## Day & Night Sky (`day-night-sky`)
+
+A sky runs from starry night through dawn, noon and sunset, sun and moon arcing over.
+
+- API: `DayNightSky(time:)`
+- Component: Background
+- Trigger: Loop / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Background/DayNightSky.swift
+- Files: Sources/MotionLibrary/Background/DayNightSky.swift
+
+### Usage
+
+```swift
+DayNightSky()                // loops a day every 16 s
+    .ignoresSafeArea()
+
+DayNightSky(time: hour / 24) // follows the time of day
+```
+
+### How it works
+
+Create a SwiftUI DayNightSky(time:cycle:) view (iOS 17+). time is 0…1 (0 midnight, 0.25 sunrise, 0.5 noon, 0.75 sunset); nil loops it with TimelineView every cycle (16 s). Draw an Animatable scene in a Canvas: a vertical gradient whose top and horizon colours are interpolated between stops (night navy, deep purple dawn, pink-orange sunrise horizon, bright blue noon, golden afternoon, orange sunset horizon under violet, dusk). Fade in 50 hashed stars near night, twinkling. Put the sun and moon on opposite sides of an arc: x = mid − cos(angle) × 0.45w, y = horizon − sin(angle) × 0.75h, sun angle = (t − 0.25) × 2π, each with a blurred halo; the sun turns orange near the horizon. Finish with a band of dark hills tinted from the sky colour. Animate a fixed time with .easeInOut(duration: 1.2). With Reduce Motion on, hold at early evening (0.7).
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A sky that runs through a whole day: deep night with stars, a pink and
+/// orange dawn, blue noon, a burning sunset, and back, with the sun and moon
+/// arcing across. Loops on its own, or follows a time of day you set.
+///
+/// ```swift
+/// DayNightSky()                 // loops a day every 16 s
+/// DayNightSky(time: 0.75)       // fixed at sunset
+/// ```
+public struct DayNightSky: View {
+    private let time: Double?
+    private let cycle: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - time: Time of day, 0…1 (0 midnight, 0.25 sunrise, 0.5 noon,
+    ///     0.75 sunset). Changes animate. Leave nil to loop.
+    ///   - cycle: Seconds per day when looping.
+    public init(time: Double? = nil, cycle: Double = 16) {
+        self.time = time
+        self.cycle = max(1, cycle)
+    }
+
+    public var body: some View {
+        if let time {
+            SkyScene(time: time)
+                .animation(.easeInOut(duration: 1.2), value: time)
+                .accessibilityHidden(true)
+        } else {
+            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
+                // Reduce Motion: hold at a calm early evening.
+                let t = reduceMotion ? 0.7 : (timeline.date.timeIntervalSinceReferenceDate / cycle).truncatingRemainder(dividingBy: 1)
+                SkyScene(time: t)
+            }
+            .accessibilityHidden(true)
+        }
+    }
+}
+
+/// The sky at one time of day. Animatable, so a fixed `time` animates
+/// through the colours in between.
+struct SkyScene: View, Animatable {
+    var time: Double
+
+    var animatableData: Double {
+        get { time }
+        set { time = newValue }
+    }
+
+    private typealias RGB = (Double, Double, Double)
+
+    /// Sky colours (top, horizon) at times of day.
+    private static let stops: [(time: Double, top: RGB, horizon: RGB)] = [
+        (0.00, (0.02, 0.03, 0.10), (0.06, 0.08, 0.20)),
+        (0.20, (0.05, 0.06, 0.20), (0.25, 0.15, 0.35)),
+        (0.27, (0.30, 0.35, 0.65), (0.98, 0.60, 0.45)),
+        (0.35, (0.30, 0.60, 0.95), (0.70, 0.85, 1.00)),
+        (0.50, (0.20, 0.50, 0.95), (0.65, 0.85, 1.00)),
+        (0.68, (0.30, 0.50, 0.90), (0.95, 0.80, 0.60)),
+        (0.75, (0.35, 0.25, 0.55), (1.00, 0.45, 0.20)),
+        (0.82, (0.08, 0.08, 0.25), (0.40, 0.20, 0.35)),
+        (1.00, (0.02, 0.03, 0.10), (0.06, 0.08, 0.20)),
+    ]
+
+    var body: some View {
+        let t = time - floor(time)
+        let (top, horizon) = Self.colours(at: t)
+        Canvas { context, size in
+            let rect = CGRect(origin: .zero, size: size)
+            context.fill(Path(rect), with: .linearGradient(
+                Gradient(colors: [Self.color(top), Self.color(horizon)]),
+                startPoint: .zero, endPoint: CGPoint(x: 0, y: size.height)))
+            // Stars fade in at night and twinkle with the time.
+            let night = max(0, 1 - min(abs(t - 0) , abs(t - 1)) / 0.22) // near midnight
+            let starOpacity = max(night, max(0, 1 - abs(t - 0.1) / 0.15), max(0, 1 - abs(t - 0.9) / 0.15))
+            if starOpacity > 0.01 {
+                for index in 0..<50 {
+                    let x = Self.hash(index, 1) * size.width, y = Self.hash(index, 2) * size.height * 0.75
+                    let r = 0.5 + Self.hash(index, 3) * 1
+                    let twinkle = 0.6 + 0.4 * sin(t * 300 + Double(index))
+                    context.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(.white.opacity(starOpacity * twinkle * 0.9)))
+                }
+            }
+            // Sun and moon on opposite sides of a wide arc.
+            let horizonY = size.height * 0.92
+            func orb(at angle: Double, radius: Double, color: Color, glow: Double) {
+                let p = CGPoint(x: size.width / 2 - cos(angle) * size.width * 0.45, y: horizonY - sin(angle) * size.height * 0.75)
+                guard p.y < horizonY + radius else { return }
+                var halo = context
+                halo.addFilter(.blur(radius: radius * 0.9))
+                halo.fill(Path(ellipseIn: CGRect(x: p.x - radius * 1.6, y: p.y - radius * 1.6, width: radius * 3.2, height: radius * 3.2)), with: .color(color.opacity(glow)))
+                context.fill(Path(ellipseIn: CGRect(x: p.x - radius, y: p.y - radius, width: radius * 2, height: radius * 2)), with: .color(color))
+            }
+            let sunAngle = (t - 0.25) * 2 * .pi
+            orb(at: sunAngle, radius: 14, color: Color(red: 1, green: 0.85 - 0.3 * max(0, 1 - sin(sunAngle) * 3), blue: 0.4), glow: 0.6)
+            orb(at: sunAngle + .pi, radius: 10, color: Color(red: 0.95, green: 0.95, blue: 0.85), glow: 0.3)
+            // A dark band of hills in front.
+            var hills = Path()
+            hills.move(to: CGPoint(x: 0, y: size.height))
+            for step in 0...40 {
+                let x = size.width * Double(step) / 40
+                hills.addLine(to: CGPoint(x: x, y: horizonY - 6 - 8 * sin(Double(step) * 0.45) - 5 * sin(Double(step) * 1.3)))
+            }
+            hills.addLine(to: CGPoint(x: size.width, y: size.height))
+            hills.closeSubpath()
+            context.fill(hills, with: .color(Self.color((top.0 * 0.35, top.1 * 0.35, top.2 * 0.4))))
+        }
+    }
+
+    private static func colours(at t: Double) -> (RGB, RGB) {
+        let upper = stops.firstIndex { $0.time >= t } ?? stops.count - 1
+        let lower = max(0, upper - 1)
+        let a = stops[lower], b = stops[upper]
+        let span = b.time - a.time
+        let f = span > 0 ? (t - a.time) / span : 0
+        func mix(_ x: RGB, _ y: RGB) -> RGB { (x.0 + (y.0 - x.0) * f, x.1 + (y.1 - x.1) * f, x.2 + (y.2 - x.2) * f) }
+        return (mix(a.top, b.top), mix(a.horizon, b.horizon))
+    }
+
+    private static func color(_ rgb: RGB) -> Color { Color(red: rgb.0, green: rgb.1, blue: rgb.2) }
+
+    private static func hash(_ a: Int, _ b: Int) -> Double {
+        var x = UInt64(truncatingIfNeeded: a &* 73_856_093 ^ b &* 19_349_663 &+ 0x5C1E)
+        x = (x ^ (x >> 33)) &* 0xff51_afd7_ed55_8ccd
+        x ^= x >> 33
+        return Double(x % 10_000) / 10_000
+    }
+}
+
+#Preview {
+    DayNightSky(cycle: 10)
+        .frame(width: 340, height: 220)
+}
+```
+
+---
+
 ## Rolling Number (`rolling-number`)
 
 Digits roll like an odometer when the value changes.
@@ -10904,6 +12140,280 @@ struct GaugeArc: Shape {
             NeedleGauge(value: value)
                 .frame(width: 200, height: 200)
                 .onTapGesture { value = Double.random(in: 0...1) }
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Contribution Grid (`contribution-grid`)
+
+Activity squares pop in column by column, shaded by how busy each day was.
+
+- API: `ContributionGrid(values:)`
+- Component: Number
+- Trigger: Appear / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Number/ContributionGrid.swift
+- Files: Sources/MotionLibrary/Number/ContributionGrid.swift
+
+### Usage
+
+```swift
+ContributionGrid(values: commitsPerDay, color: .green)
+```
+
+### How it works
+
+Create a SwiftUI ContributionGrid(values:rows:color:cellSize:spacing:) view (iOS 17+) like a contributions calendar: values fill columns of rows (7) top to bottom, left to right, as 11 pt squares with 3 pt gaps and corner radius 0.22 × size. Shade each square by its share of the largest value, rounded up to quarters: 0 is secondary at 15 %, otherwise the colour at 0.25 + 0.75 × level. On appear, scale each square from 0.2 and fade it in with .spring(duration: 0.4, bounce: 0.45) delayed by 0.035 s per column + 0.02 s per row, so it sweeps in diagonally; changes of shade use the same staggered spring. With Reduce Motion on, no scaling and a plain 0.3 s ease. Make it one accessibility element whose value is "N of M days active".
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A grid of small squares shaded by value, like a contributions calendar.
+/// On appear the squares pop in column by column in a diagonal wave, and
+/// when the values change the new shades ripple through the same way.
+///
+/// ```swift
+/// ContributionGrid(values: commitsPerDay, color: .green)
+/// ```
+public struct ContributionGrid: View {
+    private let values: [Double]
+    private let rows: Int
+    private let color: Color
+    private let cellSize: CGFloat
+    private let spacing: CGFloat
+
+    @State private var shown = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - values: One value per day, filled top to bottom, then left to right.
+    ///     Shades are relative to the largest value.
+    ///   - rows: Squares per column (7 for a week).
+    ///   - color: Colour of the busiest squares.
+    ///   - cellSize: Side of a square, in points.
+    ///   - spacing: Gap between squares.
+    public init(values: [Double], rows: Int = 7, color: Color = .green, cellSize: CGFloat = 11, spacing: CGFloat = 3) {
+        self.values = values
+        self.rows = max(1, rows)
+        self.color = color
+        self.cellSize = cellSize
+        self.spacing = spacing
+    }
+
+    public var body: some View {
+        let columns = Int(ceil(Double(values.count) / Double(rows)))
+        let peak = max(values.max() ?? 0, .leastNonzeroMagnitude)
+        HStack(alignment: .top, spacing: spacing) {
+            ForEach(0..<columns, id: \.self) { column in
+                VStack(spacing: spacing) {
+                    ForEach(0..<rows, id: \.self) { row in
+                        let index = column * rows + row
+                        if index < values.count {
+                            let level = shade(values[index] / peak)
+                            RoundedRectangle(cornerRadius: cellSize * 0.22, style: .continuous)
+                                .fill(level == 0 ? Color.secondary.opacity(0.15) : color.opacity(0.25 + 0.75 * level))
+                                .frame(width: cellSize, height: cellSize)
+                                .scaleEffect(shown || reduceMotion ? 1 : 0.2)
+                                .opacity(shown ? 1 : 0)
+                                .animation(wave(column: column, row: row), value: shown)
+                                .animation(wave(column: column, row: row), value: level)
+                        }
+                    }
+                }
+            }
+        }
+        .onAppear { shown = true }
+        .accessibilityElement()
+        .accessibilityLabel("Activity grid")
+        .accessibilityValue("\(values.filter { $0 > 0 }.count) of \(values.count) days active")
+    }
+
+    /// Rounds a 0…1 share to one of five shades, like a contributions calendar.
+    private func shade(_ share: Double) -> Double {
+        guard share > 0 else { return 0 }
+        return min(1, ceil(share * 4) / 4)
+    }
+
+    private func wave(column: Int, row: Int) -> Animation {
+        if reduceMotion { return .easeInOut(duration: 0.3) }
+        return .spring(duration: 0.4, bounce: 0.45).delay(Double(column) * 0.035 + Double(row) * 0.02)
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var seed = 1
+        var body: some View {
+            ContributionGrid(values: (0..<(7 * 20)).map { index in
+                let x = sin(Double(index * seed) * 12.9898) * 43758.5453
+                let r = x - floor(x)
+                return r < 0.3 ? 0 : r * 10
+            })
+            .onTapGesture { seed += 1 }
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Analog Clock (`analog-clock`)
+
+A clock with a sweeping second hand; set a time and the hands spring to it.
+
+- API: `AnalogClock(date:)`
+- Component: Number
+- Trigger: Loop / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Number/AnalogClock.swift
+- Files: Sources/MotionLibrary/Number/AnalogClock.swift
+
+### Usage
+
+```swift
+AnalogClock()                       // live
+    .frame(width: 160, height: 160)
+
+AnalogClock(date: meeting, accent: .pink)
+```
+
+### How it works
+
+Create a SwiftUI AnalogClock(date:color:accent:timeZone:) view (iOS 17+) drawn in a Canvas at a 1:1 aspect ratio. Convert the date to local seconds = timeIntervalSinceReferenceDate + the zone's offset, so the hands only ever move forward. Face: a ring at 25 % opacity and 60 ticks (every fifth 2.5 pt and longer). Hands from s = seconds mod 43 200: hour angle s / 43 200 × 2π (length 0.5r, width 4.5 % of the side), minute (s mod 3600) / 3600 × 2π (0.75r, 3 %), second (s mod 60) / 60 × 2π in the accent colour with a short tail and a centre dot. With no date, update from TimelineView(.animation) so the second hand sweeps; with a date, make the face Animatable on seconds and animate changes with .spring(duration: 0.9, bounce: 0.3) so the hands turn forward to the new time. With Reduce Motion on, tick once per second with TimelineView(.periodic). Label it "Clock" with the time as its value.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A clock face with a smoothly sweeping second hand. Live by default; give
+/// it a date and the hands spring forward to the new time when it changes,
+/// handy for time zones, alarms or "time travel" pickers.
+///
+/// ```swift
+/// AnalogClock()                         // live
+/// AnalogClock(date: meetingTime)        // hands spring to each new time
+///     .frame(width: 160, height: 160)
+/// ```
+public struct AnalogClock: View {
+    private let date: Date?
+    private let color: Color
+    private let accent: Color
+    private let timeZone: TimeZone
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - date: The time to show. Leave nil for the current time, live.
+    ///   - color: Colour of the face markings and the hour and minute hands.
+    ///   - accent: Colour of the second hand.
+    ///   - timeZone: Time zone the hands show.
+    public init(date: Date? = nil, color: Color = .primary, accent: Color = .orange, timeZone: TimeZone = .current) {
+        self.date = date
+        self.color = color
+        self.accent = accent
+        self.timeZone = timeZone
+    }
+
+    public var body: some View {
+        Group {
+            if let date {
+                ClockFace(seconds: localSeconds(date), color: color, accent: accent)
+                    .animation(reduceMotion ? .easeInOut(duration: 0.3) : .spring(duration: 0.9, bounce: 0.3), value: date)
+            } else if reduceMotion {
+                // Reduce Motion: the second hand ticks instead of sweeping.
+                TimelineView(.periodic(from: .now, by: 1)) { timeline in
+                    ClockFace(seconds: floor(localSeconds(timeline.date)), color: color, accent: accent)
+                }
+            } else {
+                TimelineView(.animation) { timeline in
+                    ClockFace(seconds: localSeconds(timeline.date), color: color, accent: accent)
+                }
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityElement()
+        .accessibilityLabel("Clock")
+        .accessibilityValue((date ?? .now).formatted(date: .omitted, time: .shortened))
+    }
+
+    /// Seconds since a local midnight long ago, so the hands only ever move
+    /// forward as time goes on.
+    private func localSeconds(_ date: Date) -> Double {
+        date.timeIntervalSinceReferenceDate + Double(timeZone.secondsFromGMT(for: date))
+    }
+}
+
+/// The face and hands for a count of local seconds. Animatable so a change of
+/// time turns the hands rather than jumping.
+struct ClockFace: View, Animatable {
+    var seconds: Double
+    var color: Color
+    var accent: Color
+
+    var animatableData: Double {
+        get { seconds }
+        set { seconds = newValue }
+    }
+
+    var body: some View {
+        Canvas { context, size in
+            let side = min(size.width, size.height)
+            let centre = CGPoint(x: size.width / 2, y: size.height / 2)
+            let radius = side / 2
+            context.stroke(Path(ellipseIn: CGRect(x: centre.x - radius + 1, y: centre.y - radius + 1, width: side - 2, height: side - 2)), with: .color(color.opacity(0.25)), lineWidth: 2)
+            for tick in 0..<60 {
+                let major = tick % 5 == 0
+                let angle = Double(tick) / 60 * 2 * .pi
+                let outer = radius * 0.92, inner = radius * (major ? 0.8 : 0.87)
+                var path = Path()
+                path.move(to: point(centre, angle, inner))
+                path.addLine(to: point(centre, angle, outer))
+                context.stroke(path, with: .color(color.opacity(major ? 0.9 : 0.35)), style: StrokeStyle(lineWidth: major ? 2.5 : 1, lineCap: .round))
+            }
+            let s = seconds.truncatingRemainder(dividingBy: 43_200) // 12 h
+            hand(&context, centre, angle: s / 43_200 * 2 * .pi, length: radius * 0.5, width: side * 0.045, color: color)
+            hand(&context, centre, angle: s.truncatingRemainder(dividingBy: 3600) / 3600 * 2 * .pi, length: radius * 0.75, width: side * 0.03, color: color)
+            let secondAngle = s.truncatingRemainder(dividingBy: 60) / 60 * 2 * .pi
+            var second = Path()
+            second.move(to: point(centre, secondAngle + .pi, radius * 0.18))
+            second.addLine(to: point(centre, secondAngle, radius * 0.85))
+            context.stroke(second, with: .color(accent), style: StrokeStyle(lineWidth: max(1, side * 0.012), lineCap: .round))
+            let dot = side * 0.035
+            context.fill(Path(ellipseIn: CGRect(x: centre.x - dot, y: centre.y - dot, width: dot * 2, height: dot * 2)), with: .color(accent))
+        }
+    }
+
+    /// A point `distance` from the centre at a clock angle (0 = 12 o'clock).
+    private func point(_ centre: CGPoint, _ angle: Double, _ distance: Double) -> CGPoint {
+        CGPoint(x: centre.x + sin(angle) * distance, y: centre.y - cos(angle) * distance)
+    }
+
+    private func hand(_ context: inout GraphicsContext, _ centre: CGPoint, angle: Double, length: Double, width: Double, color: Color) {
+        var path = Path()
+        path.move(to: point(centre, angle + .pi, length * 0.12))
+        path.addLine(to: point(centre, angle, length))
+        context.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: width, lineCap: .round))
+    }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var date = Date()
+        var body: some View {
+            HStack(spacing: 30) {
+                AnalogClock().frame(width: 120)
+                AnalogClock(date: date, accent: .pink)
+                    .frame(width: 120)
+                    .onTapGesture { date.addTimeInterval(3 * 3600 + 1200) }
+            }
         }
     }
     return Demo()
@@ -12982,6 +14492,494 @@ public struct Fireflies: View {
     Fireflies()
         .frame(width: 320, height: 220)
         .background(Color(red: 0.02, green: 0.06, blue: 0.05))
+}
+```
+
+---
+
+## Flock (`flock`)
+
+Little arrows swim together like birds or fish, and chase your finger.
+
+- API: `Flock()`
+- Component: Particle & 3D
+- Trigger: Loop / Drag / Hover
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/Flock.swift
+- Files: Sources/MotionLibrary/Particle/Flock.swift
+
+### Usage
+
+```swift
+Flock(count: 60, color: .white)
+    .background(.indigo.gradient)
+```
+
+### How it works
+
+Create a SwiftUI Flock(count:color:speed:) view (iOS 17+) that simulates boids. Keep the boids (position, velocity) in a reference-type model stored in @State and advance it from a Canvas inside TimelineView(.animation), with dt = time since the last frame capped at 1/20 s. For each boid, look at neighbours within 46 pt: steer 5 % towards their average velocity, 1.2 % towards their centre, and away from any closer than 16 pt by 0.14 × the overlap. If there's a target (from onContinuousHover or a DragGesture(minimumDistance: 0)), add 2 % of the gap to it. Push back by 9 within 24 pt of an edge. Clamp speed between 0.6 and 1.3 × cruise (90 pt/s, 1.5× when chasing). Draw each boid as a small arrowhead path rotated to atan2 of its velocity. With Reduce Motion on, freeze them. Hide it from accessibility.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A flock of little arrows that swim together like birds or fish: each one
+/// steers to keep its distance, match its neighbours' heading and stay with
+/// the group (boids). Drag or hover and the flock chases the pointer.
+///
+/// ```swift
+/// Flock(count: 60, color: .white)
+///     .background(.indigo.gradient)
+/// ```
+public struct Flock: View {
+    private let count: Int
+    private let color: Color
+    private let speed: Double
+
+    @State private var model = FlockModel()
+    @State private var target: CGPoint?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - count: Number of boids.
+    ///   - color: Colour of the boids.
+    ///   - speed: Cruising speed, in points per second.
+    public init(count: Int = 50, color: Color = .white, speed: Double = 90) {
+        self.count = max(1, count)
+        self.color = color
+        self.speed = speed
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            Canvas { context, size in
+                model.step(to: timeline.date, size: size, count: count, speed: speed, target: target, frozen: reduceMotion)
+                for boid in model.boids {
+                    let angle = atan2(boid.velocity.dy, boid.velocity.dx)
+                    var arrow = Path()
+                    arrow.move(to: CGPoint(x: 7, y: 0))
+                    arrow.addLine(to: CGPoint(x: -5, y: 4))
+                    arrow.addLine(to: CGPoint(x: -2.5, y: 0))
+                    arrow.addLine(to: CGPoint(x: -5, y: -4))
+                    arrow.closeSubpath()
+                    let transform = CGAffineTransform(translationX: boid.position.x, y: boid.position.y).rotated(by: angle)
+                    context.fill(arrow.applying(transform), with: .color(color))
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .onContinuousHover { phase in
+            if case let .active(location) = phase { target = location } else { target = nil }
+        }
+        .gesture(DragGesture(minimumDistance: 0)
+            .onChanged { target = $0.location }
+            .onEnded { _ in target = nil })
+        .accessibilityHidden(true)
+    }
+}
+
+/// The simulation. A class so the canvas can advance it every frame without
+/// invalidating the view.
+final class FlockModel {
+    struct Boid {
+        var position: CGPoint
+        var velocity: CGVector
+    }
+
+    private(set) var boids: [Boid] = []
+    private var last: Date?
+
+    func step(to date: Date, size: CGSize, count: Int, speed: Double, target: CGPoint?, frozen: Bool) {
+        if boids.count != count { seed(count: count, size: size, speed: speed) }
+        let dt = min(1.0 / 20, last.map { date.timeIntervalSince($0) } ?? 0)
+        last = date
+        guard !frozen, dt > 0 else { return }
+
+        let neighbourhood: CGFloat = 46, personalSpace: CGFloat = 16
+        var next = boids
+        for i in boids.indices {
+            var separation = CGVector.zero, alignment = CGVector.zero, centre = CGVector.zero
+            var neighbours: CGFloat = 0
+            for j in boids.indices where j != i {
+                let dx = boids[j].position.x - boids[i].position.x
+                let dy = boids[j].position.y - boids[i].position.y
+                let distance = hypot(dx, dy)
+                guard distance < neighbourhood else { continue }
+                neighbours += 1
+                alignment.dx += boids[j].velocity.dx; alignment.dy += boids[j].velocity.dy
+                centre.dx += dx; centre.dy += dy
+                if distance < personalSpace, distance > 0.01 {
+                    separation.dx -= dx / distance * (personalSpace - distance)
+                    separation.dy -= dy / distance * (personalSpace - distance)
+                }
+            }
+            var v = boids[i].velocity
+            if neighbours > 0 {
+                v.dx += (alignment.dx / neighbours - v.dx) * 0.05 + centre.dx / neighbours * 0.012 + separation.dx * 0.14
+                v.dy += (alignment.dy / neighbours - v.dy) * 0.05 + centre.dy / neighbours * 0.012 + separation.dy * 0.14
+            }
+            let p = boids[i].position
+            if let target {
+                v.dx += (target.x - p.x) * 0.02
+                v.dy += (target.y - p.y) * 0.02
+            }
+            // Turn back from the edges.
+            let margin: CGFloat = 24, turn: CGFloat = 9
+            if p.x < margin { v.dx += turn }
+            if p.x > size.width - margin { v.dx -= turn }
+            if p.y < margin { v.dy += turn }
+            if p.y > size.height - margin { v.dy -= turn }
+            // Hold the cruising speed (a little faster when chasing).
+            let cruise = CGFloat(speed) * (target == nil ? 1 : 1.5)
+            let length = max(0.01, hypot(v.dx, v.dy))
+            let clamped = min(max(length, cruise * 0.6), cruise * 1.3)
+            v = CGVector(dx: v.dx / length * clamped, dy: v.dy / length * clamped)
+            next[i].velocity = v
+            next[i].position = CGPoint(x: p.x + v.dx * dt, y: p.y + v.dy * dt)
+        }
+        boids = next
+    }
+
+    private func seed(count: Int, size: CGSize, speed: Double) {
+        var generator = SystemRandomNumberGenerator()
+        boids = (0..<count).map { _ in
+            let angle = Double.random(in: 0..<(2 * .pi), using: &generator)
+            return Boid(
+                position: CGPoint(x: .random(in: 0...max(1, size.width), using: &generator), y: .random(in: 0...max(1, size.height), using: &generator)),
+                velocity: CGVector(dx: cos(angle) * speed, dy: sin(angle) * speed)
+            )
+        }
+    }
+}
+
+#Preview {
+    Flock()
+        .frame(width: 340, height: 240)
+        .background(Color.indigo.gradient)
+}
+```
+
+---
+
+## Ink Trail (`ink-trail`)
+
+The pointer or finger leaves puffs of ink that swell, drift up and fade.
+
+- API: `.inkTrail(color:)`
+- Component: Particle & 3D
+- Trigger: Drag / Hover
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/InkTrail.swift
+- Files: Sources/MotionLibrary/Particle/InkTrail.swift
+
+### Usage
+
+```swift
+Color.black
+    .inkTrail(color: .purple)
+```
+
+### How it works
+
+Create a SwiftUI .inkTrail(color:lifetime:size:) view modifier (iOS 17+). Record puffs (point, time, random seed) from onContinuousHover and a simultaneous DragGesture(minimumDistance: 0), skipping points closer than 0.18 × size to the last one within 50 ms and dropping puffs older than lifetime (1.2 s). Draw them in an overlay Canvas inside TimelineView(.animation) with a blur of 0.35 × size: at age a (0…1) a puff has radius size × (0.35 + 0.9a) (size 26 pt), rises 34a pt, sways sideways by sin(seed × 9 + 3a) × 14a pt, and has opacity 0.85 × (1 − a)². Disable hit testing on the overlay. With Reduce Motion on, record nothing.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// The pointer or finger leaves a soft trail of ink, like smoke from a
+/// sparkler: puffs swell, drift upwards and fade.
+struct InkTrailModifier: ViewModifier {
+    var color: Color
+    var lifetime: Double
+    var size: CGFloat
+
+    struct Puff {
+        var point: CGPoint
+        var time: Date
+        var seed: Double
+    }
+
+    @State private var puffs: [Puff] = []
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                TimelineView(.animation(paused: reduceMotion || puffs.isEmpty)) { timeline in
+                    Canvas { context, _ in
+                        context.addFilter(.blur(radius: size * 0.35))
+                        for puff in puffs {
+                            let age = timeline.date.timeIntervalSince(puff.time) / lifetime
+                            guard age >= 0, age < 1 else { continue }
+                            let radius = size * (0.35 + age * 0.9)
+                            // Drift up and sideways, a little differently per puff.
+                            let x = puff.point.x + CGFloat(sin(puff.seed * 9 + age * 3) * 14 * age)
+                            let y = puff.point.y - CGFloat(age * 34)
+                            let opacity = (1 - age) * (1 - age) * 0.85
+                            context.fill(Path(ellipseIn: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2)), with: .color(color.opacity(opacity)))
+                        }
+                    }
+                }
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
+            .onContinuousHover { phase in
+                if case let .active(location) = phase { add(location) }
+            }
+            .simultaneousGesture(DragGesture(minimumDistance: 0).onChanged { add($0.location) })
+    }
+
+    private func add(_ point: CGPoint) {
+        guard !reduceMotion else { return }
+        let now = Date()
+        // Space puffs out so a slow drag doesn't stack hundreds in one spot.
+        if let last = puffs.last, hypot(last.point.x - point.x, last.point.y - point.y) < size * 0.18, now.timeIntervalSince(last.time) < 0.05 { return }
+        puffs.removeAll { now.timeIntervalSince($0.time) > lifetime }
+        puffs.append(Puff(point: point, time: now, seed: Double.random(in: 0...1)))
+    }
+}
+
+public extension View {
+    /// Leaves a fading trail of ink or smoke wherever the pointer moves or a
+    /// finger drags over the view.
+    ///
+    /// ```swift
+    /// Color.black
+    ///     .inkTrail(color: .purple)
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - color: Colour of the ink.
+    ///   - lifetime: Seconds before a puff fades away.
+    ///   - size: Diameter of a fresh puff, in points.
+    func inkTrail(color: Color = .purple, lifetime: Double = 1.2, size: CGFloat = 26) -> some View {
+        modifier(InkTrailModifier(color: color, lifetime: lifetime, size: size))
+    }
+}
+
+#Preview {
+    Color(red: 0.06, green: 0.05, blue: 0.1)
+        .frame(width: 340, height: 240)
+        .inkTrail(color: .pink)
+}
+```
+
+---
+
+## Rain on Glass (`rain-on-glass`)
+
+Raindrops cling to a window while bigger drops slide down in fits and starts.
+
+- API: `RainOnGlass()`
+- Component: Particle & 3D
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/RainOnGlass.swift
+- Files: Sources/MotionLibrary/Particle/RainOnGlass.swift
+
+### Usage
+
+```swift
+Image("city-night")
+    .blur(radius: 6)
+    .overlay(RainOnGlass())
+```
+
+### How it works
+
+Create a SwiftUI RainOnGlass(drops:tint:) overlay (iOS 17+) in TimelineView(.animation) + Canvas. Scatter one static bead per 900 pt² at hashed positions with radius 0.8–2.6 pt. Each of the sliding drops (9) has a cycle of 3.5–7.5 s; its progress l through the cycle becomes stick-slip motion with five steps, (floor(5l) + frac(5l)³) / 5, carrying it from a hashed start near the top past the bottom edge, with a 3 pt sideways wobble and radius 3.2–5.8 pt, stretched 1.25× vertically. Behind it, leave a trail of tiny beads every 9 pt with hashed jitter. Draw every drop like a tiny lens: an ellipse filled with a diagonal gradient (tint 35 % → tint 5 % → black 35 %) plus a bright fleck at the top-left. Disable hit testing. With Reduce Motion on, pause the timeline.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Raindrops on a window: tiny beads cling to the glass while bigger drops
+/// slide down in fits and starts, leaving a dotted trail behind them. Put it
+/// over a blurred photo or a dark gradient.
+///
+/// ```swift
+/// Image("city-night")
+///     .blur(radius: 6)
+///     .overlay(RainOnGlass())
+/// ```
+public struct RainOnGlass: View {
+    private let drops: Int
+    private let tint: Color
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - drops: Number of sliding drops.
+    ///   - tint: Colour of the drops' highlights.
+    public init(drops: Int = 9, tint: Color = .white) {
+        self.drops = max(0, drops)
+        self.tint = tint
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            Canvas { context, size in
+                // Beads that cling to the glass.
+                let beads = Int(size.width * size.height / 900)
+                for index in 0..<beads {
+                    let x = Self.hash(index, 1) * size.width, y = Self.hash(index, 2) * size.height
+                    drawDrop(&context, at: CGPoint(x: x, y: y), radius: 0.8 + Self.hash(index, 3) * 1.8)
+                }
+                // Drops that slide down in fits and starts, then start over.
+                for index in 0..<drops {
+                    let cycle = 3.5 + Self.hash(index, 4) * 4
+                    let local = (time + Self.hash(index, 5) * 20).truncatingRemainder(dividingBy: cycle) / cycle
+                    // Stick-slip: a staircase smoothed with a little ease.
+                    let steps = 5.0
+                    let stepped = (floor(local * steps) + pow(local * steps - floor(local * steps), 3)) / steps
+                    let startY = -20 + Self.hash(index, 6) * size.height * 0.4
+                    let y = startY + stepped * (size.height + 40 - startY)
+                    let wobble = sin(local * 9 + Double(index)) * 3
+                    let x = Self.hash(index, 7) * size.width + wobble
+                    let radius = 3.2 + Self.hash(index, 8) * 2.6
+                    // The trail of tiny beads left behind.
+                    let trailCount = Int((y - startY) / 9)
+                    for t in 0..<max(0, trailCount) {
+                        let ty = startY + Double(t) * 9 + Self.hash(index * 31 + t, 9) * 5
+                        let tx = Self.hash(index, 7) * size.width + sin(Double(t) * 1.7 + Double(index)) * 1.5
+                        drawDrop(&context, at: CGPoint(x: tx, y: ty), radius: 0.7 + Self.hash(index * 31 + t, 10) * 0.8)
+                    }
+                    drawDrop(&context, at: CGPoint(x: x, y: y), radius: radius, stretch: 1.25)
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    /// A drop: darker rim at the bottom, bright fleck at the top-left, like a
+    /// tiny lens.
+    private func drawDrop(_ context: inout GraphicsContext, at p: CGPoint, radius r: Double, stretch: Double = 1) {
+        let rect = CGRect(x: p.x - r, y: p.y - r * stretch, width: r * 2, height: r * 2 * stretch)
+        context.fill(Path(ellipseIn: rect), with: .linearGradient(
+            Gradient(colors: [tint.opacity(0.35), tint.opacity(0.05), Color.black.opacity(0.35)]),
+            startPoint: CGPoint(x: rect.minX, y: rect.minY), endPoint: CGPoint(x: rect.maxX, y: rect.maxY)))
+        let fleck = r * 0.35
+        context.fill(Path(ellipseIn: CGRect(x: p.x - r * 0.45 - fleck / 2, y: p.y - r * stretch * 0.5 - fleck / 2, width: fleck, height: fleck)), with: .color(tint.opacity(0.8)))
+    }
+
+    private static func hash(_ a: Int, _ b: Int) -> Double {
+        var x = UInt64(truncatingIfNeeded: a &* 73_856_093 ^ b &* 19_349_663 &+ 0x7A1D)
+        x = (x ^ (x >> 33)) &* 0xff51_afd7_ed55_8ccd
+        x ^= x >> 33
+        return Double(x % 10_000) / 10_000
+    }
+}
+
+#Preview {
+    LinearGradient(colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.35, green: 0.2, blue: 0.4)], startPoint: .top, endPoint: .bottom)
+        .overlay(RainOnGlass())
+        .frame(width: 340, height: 240)
+}
+```
+
+---
+
+## Orbits (`orbits`)
+
+Planets circle a glowing star on tilted orbits, passing behind it and in front.
+
+- API: `Orbits(colors:)`
+- Component: Particle & 3D
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Particle/Orbits.swift
+- Files: Sources/MotionLibrary/Particle/Orbits.swift
+
+### Usage
+
+```swift
+Orbits(colors: [.orange, .cyan, .pink])
+    .frame(width: 240, height: 160)
+```
+
+### How it works
+
+Create a SwiftUI Orbits(colors:tilt:centerColor:) view (iOS 17+) in TimelineView(.animation) + Canvas. Each colour is a planet on its own orbit, radius spread from 0.38 to 1 × the largest radius that fits (an ellipse squashed vertically by tilt, 0.38). Period = 2.4 × (2r / maxR)^1.5 s so inner planets move faster; angle = time / period × 2π + 2.1 × index; position = centre + (cos a × r, sin a × r × tilt); depth = sin a. Stroke each orbit at white 14 %. Draw the planets with depth < 0 first, then the star (a 20 pt circle over a 32 pt blurred halo at 70 %), then the ones in front, so they pass behind and in front of it. Scale planets by 0.75 + 0.25 × (depth + 1) / 2 and dim the far ones. With Reduce Motion on, pause the timeline.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Planets circle a glowing star on tilted orbits, passing behind it and in
+/// front of it, getting smaller and dimmer on the far side, like a little
+/// solar system or an atom.
+///
+/// ```swift
+/// Orbits(colors: [.orange, .cyan, .pink])
+///     .frame(width: 240, height: 160)
+/// ```
+public struct Orbits: View {
+    private let colors: [Color]
+    private let tilt: Double
+    private let centerColor: Color
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - colors: One planet per colour, from the innermost orbit out.
+    ///   - tilt: How flat the orbits look: 0 is seen edge-on, 1 from above.
+    ///   - centerColor: Colour of the central star.
+    public init(colors: [Color] = [.orange, .cyan, .pink, .mint], tilt: Double = 0.38, centerColor: Color = .yellow) {
+        self.colors = colors
+        self.tilt = min(1, max(0.05, tilt))
+        self.centerColor = centerColor
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            Canvas { context, size in
+                let centre = CGPoint(x: size.width / 2, y: size.height / 2)
+                let maxRadius = min(size.width / 2, size.height / 2 / tilt) * 0.92
+                let planets = colors.enumerated().map { index, color in
+                    let radius = maxRadius * (0.38 + 0.62 * Double(index + 1) / Double(colors.count))
+                    // Inner planets go round faster (roughly Kepler's third law).
+                    let period = 2.4 * pow(radius / maxRadius * 2, 1.5)
+                    let angle = time / period * 2 * .pi + Double(index) * 2.1
+                    let depth = sin(angle) // > 0: in front of the star
+                    let point = CGPoint(x: centre.x + cos(angle) * radius, y: centre.y + sin(angle) * radius * tilt)
+                    return (radius: radius, point: point, depth: depth, color: color, size: 5 + Double(index % 3) * 2)
+                }
+                // Orbit rings.
+                for planet in planets {
+                    let r = planet.radius
+                    context.stroke(Path(ellipseIn: CGRect(x: centre.x - r, y: centre.y - r * tilt, width: r * 2, height: r * 2 * tilt)), with: .color(.white.opacity(0.14)), lineWidth: 1)
+                }
+                func draw(_ planet: (radius: Double, point: CGPoint, depth: Double, color: Color, size: Double)) {
+                    let scale = 0.75 + 0.25 * (planet.depth + 1) / 2
+                    let s = planet.size * scale
+                    context.fill(Path(ellipseIn: CGRect(x: planet.point.x - s, y: planet.point.y - s, width: s * 2, height: s * 2)),
+                                 with: .color(planet.color.opacity(0.55 + 0.45 * (planet.depth + 1) / 2)))
+                }
+                for planet in planets where planet.depth < 0 { draw(planet) }
+                // The star, with a soft glow.
+                var glow = context
+                glow.addFilter(.blur(radius: 10))
+                glow.fill(Path(ellipseIn: CGRect(x: centre.x - 16, y: centre.y - 16, width: 32, height: 32)), with: .color(centerColor.opacity(0.7)))
+                context.fill(Path(ellipseIn: CGRect(x: centre.x - 10, y: centre.y - 10, width: 20, height: 20)), with: .color(centerColor))
+                for planet in planets where planet.depth >= 0 { draw(planet) }
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+#Preview {
+    Orbits()
+        .frame(width: 320, height: 200)
+        .background(Color(red: 0.04, green: 0.05, blue: 0.12))
 }
 ```
 
@@ -15230,6 +17228,276 @@ struct GlitchSlice: Shape {
 
 ---
 
+## Ink Bleed (`ink-bleed`)
+
+New content spreads in like a blot of ink on wet paper, with a ragged edge.
+
+- API: `.transition(.inkBleed)`
+- Component: Transition
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Transition/InkBleed.swift
+- Files: Sources/MotionLibrary/Transition/InkBleed.swift
+
+### Usage
+
+```swift
+if showsDetail {
+    DetailCard()
+        .transition(.inkBleed(from: .topLeading))
+}
+```
+
+### How it works
+
+Create a SwiftUI Transition .inkBleed / .inkBleed(from: UnitPoint) (iOS 17+) that masks the content with an Animatable blot view whose progress is 1 when the phase is identity and 0 otherwise. The blot is a Canvas with .alphaThreshold(min: 0.5) and a blur of max(2, 0.06r), drawing into a layer: a circle of radius 0.82r at the origin plus 26 circles around it, at angle i / 26 × 2π + hashed jitter, distance r × (0.62–0.92) and radius r × (0.12–0.32). r = (1.25 × distance to the furthest corner + 30) × progress, so blurring then thresholding melts them into one ragged blot that clears the corners at 1. With Reduce Motion on, fade instead.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Reveals the view like ink dropped on wet paper: a blot spreads from a
+/// point with a blotchy, organic edge until it covers everything.
+public struct InkBleedTransition: Transition {
+    public var origin: UnitPoint
+
+    public init(origin: UnitPoint = .center) {
+        self.origin = origin
+    }
+
+    public func body(content: Content, phase: TransitionPhase) -> some View {
+        InkBleedBody(content: content, progress: phase.isIdentity ? 1 : 0, origin: origin)
+    }
+}
+
+private struct InkBleedBody<Content: View>: View {
+    let content: Content
+    let progress: Double
+    let origin: UnitPoint
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if reduceMotion {
+            content.opacity(progress)
+        } else {
+            content.mask { InkBlot(progress: progress, origin: origin) }
+        }
+    }
+}
+
+/// The blot: a circle ringed by smaller circles, merged into one ragged
+/// shape by blurring and thresholding the alpha.
+struct InkBlot: View, Animatable {
+    var progress: Double
+    var origin: UnitPoint
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    var body: some View {
+        Canvas { context, size in
+            let o = CGPoint(x: size.width * origin.x, y: size.height * origin.y)
+            let corners = [CGPoint.zero, CGPoint(x: size.width, y: 0), CGPoint(x: 0, y: size.height), CGPoint(x: size.width, y: size.height)]
+            let reach = corners.map { hypot($0.x - o.x, $0.y - o.y) }.max() ?? 0
+            // Overshoot so the ragged edge clears the corners at 1.
+            let r = (reach * 1.25 + 30) * progress
+            guard r > 0.5 else { return }
+            context.addFilter(.alphaThreshold(min: 0.5))
+            context.addFilter(.blur(radius: max(2, r * 0.06)))
+            context.drawLayer { layer in
+                layer.fill(Path(ellipseIn: CGRect(x: o.x - r * 0.82, y: o.y - r * 0.82, width: r * 1.64, height: r * 1.64)), with: .color(.black))
+                for index in 0..<26 {
+                    let angle = Double(index) / 26 * 2 * .pi + Self.hash(index, 1) * 0.4
+                    let distance = r * (0.62 + 0.3 * Self.hash(index, 2))
+                    let blob = r * (0.12 + 0.2 * Self.hash(index, 3))
+                    let c = CGPoint(x: o.x + cos(angle) * distance, y: o.y + sin(angle) * distance)
+                    layer.fill(Path(ellipseIn: CGRect(x: c.x - blob, y: c.y - blob, width: blob * 2, height: blob * 2)), with: .color(.black))
+                }
+            }
+        }
+    }
+
+    private static func hash(_ a: Int, _ b: Int) -> Double {
+        var x = UInt64(truncatingIfNeeded: a &* 73_856_093 ^ b &* 19_349_663 &+ 0x1A4B)
+        x = (x ^ (x >> 33)) &* 0xff51_afd7_ed55_8ccd
+        x ^= x >> 33
+        return Double(x % 10_000) / 10_000
+    }
+}
+
+public extension Transition where Self == InkBleedTransition {
+    /// Spreads the view in (and out) like a blot of ink on wet paper.
+    ///
+    /// ```swift
+    /// if showsDetail {
+    ///     DetailCard().transition(.inkBleed)
+    /// }
+    /// ```
+    static var inkBleed: InkBleedTransition { InkBleedTransition() }
+
+    /// Spreads the view in from `origin` like a blot of ink.
+    static func inkBleed(from origin: UnitPoint) -> InkBleedTransition { InkBleedTransition(origin: origin) }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var shown = true
+        var body: some View {
+            ZStack {
+                Color(white: 0.95)
+                if shown {
+                    LinearGradient(colors: [.indigo, .purple], startPoint: .top, endPoint: .bottom)
+                        .overlay(Text("Ink").font(.largeTitle.bold()).foregroundStyle(.white))
+                        .transition(.inkBleed(from: .topLeading))
+                }
+            }
+            .frame(width: 280, height: 180)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .onTapGesture { withAnimation(.easeInOut(duration: 1.1)) { shown.toggle() } }
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
+## Zoom Blur (`zoom-blur`)
+
+Content rushes in from the camera, blurred and trailed by echoes, then snaps sharp.
+
+- API: `.transition(.zoomBlur)`
+- Component: Transition
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Transition/ZoomBlur.swift
+- Files: Sources/MotionLibrary/Transition/ZoomBlur.swift
+
+### Usage
+
+```swift
+Text(title)
+    .id(title)
+    .transition(.zoomBlur)
+```
+
+### How it works
+
+Create a SwiftUI Transition .zoomBlur / .zoomBlur(scale:) (iOS 17+). In an Animatable modifier with amount 0 (in place) … 1 (away), scale the content to 1 + (scale − 1) × amount (scale 1.6), blur it by 14 × amount and fade it to 1 − amount. While 0 < amount < 1, add three echo copies behind it, each a little larger (+ 0.12 × step × amount), blurrier (6 + 6 × step × amount) and fainter ((1 − amount) × 0.28 / step), as a cheap radial zoom blur. The phase maps identity to 0 and both insertion and removal to 1, so it rushes in from the camera and out past it. With Reduce Motion on, fade instead.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Rushes the view in from the camera with a zoom blur: it arrives large and
+/// out of focus, trailed by fading echoes, and snaps sharp as it lands. On
+/// removal it flies past the viewer the same way.
+public struct ZoomBlurTransition: Transition {
+    public var scale: CGFloat
+
+    public init(scale: CGFloat = 1.6) {
+        self.scale = scale
+    }
+
+    public func body(content: Content, phase: TransitionPhase) -> some View {
+        ZoomBlurBody(content: content, phase: phase, scale: scale)
+    }
+}
+
+private struct ZoomBlurBody<Content: View>: View {
+    let content: Content
+    let phase: TransitionPhase
+    let scale: CGFloat
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let away = phase.isIdentity ? 0.0 : 1.0
+        if reduceMotion {
+            content.opacity(1 - away)
+        } else {
+            content.modifier(ZoomBlurEffect(amount: away, scale: scale, content: content))
+        }
+    }
+}
+
+/// The look at `amount` 0 (in place) to 1 (fully zoomed away). The echoes
+/// are fainter, larger copies, a cheap stand-in for a radial blur.
+private struct ZoomBlurEffect<Echo: View>: ViewModifier, Animatable {
+    var amount: Double
+    var scale: CGFloat
+    let content: Echo
+
+    var animatableData: Double {
+        get { amount }
+        set { amount = newValue }
+    }
+
+    func body(content view: Content) -> some View {
+        let a = CGFloat(amount)
+        view
+            .scaleEffect(1 + (scale - 1) * a)
+            .blur(radius: 14 * a)
+            .opacity(1 - amount)
+            .background {
+                if amount > 0.01 && amount < 0.99 {
+                    ZStack {
+                        ForEach(1...3, id: \.self) { step in
+                            content
+                                .scaleEffect(1 + (scale - 1) * a + CGFloat(step) * 0.12 * a)
+                                .blur(radius: 6 + 6 * CGFloat(step) * a)
+                                .opacity((1 - amount) * 0.28 / Double(step))
+                        }
+                    }
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+                }
+            }
+    }
+}
+
+public extension Transition where Self == ZoomBlurTransition {
+    /// Zooms the view in from the camera, blurred and trailed by echoes,
+    /// and out past the viewer on removal.
+    ///
+    /// ```swift
+    /// if let photo = selected {
+    ///     PhotoView(photo).transition(.zoomBlur)
+    /// }
+    /// ```
+    static var zoomBlur: ZoomBlurTransition { ZoomBlurTransition() }
+
+    /// Zooms the view in from `scale` times its size.
+    static func zoomBlur(scale: CGFloat) -> ZoomBlurTransition { ZoomBlurTransition(scale: scale) }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var shown = true
+        var body: some View {
+            ZStack {
+                if shown {
+                    Text("WARP")
+                        .font(.system(size: 54, weight: .black, design: .rounded))
+                        .foregroundStyle(.indigo)
+                        .transition(.zoomBlur)
+                }
+            }
+            .frame(width: 280, height: 180)
+            .onTapGesture { withAnimation(.easeOut(duration: 0.6)) { shown.toggle() } }
+        }
+    }
+    return Demo()
+}
+```
+
+---
+
 ## Water Ripple (`water-ripple`)
 
 A real ripple distorts the view's pixels outward from a tap.
@@ -16000,6 +18268,1383 @@ static float motionNoise(float2 p) {
     if (progress <= 0.0) { glow = 0.0; }
     half4 burnt = mix(color, edge * color.a, half(glow));
     return burnt;
+}
+*/
+```
+
+---
+
+## Disintegrate (`disintegrate`)
+
+The view crumbles into grains of sand that blow away on the wind.
+
+- API: `.disintegrate(_:) / .transition(.disintegrate)`
+- Component: Shader
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Disintegrate.swift
+- Files: Sources/MotionShaders/Disintegrate.swift, Sources/MotionShaders/Shaders/Disintegrate.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+Avatar()
+    .disintegrate(isGone ? 1 : 0)
+    .animation(.easeIn(duration: 1.6), value: isGone)
+
+if !isDeleted {
+    MessageRow().transition(.disintegrate)
+}
+```
+
+### How it works
+
+Create a SwiftUI .disintegrate(_ progress:wind:grain:) view modifier and matching Transition (iOS 17+) using a Metal [[stitchable]] layer shader with (position, layer, float2 size, float progress, float grain, float2 wind). Split the view into grain-sized cells (2 pt) with two hashes n, n2 per cell. along = dot(position / size, normalize(wind)) × 0.5 + 0.5; delay = (1 − along) × 0.55 + 0.3n; local = clamp((1.4 × progress − delay) / 0.5, 0, 1). If local is 0, return the layer unchanged; if n2 < 1.15 × local, return clear (the grain is gone); otherwise sample the layer at position − (wind × local² + (sin 40n, cos 31n) × local × 6 × grain) and multiply by 1 − local. Apply it through .visualEffect so the shader gets the size, with maxSampleOffset |wind| + 6 × grain, in an Animatable modifier on progress. The transition maps identity to 0 and removal/insertion to 1 (default wind (140, −60)); with Reduce Motion on it fades instead.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Crumbles the view into grains of sand that blow away on the wind, the
+/// grains nearest the wind's source going first. `progress` is animatable,
+/// and there's a matching transition. Rendered with a Metal `layerEffect`
+/// (`Shaders/Disintegrate.metal`).
+struct DisintegrateModifier: ViewModifier, Animatable {
+    var progress: Double
+    var wind: CGVector
+    var grain: Double
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        let progress = Float(progress), grain = Float(max(1, grain))
+        let wind = CGPoint(x: wind.dx, y: wind.dy)
+        let reach = CGSize(width: abs(wind.x) + Double(grain) * 6, height: abs(wind.y) + Double(grain) * 6)
+        return content.visualEffect { effect, proxy in
+            effect.layerEffect(
+                motionShaders.motionDisintegrate(.float2(proxy.size), .float(progress), .float(grain), .float2(wind)),
+                maxSampleOffset: reach,
+                isEnabled: progress > 0
+            )
+        }
+    }
+}
+
+/// Blows the view away as sand on removal and gathers it back on insertion.
+public struct DisintegrateTransition: Transition {
+    public var wind: CGVector
+
+    public init(wind: CGVector = CGVector(dx: 140, dy: -60)) {
+        self.wind = wind
+    }
+
+    public func body(content: Content, phase: TransitionPhase) -> some View {
+        DisintegrateBody(content: content, phase: phase, wind: wind)
+    }
+}
+
+private struct DisintegrateBody<Content: View>: View {
+    let content: Content
+    let phase: TransitionPhase
+    let wind: CGVector
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if reduceMotion {
+            content.opacity(phase.isIdentity ? 1 : 0)
+        } else {
+            content.modifier(DisintegrateModifier(progress: phase.isIdentity ? 0 : 1, wind: wind, grain: 2))
+        }
+    }
+}
+
+public extension View {
+    /// Crumbles the view into blowing sand: 0 shows it whole, 1 has blown
+    /// it all away. Animate `progress` to make it go.
+    ///
+    /// ```swift
+    /// Avatar()
+    ///     .disintegrate(isGone ? 1 : 0)
+    ///     .animation(.easeIn(duration: 1.6), value: isGone)
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameters:
+    ///   - progress: 0…1.
+    ///   - wind: Where the grains blow, and how far, in points.
+    ///   - grain: Size of a grain, in points.
+    func disintegrate(_ progress: Double, wind: CGVector = CGVector(dx: 140, dy: -60), grain: Double = 2) -> some View {
+        modifier(DisintegrateModifier(progress: progress, wind: wind, grain: grain))
+    }
+}
+
+public extension Transition where Self == DisintegrateTransition {
+    /// Blows the view away as sand (and gathers it back in on insertion).
+    ///
+    /// ```swift
+    /// if !isDeleted {
+    ///     MessageRow().transition(.disintegrate)
+    /// }
+    /// ```
+    static var disintegrate: DisintegrateTransition { DisintegrateTransition() }
+
+    /// Blows the view away as sand along `wind`, in points.
+    static func disintegrate(wind: CGVector) -> DisintegrateTransition { DisintegrateTransition(wind: wind) }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var gone = false
+        var body: some View {
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.orange.gradient)
+                .overlay(Image(systemName: "person.fill").font(.system(size: 60)).foregroundStyle(.white))
+                .frame(width: 160, height: 160)
+                .disintegrate(gone ? 1 : 0)
+                .onTapGesture { withAnimation(.easeIn(duration: 1.6)) { gone.toggle() } }
+        }
+    }
+    return Demo()
+}
+
+// MARK: - Disintegrate.metal
+// Save the shader below as Disintegrate.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for Disintegrate.swift (SwiftUI layer effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// A cheap, stable hash of a 2D point into 0...1.
+static float motionHash(float2 p) {
+    p = fract(p * float2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+/// Crumbles the layer into grains of sand that blow away on the wind,
+/// sweeping from the leading edge to the trailing one as `progress` goes
+/// from 0 to 1.
+[[ stitchable ]] half4 motionDisintegrate(float2 position, SwiftUI::Layer layer, float2 size, float progress, float grain, float2 wind) {
+    float2 cell = floor(position / grain);
+    float n = motionHash(cell);
+    float n2 = motionHash(cell + 17.0);
+    // Grains leave in a sweep along the wind, with some randomness.
+    float2 direction = normalize(wind);
+    float along = dot(position / max(size, float2(1.0)), direction) * 0.5 + 0.5;
+    float delay = (1.0 - along) * 0.55 + n * 0.3;
+    float local = clamp((progress * 1.4 - delay) / 0.5, 0.0, 1.0);
+    if (local <= 0.0) { return layer.sample(position); }
+    // A grain that has left: some vanish, the rest are drawn from upwind.
+    if (n2 < local * 1.15) { return half4(0); }
+    float2 drift = wind * local * local + float2(sin(n * 40.0), cos(n * 31.0)) * local * grain * 6.0;
+    half4 colour = layer.sample(position - drift);
+    return colour * half(1.0 - local);
+}
+*/
+```
+
+---
+
+## Genie (`genie`)
+
+The view pinches and pours into a point below it, like minimising a window.
+
+- API: `.genie(_:toward:) / .transition(.genie)`
+- Component: Shader
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Genie.swift
+- Files: Sources/MotionShaders/Genie.swift, Sources/MotionShaders/Shaders/Genie.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+Panel()
+    .genie(isMinimised ? 1 : 0, toward: 0.8)
+    .animation(.easeInOut(duration: 0.7), value: isMinimised)
+```
+
+### How it works
+
+Create a SwiftUI .genie(_ progress:toward:) view modifier and matching Transition (iOS 17+) using a Metal [[stitchable]] distortion shader (position, float2 size, float progress, float target) that returns where to sample. pinch = clamp(2p, 0, 1), slide = clamp(2p − 1, 0, 1). Return an off-view point below the bottom edge (that part has gone into the target, and maxSampleOffset widens the drawn area). y = position.y − slide × height (return an off-view point if y < 0). bend = smoothstep(0, 1, clamp(y / height + slide, 0, 1)) and squeeze = pinch × bend; the row's edges move from 0 and width towards target × width ∓ 3 pt by squeeze. Return off-view for x outside them, else x = (position.x − left) / (right − left) × width. So the bottom first pinches towards the target in an S-curve, then the whole shape slides down into it. Apply through .visualEffect for the size, maxSampleOffset = size, in an Animatable modifier on progress. The transition defaults to the middle of the bottom edge; with Reduce Motion on it fades instead.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// The "genie" minimise: the view pinches towards a point on its bottom edge
+/// and pours down into it. `progress` is animatable, and there's a matching
+/// transition. Rendered with a Metal `distortionEffect`
+/// (`Shaders/Genie.metal`).
+struct GenieModifier: ViewModifier, Animatable {
+    var progress: Double
+    var target: Double
+
+    var animatableData: Double {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        let progress = Float(progress), target = Float(target)
+        return content.visualEffect { effect, proxy in
+            effect.distortionEffect(
+                motionShaders.motionGenie(.float2(proxy.size), .float(progress), .float(target)),
+                maxSampleOffset: proxy.size,
+                isEnabled: progress > 0
+            )
+        }
+    }
+}
+
+/// Sucks the view into a point below it on removal, and pours it back out on
+/// insertion.
+public struct GenieTransition: Transition {
+    public var target: Double
+
+    public init(target: Double = 0.5) {
+        self.target = target
+    }
+
+    public func body(content: Content, phase: TransitionPhase) -> some View {
+        GenieBody(content: content, phase: phase, target: target)
+    }
+}
+
+private struct GenieBody<Content: View>: View {
+    let content: Content
+    let phase: TransitionPhase
+    let target: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if reduceMotion {
+            content.opacity(phase.isIdentity ? 1 : 0)
+        } else {
+            content.modifier(GenieModifier(progress: phase.isIdentity ? 0 : 1, target: target))
+        }
+    }
+}
+
+public extension View {
+    /// Pours the view into a point on its bottom edge: 0 shows it, 1 has it
+    /// fully minimised.
+    ///
+    /// ```swift
+    /// Window()
+    ///     .genie(isMinimised ? 1 : 0, toward: 0.8)
+    ///     .animation(.easeIn(duration: 0.6), value: isMinimised)
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameters:
+    ///   - progress: 0…1.
+    ///   - target: Where along the bottom edge it goes, 0 (left) to 1 (right).
+    func genie(_ progress: Double, toward target: Double = 0.5) -> some View {
+        modifier(GenieModifier(progress: progress, target: min(1, max(0, target))))
+    }
+}
+
+public extension Transition where Self == GenieTransition {
+    /// Minimises the view into the middle of its bottom edge, genie style.
+    ///
+    /// ```swift
+    /// if isOpen {
+    ///     Panel().transition(.genie)
+    /// }
+    /// ```
+    static var genie: GenieTransition { GenieTransition() }
+
+    /// Minimises the view into a point on its bottom edge, 0 (left) to 1 (right).
+    static func genie(toward target: Double) -> GenieTransition { GenieTransition(target: min(1, max(0, target))) }
+}
+
+#Preview {
+    struct Demo: View {
+        @State private var minimised = false
+        var body: some View {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.blue.gradient)
+                .overlay(Text("Window").font(.title.bold()).foregroundStyle(.white))
+                .frame(width: 220, height: 150)
+                .genie(minimised ? 1 : 0, toward: 0.8)
+                .frame(height: 260, alignment: .top)
+                .onTapGesture { withAnimation(.easeInOut(duration: 0.8)) { minimised.toggle() } }
+        }
+    }
+    return Demo()
+}
+
+// MARK: - Genie.metal
+// Save the shader below as Genie.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for Genie.swift (SwiftUI distortion effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// The macOS-style "genie" minimise: the bottom of the view pinches towards
+/// `target` (0...1 along the bottom edge) while the rest bends after it,
+/// then the whole shape slides down and into that point.
+[[ stitchable ]] float2 motionGenie(float2 position, float2 size, float progress, float target) {
+    float pinch = clamp(progress * 2.0, 0.0, 1.0);
+    float slide = clamp(progress * 2.0 - 1.0, 0.0, 1.0);
+    // Anything that has slid past the bottom edge has gone into the target.
+    if (position.y > size.y) { return float2(-1e5); }
+    // Slide: content moves down by up to the full height.
+    float y = position.y - slide * size.y;
+    if (y < 0.0) { return float2(-1e5); }
+    float v = clamp(y / size.y, 0.0, 1.0);
+    // The pinch grows towards the bottom with an S-curve, and reaches higher
+    // up as the slide progresses.
+    float bend = smoothstep(0.0, 1.0, clamp(v + slide, 0.0, 1.0));
+    float squeeze = pinch * bend;
+    float targetX = target * size.x;
+    float narrow = 6.0;
+    float left = mix(0.0, targetX - narrow * 0.5, squeeze);
+    float right = mix(size.x, targetX + narrow * 0.5, squeeze);
+    if (position.x < left || position.x > right) { return float2(-1e5); }
+    float x = (position.x - left) / max(right - left, 0.001) * size.x;
+    return float2(x, y);
+}
+*/
+```
+
+---
+
+## Glass Lens (`glass-lens`)
+
+A round glass lens magnifies what's under it, bending light at its rim.
+
+- API: `.glassLensOnDrag() / .glassLens(at:)`
+- Component: Shader
+- Trigger: Drag / Hover
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/GlassLens.swift
+- Files: Sources/MotionShaders/GlassLens.swift, Sources/MotionShaders/Shaders/GlassLens.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+ArticleView()
+    .glassLensOnDrag(radius: 60)
+```
+
+### How it works
+
+Create SwiftUI .glassLens(at:radius:magnification:) and .glassLensOnDrag() view modifiers (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float2 centre, float radius, float magnification). u = distance from centre / radius. Outside (u ≥ 1), darken the layer by up to 22 % in a soft ring that fades out by u = 1.12. Inside, sample at centre + offset × scale with scale = mix(1 / magnification, 1, u³), so the middle is magnified (1.8×) and the rim isn't; sample red at scale + 0.035u⁴ and blue at scale − 0.035u⁴ for colour fringing. Brighten towards white by a rim term smoothstep(0.86, 1, u) × 0.35 plus a specular spot centred at (−0.38, −0.42) × radius that fades over 0.32 × radius. maxSampleOffset = radius. The drag version follows a DragGesture(minimumDistance: 0) and the hover location, starting in the middle.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A round glass lens over the view: it magnifies what's under it, bends the
+/// light harder towards the rim with a hint of colour fringing, and casts a
+/// soft shadow. Rendered with a Metal `layerEffect`
+/// (`Shaders/GlassLens.metal`).
+struct GlassLensModifier: ViewModifier {
+    var centre: CGPoint
+    var radius: Double
+    var magnification: Double
+
+    func body(content: Content) -> some View {
+        content.layerEffect(
+            motionShaders.motionGlassLens(.float2(centre), .float(radius), .float(max(1, magnification))),
+            maxSampleOffset: CGSize(width: radius, height: radius)
+        )
+    }
+}
+
+/// A lens that follows a dragging finger or the pointer.
+struct GlassLensOnDragModifier: ViewModifier {
+    var radius: Double
+    var magnification: Double
+
+    @State private var centre: CGPoint?
+    @State private var size: CGSize = .zero
+
+    func body(content: Content) -> some View {
+        content
+            .modifier(GlassLensModifier(centre: centre ?? CGPoint(x: size.width / 2, y: size.height / 2), radius: radius, magnification: magnification))
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear { size = proxy.size }
+                        .onChange(of: proxy.size) { _, new in size = new }
+                }
+            }
+            .gesture(DragGesture(minimumDistance: 0).onChanged { value in
+                withAnimation(.interactiveSpring(duration: 0.2)) { centre = value.location }
+            })
+            .onContinuousHover { phase in
+                if case let .active(location) = phase { centre = location }
+            }
+    }
+}
+
+public extension View {
+    /// Puts a glass lens over the view at `centre`.
+    ///
+    /// ```swift
+    /// MapView()
+    ///     .glassLens(at: point, radius: 60)
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameters:
+    ///   - centre: Centre of the lens, in the view's coordinates.
+    ///   - radius: Radius of the lens, in points.
+    ///   - magnification: Zoom at the middle of the lens.
+    func glassLens(at centre: CGPoint, radius: Double = 56, magnification: Double = 1.8) -> some View {
+        modifier(GlassLensModifier(centre: centre, radius: radius, magnification: magnification))
+    }
+
+    /// Puts a glass lens over the view that follows a dragging finger or the
+    /// pointer. It starts in the middle.
+    ///
+    /// ```swift
+    /// Text(article).glassLensOnDrag()
+    /// ```
+    func glassLensOnDrag(radius: Double = 56, magnification: Double = 1.8) -> some View {
+        modifier(GlassLensOnDragModifier(radius: radius, magnification: magnification))
+    }
+}
+
+#Preview {
+    VStack(alignment: .leading, spacing: 6) {
+        ForEach(0..<6) { _ in
+            Text("Drag the lens over this text to read it.").font(.caption)
+        }
+    }
+    .padding()
+    .frame(width: 280, height: 180)
+    .background(.white)
+    .glassLensOnDrag()
+}
+
+// MARK: - GlassLens.metal
+// Save the shader below as GlassLens.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for GlassLens.swift (SwiftUI layer effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// A round glass lens over the layer: magnifies the middle, bends the light
+/// harder towards the rim (splitting the colours a little), adds a bright rim
+/// and specular highlight, and drops a soft shadow just outside.
+[[ stitchable ]] half4 motionGlassLens(float2 position, SwiftUI::Layer layer, float2 centre, float radius, float magnification) {
+    float2 offset = position - centre;
+    float d = length(offset);
+    float u = d / radius;
+    if (u >= 1.0) {
+        half4 colour = layer.sample(position);
+        // Soft shadow ring outside the rim.
+        float shadow = (1.0 - smoothstep(1.0, 1.12, u)) * 0.22;
+        return half4(colour.rgb * half(1.0 - shadow), colour.a);
+    }
+    // Strong magnification in the middle easing to none at the rim.
+    float scale = mix(1.0 / magnification, 1.0, pow(u, 3.0));
+    float split = 0.035 * pow(u, 4.0);
+    half4 g = layer.sample(centre + offset * scale);
+    half r = layer.sample(centre + offset * (scale + split)).r;
+    half b = layer.sample(centre + offset * (scale - split)).b;
+    half4 colour = half4(r, g.g, b, g.a);
+    // Bright rim, and a highlight up and to the left.
+    float rim = smoothstep(0.86, 1.0, u) * 0.35;
+    float2 light = centre + float2(-0.38, -0.42) * radius;
+    float spec = (1.0 - smoothstep(0.0, radius * 0.32, length(position - light))) * 0.45;
+    half glow = half(rim + spec);
+    colour.rgb = colour.rgb + glow * (1.0h - colour.rgb);
+    colour.a = max(colour.a, glow);
+    return colour;
+}
+*/
+```
+
+---
+
+## Swirl (`swirl`)
+
+The view twists around a point like water going down a drain.
+
+- API: `.swirlOnDrag() / .swirl(at:strength:)`
+- Component: Shader
+- Trigger: Drag / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Swirl.swift
+- Files: Sources/MotionShaders/Swirl.swift, Sources/MotionShaders/Shaders/Swirl.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+Image("galaxy")
+    .swirlOnDrag()
+
+Logo()
+    .swirl(at: centre, strength: isStirred ? 4 : 0)
+    .animation(.spring(duration: 1), value: isStirred)
+```
+
+### How it works
+
+Create SwiftUI .swirl(at:radius:strength:) and .swirlOnDrag(radius:strength:) view modifiers (iOS 17+) using a Metal [[stitchable]] distortion shader (position, float2 centre, float radius, float strength): within radius (110 pt), rotate the offset from the centre by strength × t² where t = 1 − distance / radius, so it twists most at the centre and not at all at the edge; outside, return the position unchanged. Animate strength in an Animatable modifier, maxSampleOffset = radius. The drag version moves the centre to the finger and sets strength to 4 × min(1, 0.35 + travel / 160) with an interactive spring, then springs back to 0 with .spring(duration: 0.8, bounce: 0.45) on release. With Reduce Motion on, the drag doesn't twist.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Twists the view around a point like water going down a drain.
+/// `strength` is animatable. Rendered with a Metal `distortionEffect`
+/// (`Shaders/Swirl.metal`).
+struct SwirlModifier: ViewModifier, Animatable {
+    var centre: CGPoint
+    var radius: Double
+    var strength: Double
+
+    var animatableData: Double {
+        get { strength }
+        set { strength = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        content.distortionEffect(
+            motionShaders.motionSwirl(.float2(centre), .float(radius), .float(strength)),
+            maxSampleOffset: CGSize(width: radius, height: radius),
+            isEnabled: abs(strength) > 0.001
+        )
+    }
+}
+
+/// Swirls wherever a finger drags, and untwists with a spring on release.
+struct SwirlOnDragModifier: ViewModifier {
+    var radius: Double
+    var strength: Double
+
+    @State private var centre: CGPoint = .zero
+    @State private var amount: Double = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .modifier(SwirlModifier(centre: centre, radius: radius, strength: amount))
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        guard !reduceMotion else { return }
+                        centre = value.location
+                        // Twist harder the further the finger travels.
+                        let travel = hypot(value.translation.width, value.translation.height)
+                        withAnimation(.interactiveSpring(duration: 0.3)) {
+                            amount = strength * min(1, 0.35 + travel / 160)
+                        }
+                    }
+                    .onEnded { _ in
+                        withAnimation(.spring(duration: 0.8, bounce: 0.45)) { amount = 0 }
+                    }
+            )
+    }
+}
+
+public extension View {
+    /// Twists the view around `centre`. Animate `strength` to stir it.
+    ///
+    /// ```swift
+    /// Image("latte")
+    ///     .swirl(at: point, strength: isStirred ? 4 : 0)
+    ///     .animation(.spring(duration: 1), value: isStirred)
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameters:
+    ///   - centre: Centre of the twist, in the view's coordinates.
+    ///   - radius: Reach of the twist, in points.
+    ///   - strength: Twist at the centre, in radians (negative turns the other way).
+    func swirl(at centre: CGPoint, radius: Double = 110, strength: Double) -> some View {
+        modifier(SwirlModifier(centre: centre, radius: radius, strength: strength))
+    }
+
+    /// Swirls the view under a dragging finger and springs back on release.
+    ///
+    /// ```swift
+    /// Image("galaxy")
+    ///     .swirlOnDrag()
+    /// ```
+    func swirlOnDrag(radius: Double = 110, strength: Double = 4) -> some View {
+        modifier(SwirlOnDragModifier(radius: radius, strength: strength))
+    }
+}
+
+#Preview {
+    LinearGradient(colors: [.blue, .purple, .pink], startPoint: .top, endPoint: .bottom)
+        .overlay(Text("SWIRL").font(.system(size: 50, weight: .black)).foregroundStyle(.white))
+        .frame(width: 280, height: 200)
+        .swirlOnDrag()
+}
+
+// MARK: - Swirl.metal
+// Save the shader below as Swirl.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for Swirl.swift (SwiftUI distortion effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// Twists the view around `centre` like water going down a drain: pixels
+/// within `radius` are rotated, most at the centre and none at the edge.
+[[ stitchable ]] float2 motionSwirl(float2 position, float2 centre, float radius, float strength) {
+    float2 offset = position - centre;
+    float d = length(offset);
+    if (d >= radius) { return position; }
+    float t = 1.0 - d / radius;
+    float angle = strength * t * t;
+    float c = cos(angle), s = sin(angle);
+    return centre + float2(c * offset.x - s * offset.y, s * offset.x + c * offset.y);
+}
+*/
+```
+
+---
+
+## Kaleidoscope (`kaleidoscope`)
+
+One wedge of the view mirrored round the centre, turning into new patterns.
+
+- API: `.kaleidoscope(segments:)`
+- Component: Shader
+- Trigger: Loop / Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Kaleidoscope.swift
+- Files: Sources/MotionShaders/Kaleidoscope.swift, Sources/MotionShaders/Shaders/Kaleidoscope.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+Image("flowers")
+    .kaleidoscope(segments: 8)
+    .clipShape(Circle())
+```
+
+### How it works
+
+Create a SwiftUI .kaleidoscope(segments:rotation:spins:) view modifier (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float2 size, float segments, float rotation). Around the centre, take the polar angle modulo the wedge 2π / segments and mirror the second half of each wedge (a > wedge / 2 → wedge − a), add rotation, and sample at centre + r' × (cos a, sin a), where r' folds the radius back into the view (reach − |r mod 2 reach − reach|, reach = half the shorter side) so the corners aren't empty. Pass the size through .visualEffect with maxSampleOffset = size, in an Animatable modifier on rotation. When spins is on, add time × 0.25 rad from TimelineView(.animation) so the pattern keeps blooming. With Reduce Motion on, don't spin.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Turns the view into a kaleidoscope: one wedge is mirrored around the
+/// centre, and turning the wedge makes the pattern bloom and fold.
+/// Rendered with a Metal `layerEffect` (`Shaders/Kaleidoscope.metal`).
+struct KaleidoscopeModifier: ViewModifier {
+    var segments: Int
+    var rotation: Angle
+    var spins: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        if spins && !reduceMotion {
+            TimelineView(.animation) { timeline in
+                let turn = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600) * 0.25
+                content.modifier(KaleidoscopeEffect(segments: segments, rotation: rotation.radians + turn))
+            }
+        } else {
+            content.modifier(KaleidoscopeEffect(segments: segments, rotation: rotation.radians))
+        }
+    }
+}
+
+struct KaleidoscopeEffect: ViewModifier, Animatable {
+    var segments: Int
+    var rotation: Double
+
+    var animatableData: Double {
+        get { rotation }
+        set { rotation = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        let segments = Float(max(2, segments)), rotation = Float(rotation)
+        return content.visualEffect { effect, proxy in
+            effect.layerEffect(
+                motionShaders.motionKaleidoscope(.float2(proxy.size), .float(segments), .float(rotation)),
+                maxSampleOffset: proxy.size
+            )
+        }
+    }
+}
+
+public extension View {
+    /// Mirrors the view into a kaleidoscope with `segments` reflections.
+    ///
+    /// ```swift
+    /// Image("flowers")
+    ///     .kaleidoscope(segments: 8)           // turns on its own
+    /// Pattern()
+    ///     .kaleidoscope(segments: 6, rotation: angle, spins: false)
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameters:
+    ///   - segments: Number of mirrored wedges.
+    ///   - rotation: Which part of the view the wedge samples; animatable.
+    ///   - spins: Keep turning the wedge, so the pattern keeps changing.
+    func kaleidoscope(segments: Int = 8, rotation: Angle = .zero, spins: Bool = true) -> some View {
+        modifier(KaleidoscopeModifier(segments: segments, rotation: rotation, spins: spins))
+    }
+}
+
+#Preview {
+    AngularGradient(colors: [.red, .orange, .yellow, .green, .blue, .purple, .red], center: .topLeading)
+        .overlay(Image(systemName: "leaf.fill").font(.system(size: 60)).foregroundStyle(.white).offset(x: 40, y: 20))
+        .frame(width: 240, height: 240)
+        .kaleidoscope(segments: 8)
+}
+
+// MARK: - Kaleidoscope.metal
+// Save the shader below as Kaleidoscope.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for Kaleidoscope.swift (SwiftUI layer effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// Mirrors one wedge of the layer around the centre, `segments` times, like
+/// a kaleidoscope. `rotation` turns the wedge being sampled, so animating it
+/// makes the pattern bloom and fold.
+[[ stitchable ]] half4 motionKaleidoscope(float2 position, SwiftUI::Layer layer, float2 size, float segments, float rotation) {
+    float2 centre = size * 0.5;
+    float2 p = position - centre;
+    float r = length(p);
+    float wedge = 2.0 * M_PI_F / max(segments, 1.0);
+    float a = atan2(p.y, p.x);
+    a = a - wedge * floor(a / wedge);
+    if (a > wedge * 0.5) { a = wedge - a; } // mirror every other half
+    a += rotation;
+    // Fold the sample radius back into the view so the edges don't go blank.
+    float reach = min(size.x, size.y) * 0.5;
+    float folded = reach - abs(fmod(r, 2.0 * reach) - reach);
+    return layer.sample(centre + folded * float2(cos(a), sin(a)));
+}
+*/
+```
+
+---
+
+## Halftone (`halftone`)
+
+The view is printed in round dots, bigger where it's darker, like newsprint.
+
+- API: `.halftone(dotSize:)`
+- Component: Shader
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Halftone.swift
+- Files: Sources/MotionShaders/Halftone.swift, Sources/MotionShaders/Shaders/Halftone.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+Image("portrait")
+    .halftone(dotSize: isPrinted ? 8 : 1)
+    .animation(.easeInOut, value: isPrinted)
+```
+
+### How it works
+
+Create a SwiftUI .halftone(dotSize:angle:paper:) view modifier (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float dotSize, float angle, half4 paper). Rotate the position into a grid at angle (45°), find the centre of its dotSize cell (8 pt), rotate that back and sample the layer there for the dot's colour. Un-premultiply, take luminance L, coverage = (1 − 0.85L) × alpha, dot radius = √coverage × 0.72 × dotSize, and draw the dot with a 0.8 pt smoothstep edge over the paper colour, keeping the alpha of the layer at the pixel so transparent areas stay transparent. Animate dotSize in an Animatable modifier and disable the effect below 1.5 pt, so animating from 1 brings the dots in. maxSampleOffset = dotSize.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Redraws the view as round printing dots on paper, like newsprint or a
+/// comic: darker areas get bigger dots, each in the colour underneath.
+/// `dotSize` is animatable. Rendered with a Metal `layerEffect`
+/// (`Shaders/Halftone.metal`).
+struct HalftoneModifier: ViewModifier, Animatable {
+    var dotSize: Double
+    var angle: Angle
+    var paper: Color
+
+    var animatableData: Double {
+        get { dotSize }
+        set { dotSize = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        let size = max(1, dotSize)
+        content.layerEffect(
+            motionShaders.motionHalftone(.float(size), .float(angle.radians), .color(paper)),
+            maxSampleOffset: CGSize(width: size, height: size),
+            isEnabled: dotSize >= 1.5
+        )
+    }
+}
+
+public extension View {
+    /// Prints the view in halftone dots. Animate `dotSize` from 1 (off) up
+    /// to bring the dots in.
+    ///
+    /// ```swift
+    /// Image("portrait")
+    ///     .halftone(dotSize: 8)
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameters:
+    ///   - dotSize: Spacing of the dot grid, in points. Below 1.5 the effect is off.
+    ///   - angle: Rotation of the dot grid (print screens use 45°).
+    ///   - paper: Colour between the dots.
+    func halftone(dotSize: Double = 8, angle: Angle = .degrees(45), paper: Color = .white) -> some View {
+        modifier(HalftoneModifier(dotSize: dotSize, angle: angle, paper: paper))
+    }
+}
+
+#Preview {
+    LinearGradient(colors: [.orange, .pink, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+        .overlay(Image(systemName: "star.fill").font(.system(size: 80)).foregroundStyle(.yellow))
+        .frame(width: 260, height: 180)
+        .halftone(dotSize: 7)
+}
+
+// MARK: - Halftone.metal
+// Save the shader below as Halftone.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for Halftone.swift (SwiftUI layer effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// Redraws the layer as a grid of round dots on paper, like newsprint: the
+/// grid is rotated by `angle`, each dot takes the colour under its centre,
+/// and darker areas get bigger dots.
+[[ stitchable ]] half4 motionHalftone(float2 position, SwiftUI::Layer layer, float dotSize, float angle, half4 paper) {
+    float c = cos(angle), s = sin(angle);
+    // Into the rotated grid and back out again.
+    float2 p = float2(c * position.x + s * position.y, -s * position.x + c * position.y);
+    float2 cell = (floor(p / dotSize) + 0.5) * dotSize;
+    float2 centre = float2(c * cell.x - s * cell.y, s * cell.x + c * cell.y);
+    half4 ink = layer.sample(centre);
+    half alpha = layer.sample(position).a;
+    if (alpha <= 0.0h) { return half4(0); }
+    float3 rgb = ink.a > 0.0h ? float3(ink.rgb / ink.a) : float3(1);
+    float luminance = dot(rgb, float3(0.299, 0.587, 0.114));
+    float coverage = (1.0 - luminance * 0.85) * float(ink.a);
+    float radius = sqrt(coverage) * dotSize * 0.72;
+    float d = length(p - cell);
+    float inside = 1.0 - smoothstep(radius - 0.8, radius + 0.8, d);
+    half3 colour = mix(paper.rgb, half3(rgb), half(inside));
+    return half4(colour * alpha, alpha);
+}
+*/
+```
+
+---
+
+## Dither (`dither`)
+
+Chunky pixels in a few flat colours with a Bayer cross-hatch, like a retro handheld.
+
+- API: `.dither(pixelSize:palette:)`
+- Component: Shader
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Dither.swift
+- Files: Sources/MotionShaders/Dither.swift, Sources/MotionShaders/Shaders/Dither.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+GameScene()
+    .dither(pixelSize: 3)                             // four greens
+Avatar()
+    .dither(pixelSize: 2, palette: DitherPalette.mono) // 1-bit
+```
+
+### How it works
+
+Create a SwiftUI .dither(pixelSize:palette:) view modifier (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float pixelSize, device const half4 *palette, int count). Sample the layer at the centre of the position's pixelSize block (3 pt), un-premultiply, take luminance, and add a 4 × 4 Bayer threshold ((bayer[i] + 0.5) / 16 − 0.5) / (levels − 1) indexed by the block coordinates mod 4. Round to the nearest of the palette's colours (darkest first) and return it premultiplied by the sample's alpha. Pass the palette with .colorArray. Ship palettes: four greens like an early handheld (0.06, 0.22, 0.06) … (0.61, 0.74, 0.06), mono black/white, and sepia. Animate pixelSize in an Animatable modifier; maxSampleOffset = pixelSize.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Retro ordered dithering: the view is cut into chunky pixels and drawn in
+/// a few flat colours with a Bayer cross-hatch between them, like an old
+/// handheld console screen. Rendered with a Metal `layerEffect`
+/// (`Shaders/Dither.metal`).
+struct DitherModifier: ViewModifier, Animatable {
+    var pixelSize: Double
+    var palette: [Color]
+
+    var animatableData: Double {
+        get { pixelSize }
+        set { pixelSize = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        let size = max(1, pixelSize)
+        content.layerEffect(
+            motionShaders.motionDither(.float(size), .colorArray(palette)),
+            maxSampleOffset: CGSize(width: size, height: size),
+            isEnabled: palette.count >= 2
+        )
+    }
+}
+
+public extension View {
+    /// Draws the view in a handful of colours with ordered (Bayer) dithering.
+    ///
+    /// ```swift
+    /// Image("level")
+    ///     .dither(pixelSize: 3)                         // four-shade green
+    /// Avatar()
+    ///     .dither(pixelSize: 2, palette: [.black, .white]) // 1-bit
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameters:
+    ///   - pixelSize: Size of one chunky pixel, in points.
+    ///   - palette: Two or more colours from darkest to lightest. The default
+    ///     is a four-shade green, like an early handheld console.
+    func dither(pixelSize: Double = 3, palette: [Color] = DitherPalette.green) -> some View {
+        modifier(DitherModifier(pixelSize: pixelSize, palette: palette))
+    }
+}
+
+/// Palettes for `.dither(pixelSize:palette:)`, darkest first.
+public enum DitherPalette {
+    /// Four greens, like an early handheld console's screen.
+    public static let green: [Color] = [
+        Color(red: 0.06, green: 0.22, blue: 0.06), Color(red: 0.19, green: 0.38, blue: 0.19),
+        Color(red: 0.55, green: 0.67, blue: 0.06), Color(red: 0.61, green: 0.74, blue: 0.06),
+    ]
+    /// Black and white.
+    public static let mono: [Color] = [.black, .white]
+    /// Four warm browns, like an old photograph.
+    public static let sepia: [Color] = [
+        Color(red: 0.17, green: 0.11, blue: 0.07), Color(red: 0.44, green: 0.3, blue: 0.2),
+        Color(red: 0.75, green: 0.6, blue: 0.43), Color(red: 0.96, green: 0.9, blue: 0.78),
+    ]
+}
+
+#Preview {
+    LinearGradient(colors: [.black, .white], startPoint: .leading, endPoint: .trailing)
+        .overlay(Image(systemName: "gamecontroller.fill").font(.system(size: 70)).foregroundStyle(.gray))
+        .frame(width: 260, height: 160)
+        .dither(pixelSize: 3)
+}
+
+// MARK: - Dither.metal
+// Save the shader below as Dither.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for Dither.swift (SwiftUI layer effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// Retro ordered dithering: the layer is cut into `pixelSize` blocks, each
+/// block's brightness is nudged by a 4x4 Bayer pattern and snapped to one of
+/// the palette's colours (darkest first).
+[[ stitchable ]] half4 motionDither(float2 position, SwiftUI::Layer layer, float pixelSize, device const half4 *palette, int count) {
+    float2 block = floor(position / pixelSize);
+    half4 colour = layer.sample((block + 0.5) * pixelSize);
+    if (colour.a <= 0.01h) { return half4(0); }
+    float3 rgb = float3(colour.rgb / colour.a);
+    float luminance = dot(rgb, float3(0.299, 0.587, 0.114));
+    const float bayer[16] = { 0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5 };
+    int2 b = int2(fmod(block, 4.0));
+    float threshold = (bayer[b.y * 4 + b.x] + 0.5) / 16.0 - 0.5;
+    int levels = max(count, 2);
+    float level = clamp(luminance + threshold / float(levels - 1), 0.0, 1.0);
+    int index = clamp(int(round(level * float(levels - 1))), 0, levels - 1);
+    half4 shade = palette[min(index, count - 1)];
+    return half4(shade.rgb * colour.a, colour.a);
+}
+*/
+```
+
+---
+
+## Thermal Vision (`thermal`)
+
+Brightness turns into heat colours, from cold indigo to white hot.
+
+- API: `.thermal(_:)`
+- Component: Shader
+- Trigger: Value change
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Thermal.swift
+- Files: Sources/MotionShaders/Thermal.swift, Sources/MotionShaders/Shaders/Thermal.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+CameraFeed()
+    .thermal(isScanning ? 1 : 0)
+    .animation(.easeInOut(duration: 0.6), value: isScanning)
+```
+
+### How it works
+
+Create a SwiftUI .thermal(_ intensity:) view modifier (iOS 17+) using a Metal [[stitchable]] colour shader (position, half4 colour, float intensity). Un-premultiply, take luminance as heat, and map it through seven evenly spaced stops: (0, 0, 0.05), (0.2, 0.05, 0.45), (0.65, 0.05, 0.6), (0.95, 0.15, 0.2), (1, 0.5, 0), (1, 0.9, 0.2), (1, 1, 1), interpolating linearly. Mix the original colour with the heat colour by intensity and premultiply again. Animate intensity in an Animatable modifier and disable the effect at 0, so the view can switch into heat vision.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// False-colour "heat vision": brightness becomes temperature, from cold
+/// black and indigo through magenta and red to hot yellow and white.
+/// `intensity` is animatable, so the view can switch into heat vision.
+/// Rendered with a Metal `colorEffect` (`Shaders/Thermal.metal`).
+struct ThermalModifier: ViewModifier, Animatable {
+    var intensity: Double
+
+    var animatableData: Double {
+        get { intensity }
+        set { intensity = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        content.colorEffect(motionShaders.motionThermal(.float(intensity)), isEnabled: intensity > 0)
+    }
+}
+
+public extension View {
+    /// Shows the view through a heat camera. Animate `intensity` between 0
+    /// and 1 to switch it on and off.
+    ///
+    /// ```swift
+    /// Image("street")
+    ///     .thermal(isScanning ? 1 : 0)
+    ///     .animation(.easeInOut(duration: 0.6), value: isScanning)
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameter intensity: 0 shows the original colours, 1 the full heat palette.
+    func thermal(_ intensity: Double = 1) -> some View {
+        modifier(ThermalModifier(intensity: intensity))
+    }
+}
+
+#Preview {
+    RadialGradient(colors: [.white, .gray, .black], center: .center, startRadius: 10, endRadius: 140)
+        .frame(width: 260, height: 180)
+        .thermal()
+}
+
+// MARK: - Thermal.metal
+// Save the shader below as Thermal.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for Thermal.swift (SwiftUI colour effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// Maps brightness to a heat-camera palette, from cold black and indigo
+/// through magenta and red to hot yellow and white. `intensity` blends from
+/// the original colours (0) to the full false colour (1).
+[[ stitchable ]] half4 motionThermal(float2 position, half4 colour, float intensity) {
+    if (colour.a <= 0.0h) { return colour; }
+    float3 rgb = float3(colour.rgb / colour.a);
+    float heat = dot(rgb, float3(0.299, 0.587, 0.114));
+    const float3 stops[7] = {
+        float3(0.0, 0.0, 0.05), float3(0.2, 0.05, 0.45), float3(0.65, 0.05, 0.6),
+        float3(0.95, 0.15, 0.2), float3(1.0, 0.5, 0.0), float3(1.0, 0.9, 0.2), float3(1.0, 1.0, 1.0)
+    };
+    float scaled = clamp(heat, 0.0, 1.0) * 6.0;
+    int i = min(int(floor(scaled)), 5);
+    float3 thermal = mix(stops[i], stops[i + 1], scaled - float(i));
+    float3 result = mix(rgb, thermal, clamp(intensity, 0.0, 1.0));
+    return half4(half3(result) * colour.a, colour.a);
+}
+*/
+```
+
+---
+
+## Flag Wave (`flag-wave`)
+
+The view ripples like a flag on a pole, its folds catching the light.
+
+- API: `.flagWave()`
+- Component: Shader
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/FlagWave.swift
+- Files: Sources/MotionShaders/FlagWave.swift, Sources/MotionShaders/Shaders/FlagWave.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+Image("banner")
+    .flagWave(amplitude: 10)
+```
+
+### How it works
+
+Create a SwiftUI .flagWave(amplitude:wavelength:speed:) view modifier (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float2 size, float time, float amplitude, float wavelength). reach = x / width (0 at the pole on the leading edge, 1 at the free end); phase = x / wavelength × 2π − 4 × time; wave = sin(phase) + 0.35 sin(2.3 phase + 1.1). Sample at (x + 0.25 × amplitude × reach × cos(phase), y − amplitude × reach × wave) and multiply the colour by 1 + 0.18 × reach × (cos(phase) + 0.8 cos(2.3 phase + 1.1)) so slopes catch light and shade, clamped to alpha. Drive time from TimelineView(.animation), pad the view vertically by 1.4 × amplitude (and take it back with negative padding) so the ripples have room, and apply through .visualEffect for the size. With Reduce Motion on, leave the view still.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// Waves the view like a flag in the wind, held at its leading edge: ripples
+/// run along it, growing towards the free end, and the folds catch light
+/// and shadow. Rendered with a Metal `layerEffect`
+/// (`Shaders/FlagWave.metal`).
+struct FlagWaveModifier: ViewModifier {
+    var amplitude: Double
+    var wavelength: Double
+    var speed: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        if reduceMotion {
+            content
+        } else {
+            TimelineView(.animation) { timeline in
+                let time = Float(timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600) * speed)
+                let amplitude = Float(amplitude), wavelength = Float(max(10, wavelength))
+                let reach = CGSize(width: Double(amplitude), height: Double(amplitude) * 1.4)
+                content
+                    .padding(.vertical, Double(amplitude) * 1.4)
+                    .visualEffect { effect, proxy in
+                        effect.layerEffect(
+                            motionShaders.motionFlagWave(.float2(proxy.size), .float(time), .float(amplitude), .float(wavelength)),
+                            maxSampleOffset: reach
+                        )
+                    }
+                    .padding(.vertical, -Double(amplitude) * 1.4)
+            }
+        }
+    }
+}
+
+public extension View {
+    /// Waves the view like a flag held at its leading edge.
+    ///
+    /// ```swift
+    /// Image("banner")
+    ///     .flagWave()
+    /// ```
+    ///
+    /// Requires the `MotionShaders` product (Metal).
+    ///
+    /// - Parameters:
+    ///   - amplitude: Height of the ripples at the free end, in points.
+    ///   - wavelength: Length of one ripple, in points.
+    ///   - speed: How fast the ripples run.
+    func flagWave(amplitude: Double = 9, wavelength: Double = 120, speed: Double = 1) -> some View {
+        modifier(FlagWaveModifier(amplitude: amplitude, wavelength: wavelength, speed: speed))
+    }
+}
+
+#Preview {
+    VStack(spacing: 0) {
+        Color.red
+        Color.white
+        Color.blue
+    }
+    .frame(width: 240, height: 150)
+    .flagWave()
+}
+
+// MARK: - FlagWave.metal
+// Save the shader below as FlagWave.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for FlagWave.swift (SwiftUI layer effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// Waves the layer like a flag on a pole at its leading edge: ripples run
+/// along it, growing away from the pole, and the folds catch light and
+/// shadow.
+[[ stitchable ]] half4 motionFlagWave(float2 position, SwiftUI::Layer layer, float2 size, float time, float amplitude, float wavelength) {
+    float reach = clamp(position.x / max(size.x, 1.0), 0.0, 1.0);
+    float phase = position.x / wavelength * 2.0 * M_PI_F - time * 4.0;
+    float wave = sin(phase) + 0.35 * sin(phase * 2.3 + 1.1);
+    float dy = amplitude * reach * wave;
+    float dx = amplitude * 0.25 * reach * cos(phase);
+    half4 colour = layer.sample(float2(position.x + dx, position.y - dy));
+    // Light on the slopes facing up, shade on the ones facing down.
+    float slope = cos(phase) + 0.8 * cos(phase * 2.3 + 1.1);
+    half shade = half(1.0 + 0.18 * reach * slope);
+    return half4(clamp(colour.rgb * shade, 0.0h, colour.a), colour.a);
+}
+*/
+```
+
+---
+
+## Voronoi Cells (`voronoi`)
+
+Slowly drifting cells like stained glass, with soft seams between them.
+
+- API: `VoronoiCells(colors:)`
+- Component: Shader
+- Trigger: Loop
+- Requires: iOS 17+ · macOS 14+ · visionOS 1+
+- Source: https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionShaders/Voronoi.swift
+- Files: Sources/MotionShaders/Voronoi.swift, Sources/MotionShaders/Shaders/Voronoi.metal
+
+### Usage
+
+```swift
+import MotionShaders
+
+VoronoiCells(colors: [.indigo, .purple, .pink, .orange, .teal])
+    .ignoresSafeArea()
+```
+
+### How it works
+
+Create a SwiftUI VoronoiCells(colors:cellSize:speed:) view (iOS 17+): a Rectangle with a Metal [[stitchable]] colour shader (position, colour, float time, float scale, device const half4 *palette, int count) driven by TimelineView(.animation). Work in cells of scale (60 pt); for the 3 × 3 neighbouring cells, the seed is cell + 0.5 + 0.4 × sin(time + 2π × hash2(cell)), so seeds drift. Track the nearest and second-nearest distances; colour the pixel with palette[hash(nearest cell) × count], darkened by smoothstep(0, 0.08, second − nearest) for soft seams and by 1 − 0.35 × nearest for a gentle glow at each seed. Pass the colours with .colorArray. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+
+### Source
+
+```swift
+import SwiftUI
+
+/// A background of slowly drifting Voronoi cells, like stained glass or
+/// living tissue: every point takes the colour of its nearest moving seed,
+/// with soft dark seams between cells. Rendered with a Metal `colorEffect`
+/// (`Shaders/Voronoi.metal`).
+public struct VoronoiCells: View {
+    private let colors: [Color]
+    private let cellSize: Double
+    private let speed: Double
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// - Parameters:
+    ///   - colors: Colours the cells are picked from.
+    ///   - cellSize: Typical size of a cell, in points.
+    ///   - speed: How fast the seeds drift.
+    public init(colors: [Color] = [.indigo, .purple, .pink, .orange, .teal], cellSize: Double = 60, speed: Double = 0.6) {
+        self.colors = colors.isEmpty ? [.gray] : colors
+        self.cellSize = max(8, cellSize)
+        self.speed = speed
+    }
+
+    public var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600) * speed
+            Rectangle()
+                .fill(.white)
+                .colorEffect(motionShaders.motionVoronoi(.float(time), .float(cellSize), .colorArray(colors)))
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+#Preview {
+    VoronoiCells()
+        .frame(width: 320, height: 220)
+}
+
+// MARK: - Voronoi.metal
+// Save the shader below as Voronoi.metal in your app target, and replace
+// `motionShaders` with `ShaderLibrary.default`.
+/*
+// Stitchable shader for Voronoi.swift (SwiftUI colour effect).
+
+#include <metal_stdlib>
+#include <SwiftUI/SwiftUI_Metal.h>
+using namespace metal;
+
+/// A cheap, stable hash of a 2D point into 0...1, two values at once.
+static float2 motionHash2(float2 p) {
+    p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
+    return fract(sin(p) * 43758.5453);
+}
+
+/// Slowly drifting Voronoi cells: each pixel takes the colour of its nearest
+/// moving seed (picked from `palette`), and the borders between cells are
+/// drawn as soft dark seams.
+[[ stitchable ]] half4 motionVoronoi(float2 position, half4 colour, float time, float scale, device const half4 *palette, int count) {
+    float2 p = position / scale;
+    float2 cell = floor(p);
+    float nearest = 8.0, second = 8.0;
+    float2 nearestCell = float2(0);
+    for (int y = -1; y <= 1; y++) {
+        for (int x = -1; x <= 1; x++) {
+            float2 neighbour = cell + float2(x, y);
+            float2 h = motionHash2(neighbour);
+            float2 seed = neighbour + 0.5 + 0.4 * sin(time + 6.2831 * h);
+            float d = length(p - seed);
+            if (d < nearest) { second = nearest; nearest = d; nearestCell = neighbour; }
+            else if (d < second) { second = d; }
+        }
+    }
+    int index = int(motionHash2(nearestCell + 3.0).x * float(count)) % max(count, 1);
+    half4 fill = palette[index];
+    float seam = smoothstep(0.0, 0.08, second - nearest);
+    float glow = 1.0 - nearest * 0.35;
+    return half4(fill.rgb * half(seam * glow), 1.0h) * colour.a;
 }
 */
 ```

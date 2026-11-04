@@ -8,15 +8,15 @@ import MotionLibrary
 /// See CONTRIBUTING.md for the checklist.
 public enum MotionCatalog {
     public static let all: [MotionEffect] =
-        text + textV04
-        + button + buttonV04
-        + card + cardV04
+        text + textV04 + textV05
+        + button + buttonV04 + buttonV05
+        + card + cardV04 + cardV05
         + shape + shapeV04
-        + background + backgroundV04
-        + number + numberV04
-        + particle + particleV04
-        + transition + transitionV04
-        + shader
+        + background + backgroundV04 + backgroundV05
+        + number + numberV04 + numberV05
+        + particle + particleV04 + particleV05
+        + transition + transitionV04 + transitionV05
+        + shader + shaderV05
 
     public static func filtered(component: MotionComponent?, trigger: MotionTrigger?, search: String = "") -> [MotionEffect] {
         let query = search.trimmingCharacters(in: .whitespaces).lowercased()

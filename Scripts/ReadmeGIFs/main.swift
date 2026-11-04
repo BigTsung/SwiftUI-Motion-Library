@@ -319,6 +319,40 @@ func recording(for id: String) -> Recording {
         return Recording(duration: 4.0)
     case "pixellate", "needle-gauge":
         return Recording(duration: 3.2)
+    // MARK: v0.5
+    case "pull-cord":
+        // The cord hangs from the top of a 120 pt tall demo; the knob sits
+        // about 70 pt below its top edge, right of the bulb.
+        let knob = CGPoint(x: c.x + 29, y: c.y - 60 + 58)
+        return Recording(duration: 3.6, steps:
+            linearDrag(start: 0.3, length: 0.5, from: knob, to: CGPoint(x: knob.x + 6, y: knob.y + 40))
+            + linearDrag(start: 2.0, length: 0.5, from: knob, to: CGPoint(x: knob.x - 8, y: knob.y + 40)))
+    case "hover-lift":
+        // Synthetic pointer moves don't reach AppKit tracking areas, so the
+        // demo's autoplay (isActive on each card in turn) shows the lift.
+        return Recording(duration: 3.0)
+    case "ink-trail":
+        var strokes: [(at: Double, step: Step)] = [(0.2, .down(CGPoint(x: c.x - 60, y: c.y + 30)))]
+        let count = Int(2.6 * fps)
+        for i in 1...count {
+            let t = Double(i) / Double(count)
+            let p = CGPoint(x: c.x - 60 + CGFloat(t) * 120, y: c.y + 30 - CGFloat(sin(t * .pi * 2.5)) * 30 - CGFloat(t) * 20)
+            strokes.append((0.2 + t * 2.6, .move(p)))
+        }
+        strokes.append((2.85, .up(CGPoint(x: c.x + 60, y: c.y + 10))))
+        return Recording(duration: 3.8, steps: strokes)
+    case "flock", "network":
+        return Recording(duration: 4.0, steps: linearDrag(start: 1.0, length: 2.2, from: CGPoint(x: c.x - 50, y: c.y - 30), to: CGPoint(x: c.x + 50, y: c.y + 30)))
+    case "day-night-sky":
+        return Recording(duration: 5.0, scene: { AnyView(DayNightSky(cycle: 5).frame(width: 150, height: 110).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))) })
+    case "photo-develop":
+        return Recording(duration: 3.4, appear: true)
+    case "contribution-grid":
+        return Recording(duration: 3.4, appear: true)
+    case "liquid-fill-text", "island-pill", "ink-bleed", "analog-clock", "swirl", "genie":
+        return Recording(duration: 3.6)
+    case "thermal", "halftone", "disintegrate":
+        return Recording(duration: 4.0)
     default:
         return Recording(duration: 3.0)
     }

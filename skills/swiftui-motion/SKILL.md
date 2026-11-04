@@ -5,7 +5,7 @@ description: "Adds polished SwiftUI animations from SwiftUI Motion Library: anim
 
 # SwiftUI Motion Library
 
-118 ready-made SwiftUI motion effects as one-line views and modifiers, with no dependencies. Source: https://github.com/BigTsung/SwiftUI-Motion-Library
+145 ready-made SwiftUI motion effects as one-line views and modifiers, with no dependencies. Source: https://github.com/BigTsung/SwiftUI-Motion-Library
 
 ## Install
 
@@ -54,6 +54,7 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Karaoke Text | `KaraokeText(_:progress:)` | Value change / Scroll | A line fills with colour left to right as progress goes from 0 to 1. |
 | Weight Wave | `WeightWaveText(_:)` | Loop | Letters swell from thin to black and back in a travelling wave. |
 | Exploding Text (iOS 18+) | `ExplodingText(_:isExploded:)` | Value change / Tap | Letters blast apart spinning and spring back into place. |
+| Liquid Fill Text | `LiquidFillText(_:progress:)` | Value change / Loop | A wavy water line rises inside the letters as progress grows. |
 
 ### Button
 
@@ -77,6 +78,7 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Download Button | `DownloadButton(progress:action:)` | Tap / Value change | A capsule shrinks into a progress ring, then pops into a checkmark. |
 | Star Rating | `StarRating(rating:)` | Tap / Value change | Stars fill one after another with a springy pop and a burst of sparks. |
 | Bouncy Tab Bar | `BouncyTabBar(selection:items:)` | Tap / Value change | A pill glides to the selected tab and its icon squashes and hops. |
+| Pull Cord | `PullCord(isOn:)` | Drag / Tap | A lamp cord toggle: pull the knob down, it clicks and springs back swinging. |
 
 ### Card & Group
 
@@ -101,6 +103,10 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Drag to Dismiss | `.dragToDismiss(isPresented:)` | Drag | Fling a card away; it flies off with your throw or springs back. |
 | Shrinking Header | `.shrinkingHeader()` | Scroll | The header sticks to the top and shrinks as content scrolls under it. |
 | Stretchy Header | `.stretchyHeader()` | Scroll | A header image stretches when pulled down and drifts with parallax when scrolled. |
+| Island Pill | `IslandPill(isExpanded:compact:expanded:)` | Tap / Value change | A black pill springs open into a card and back, its contents blurring across. |
+| Hover Lift | `.hoverLift(isActive:)` | Hover | Cards rise, grow and lean towards the pointer on iPad and Mac. |
+| Marquee Wall | `MarqueeWall(count:columns:content:)` | Loop | A tilted wall of cards, columns scrolling endlessly up and down. |
+| Photo Develop | `.photoDevelop()` | Appear / Value change | The view develops like an instant photo, from murky dark to full colour. |
 
 ### Shape
 
@@ -134,6 +140,9 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Interactive Dot Grid | `InteractiveDotGrid()` | Drag / Hover / Loop | A grid of dots scatters away from your finger and eases back. |
 | Meteors | `Meteors()` | Loop | Meteors streak across a starry sky with glowing heads and fading tails. |
 | Flow Field | `FlowField()` | Loop | Generative curves follow a shifting vector field with dashes flowing along them. |
+| Network | `NetworkBackground()` | Loop / Hover / Drag | Drifting points link up with lines when close, and gather at your finger. |
+| Topographic Lines | `TopographicLines()` | Loop | Contour lines of a shifting landscape flow like a living map. |
+| Day & Night Sky | `DayNightSky(time:)` | Loop / Value change | A sky runs from starry night through dawn, noon and sunset, sun and moon arcing over. |
 
 ### Number
 
@@ -145,6 +154,8 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Price Ticker | `PriceTicker(value:)` | Value change | Digits roll to the new price as the background flashes green or red. |
 | Animated Chart | `GrowingBarChart(values:) / DrawingLineChart(values:)` | Appear / Value change | Bars grow up one after another; a line draws itself left to right. |
 | Needle Gauge | `NeedleGauge(value:)` | Value change | A speedometer needle swings to the value, overshoots and settles. |
+| Contribution Grid | `ContributionGrid(values:)` | Appear / Value change | Activity squares pop in column by column, shaded by how busy each day was. |
+| Analog Clock | `AnalogClock(date:)` | Loop / Value change | A clock with a sweeping second hand; set a time and the hands spring to it. |
 
 ### Particle & 3D
 
@@ -165,6 +176,10 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Dot Globe | `DotGlobe()` | Loop | A globe of evenly spread dots spins on a tilted axis, with pulsing cities. |
 | Bubbles | `Bubbles()` | Loop | Soap bubbles rise and wobble with rainbow rims and glossy highlights. |
 | Fireflies | `Fireflies()` | Loop | Glowing fireflies drift lazily and blink on their own rhythms. |
+| Flock | `Flock()` | Loop / Drag / Hover | Little arrows swim together like birds or fish, and chase your finger. |
+| Ink Trail | `.inkTrail(color:)` | Drag / Hover | The pointer or finger leaves puffs of ink that swell, drift up and fade. |
+| Rain on Glass | `RainOnGlass()` | Loop | Raindrops cling to a window while bigger drops slide down in fits and starts. |
+| Orbits | `Orbits(colors:)` | Loop | Planets circle a glowing star on tilted orbits, passing behind it and in front. |
 
 ### Transition
 
@@ -182,6 +197,8 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Page Turn | `.transition(.pageTurn)` | Value change | The old page swings away like a book page, revealing the next one. |
 | Glitch Transition | `.transition(.glitch)` | Value change | The view breaks up like a bad signal on its way in or out. |
 | Origami Fold | `.transition(.origami)` | Value change | The view folds up into creased panels like a paper map. |
+| Ink Bleed | `.transition(.inkBleed)` | Value change | New content spreads in like a blot of ink on wet paper, with a ragged edge. |
+| Zoom Blur | `.transition(.zoomBlur)` | Value change | Content rushes in from the camera, blurred and trailed by echoes, then snaps sharp. |
 
 ### Shader
 
@@ -193,3 +210,13 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | CRT Screen | `.crtScreen()` | Loop | Curved glass, scanlines, a rolling band and flicker, like an old monitor. |
 | Heat Haze | `.heatHaze(strength:)` | Loop | The view shimmers like hot air over a desert road. |
 | Noise Dissolve | `.noiseDissolve(_:) / .transition(.noiseDissolve)` | Value change | The view burns away in organic blotches with a glowing edge. |
+| Disintegrate | `.disintegrate(_:) / .transition(.disintegrate)` | Value change | The view crumbles into grains of sand that blow away on the wind. |
+| Genie | `.genie(_:toward:) / .transition(.genie)` | Value change | The view pinches and pours into a point below it, like minimising a window. |
+| Glass Lens | `.glassLensOnDrag() / .glassLens(at:)` | Drag / Hover | A round glass lens magnifies what's under it, bending light at its rim. |
+| Swirl | `.swirlOnDrag() / .swirl(at:strength:)` | Drag / Value change | The view twists around a point like water going down a drain. |
+| Kaleidoscope | `.kaleidoscope(segments:)` | Loop / Value change | One wedge of the view mirrored round the centre, turning into new patterns. |
+| Halftone | `.halftone(dotSize:)` | Value change | The view is printed in round dots, bigger where it's darker, like newsprint. |
+| Dither | `.dither(pixelSize:palette:)` | Value change | Chunky pixels in a few flat colours with a Bayer cross-hatch, like a retro handheld. |
+| Thermal Vision | `.thermal(_:)` | Value change | Brightness turns into heat colours, from cold indigo to white hot. |
+| Flag Wave | `.flagWave()` | Loop | The view ripples like a flag on a pole, its folds catching the light. |
+| Voronoi Cells | `VoronoiCells(colors:)` | Loop | Slowly drifting cells like stained glass, with soft seams between them. |

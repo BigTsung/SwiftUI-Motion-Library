@@ -252,6 +252,17 @@ ExplodingText("Kaboom!", isExploded: exploded)
 
 How it works: Create a SwiftUI ExplodingText(_:isExploded:distance:) view (iOS 18+) using a TextRenderer that is Animatable over progress (0 = assembled, 1 = scattered). Its displayPadding is distance on every side (60 pt). In draw(layout:in:), for each glyph (counted across lines and runs) take three stable pseudo-random values r0, r1, r2 from a hash of its index; translate by (cos, sin)(r0 × 2π) × distance × (0.5 + 0.5 × r1) × progress, rotate around the glyph's typographic-bounds centre by (r2 − 0.5) × 540° × progress, and set opacity 1 − 0.7 × progress. Animate with .easeOut(0.45 s) when exploding and .spring(duration: 0.8, bounce: 0.35) when reassembling. With Reduce Motion on, use distance 0 (just a fade) and a 0.3 s ease. Keep the string as the accessibility label.
 
+## Liquid Fill Text
+
+A wavy water line rises inside the letters as progress grows. Trigger: Value change / Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Text/LiquidFillText.swift.
+
+```swift
+LiquidFillText("\(Int(level * 100))%", progress: level, color: .cyan)
+    .font(.system(size: 64, weight: .black, design: .rounded))
+```
+
+How it works: Create a SwiftUI LiquidFillText(_:progress:color:waveHeight:) view (iOS 17+). Draw the Text in the colour at 15 % opacity as an empty glass, then overlay a TimelineView(.animation) with a ZStack of two wave shapes, masked by the same Text: a back wave in the colour at 45 % (phase = time × 2.2 + 1.3, amplitude 0.8 × waveHeight) and a front wave in the full colour (phase = time × 3, amplitude waveHeight, default 6 pt). The wave Shape has level, phase and amplitude, animates level, and fills everything below y = baseline + amplitude × sin(x / width × 3π + phase). A line of text has descender room below the glyphs and space above the caps, so fill between bottom = maxY − 0.2 × height + 2 × amplitude and top = minY + 0.12 × height − 2 × amplitude: baseline = bottom − (bottom − top) × level, so 0 is empty and 1 full. Clamp progress to 0…1 and animate level changes with .spring(duration: 0.9, bounce: 0.25). With Reduce Motion on, pause the timeline (the level still animates). Hide the overlay from accessibility; the label is the text.
+
 ## Pressable
 
 Button squashes and darkens on press, then springs back with a light haptic. Trigger: Press. Requires iOS 17+. Files: Sources/MotionLibrary/Button/PressableButtonStyle.swift, Sources/MotionLibrary/Support/Haptics.swift.
@@ -503,6 +514,19 @@ BouncyTabBar(selection: $tab, items: [
 ```
 
 How it works: Create a SwiftUI BouncyTabBar(selection: Binding<Int>, items:color:) (iOS 17+) where each item is an SF Symbol and a title. Lay the tabs out in an HStack (spacing 4, padding 6) on a .regularMaterial Capsule with a soft shadow. Each tab is a plain Button with a VStack of the 18 pt semibold symbol and a caption2 title, tinted with the colour when selected (secondary otherwise), and a Capsule at 15 % of the colour behind the selected tab, shared with matchedGeometryEffect so it glides; selection changes use .spring(duration: 0.4, bounce: 0.3). The selected icon runs keyframeAnimator(trigger: selection), anchored at the bottom: scaleX 1.25 → 0.9 → spring 1, scaleY 0.75 → 1.12 → spring 1, y 0 → −7 → spring 0 (0.08 s, 0.14 s, 0.3 s .bouncy). Play a light haptic. With Reduce Motion on, skip the hop.
+
+## Pull Cord
+
+A lamp cord toggle: pull the knob down, it clicks and springs back swinging. Trigger: Drag / Tap. Requires iOS 17+. Files: Sources/MotionLibrary/Button/PullCord.swift, Sources/MotionLibrary/Support/Haptics.swift.
+
+```swift
+HStack(alignment: .top) {
+    Image(systemName: lightsOn ? "lightbulb.max.fill" : "lightbulb")
+    PullCord(isOn: $lightsOn)
+}
+```
+
+How it works: Create a SwiftUI PullCord(isOn:length:color:) toggle (iOS 17+). A VStack(spacing: 0) of a 2 pt wide Rectangle (height length + stretch, default length 70) and a 16 × 26 Capsule knob, yellow with a yellow shadow (radius 8) when on. Rotate the whole cord with .rotationEffect(swing, anchor: .top) inside a 60 pt wide frame with room below to stretch. A DragGesture(minimumDistance: 0) sets stretch = 1.6c × (1 − e^(−pull / 1.6c)) with c = 0.45 × length (rubber-band resistance) and swing = −translation.width / 6 clamped to ±18°. On release, toggle when stretch passed c or the drag was a tap (moved < 4 pt), play a light haptic, then spring stretch back to 0 with .spring(duration: 0.55, bounce: 0.6) and swing back with .spring(duration: 0.9, bounce: 0.7). With Reduce Motion on, no swing and an ease-out return. Make it one accessibility element with the button trait, value On/Off and an action that toggles.
 
 ## Staggered Entrance
 
@@ -776,6 +800,64 @@ ScrollView {
 ```
 
 How it works: Create a SwiftUI .stretchyHeader(parallax:) view modifier (iOS 17+) for a header image at the top of a vertical ScrollView, built with visualEffect. From proxy.frame(in: .scrollView): when pulled past the top (minY > 0), scaleEffect(1 + minY / height, anchor: .bottom) so it grows upward to fill the gap; when scrolled up (minY < 0), offset(y: minY × −parallax) with parallax 0.5 so it moves at half speed. With Reduce Motion on, skip the parallax.
+
+## Island Pill
+
+A black pill springs open into a card and back, its contents blurring across. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Card/IslandPill.swift.
+
+```swift
+IslandPill(isExpanded: showsPlayer) {
+    Image(systemName: "waveform")
+} expanded: {
+    NowPlayingView()
+}
+.onTapGesture { showsPlayer.toggle() }
+```
+
+How it works: Create a SwiftUI IslandPill(isExpanded:compactSize:expandedSize:color:compact:expanded:) view (iOS 17+): a black shape that morphs between a pill (default 126 × 37, corner radius half its height) and a card (default 340 × 160, corner radius min(44, height / 2)), using a continuous RoundedRectangle as background and clip shape. Inside, a ZStack holds both contents: the compact one fades out while blurring to 8 pt and scaling to 1.6; the expanded one fades in from blur 10 pt and scale 0.6 (anchored top). Force the dark colour scheme inside. Animate every change of isExpanded with .spring(duration: 0.5, bounce: 0.32). With Reduce Motion on, skip the blur and scale and use .easeInOut(duration: 0.25).
+
+## Hover Lift
+
+Cards rise, grow and lean towards the pointer on iPad and Mac. Trigger: Hover. Requires iOS 17+. Files: Sources/MotionLibrary/Card/HoverLift.swift.
+
+```swift
+LazyVGrid(columns: columns) {
+    ForEach(projects) { project in
+        ProjectCard(project)
+            .hoverLift()
+    }
+}
+```
+
+How it works: Create a SwiftUI .hoverLift(scale:tilt:cornerRadius:) view modifier (iOS 17+) for pointer hover on iPad and Mac. Track the pointer with .onContinuousHover(coordinateSpace: .local) and the view size with a background GeometryReader. While hovered, scale to 1.05, offset y −4 and deepen the shadow (black 22 %, radius 18, y 12; at rest 8 %, radius 6, y 3), all with .spring(duration: 0.35, bounce: 0.3). Lean towards the pointer: with lean = location / size × 2 − 1, apply rotation3DEffect(tilt × lean.x around y) and (−tilt × lean.y around x), tilt 6°, perspective 0.6, animated with .interactiveSpring(duration: 0.25). With Reduce Motion on, don't move or scale; brighten by 0.05 instead. Add isActive (default false) to lift the view without a pointer too, for the focused or selected card. On visionOS, where apps can't see the gaze, use .contentShape(.hoverEffect, RoundedRectangle(cornerRadius:)) and the system .hoverEffect().
+
+## Marquee Wall
+
+A tilted wall of cards, columns scrolling endlessly up and down. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Card/MarqueeWall.swift.
+
+```swift
+MarqueeWall(count: shots.count, columns: 4) { index in
+    Image(shots[index]).resizable().scaledToFill()
+}
+.frame(height: 320)
+.clipped()
+```
+
+How it works: Create a SwiftUI MarqueeWall(count:columns:itemSize:spacing:speed:angle:content:) view (iOS 17+), the scrolling showcase wall from landing pages. Each of the columns (default 4) shows perColumn = max(3, ceil(count / columns)) items twice in a VStack, cards of itemSize (110 × 140) with 14 pt continuous corners and 12 pt spacing, so the loop height is perColumn × (height + spacing). In TimelineView(.animation), distance = (time × speed × (1 + 0.15 × (column % 3))) mod loopHeight (speed 24 pt/s); even columns offset by −distance (moving up), odd ones by distance − loopHeight (moving down). Lay the columns in an HStack, rotate the whole thing by −14° and let the caller clip it. Disable hit testing. With Reduce Motion on, pause the timeline.
+
+## Photo Develop
+
+The view develops like an instant photo, from murky dark to full colour. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Card/PhotoDevelop.swift.
+
+```swift
+Image("snapshot")
+    .resizable()
+    .scaledToFill()
+    .frame(width: 200, height: 200)
+    .photoDevelop(trigger: shotCount)
+```
+
+How it works: Create a SwiftUI .photoDevelop(trigger:duration:) view modifier (iOS 17+) that develops the view like an instant photo on appear and whenever trigger changes. Reset progress to 0 without animation, then animate it to 1 with .easeOut(duration: 3.5). Apply the look in an Animatable modifier so each quality keeps its own pace: light = min(1, 1.6p), colour = max(0, (p − 0.25) / 0.75), focus = min(1, 1.3p); .saturation(colour), .contrast(0.55 + 0.45 × light), .brightness(−0.45 × (1 − light)), .blur(radius: 5 × (1 − focus)), and an overlay LinearGradient from blue-grey (0.2, 0.25, 0.35) to brown (0.35, 0.25, 0.18) with opacity 0.75 × (1 − colour) and .blendMode(.multiply). With Reduce Motion on, develop over 0.4 s.
 
 ## Pulse Rings
 
@@ -1075,6 +1157,42 @@ FlowField(colors: [.cyan, .blue, .purple, .pink])
 
 How it works: Create a SwiftUI FlowField(lines:colors:speed:) view (iOS 17+) drawn in a Canvas inside TimelineView(.animation). Define a flow angle field(x, y, t) = (sin(x × 0.012 + t) × cos(y × 0.014 − 0.7t) + sin((x + y) × 0.007 + 0.5t)) × π, with coordinates scaled so the smaller side maps to about 220 units and t = time × 0.25. For each of 140 lines, start at a stable random point and integrate 22 steps of 3.2 pt along the field into a Path. Stroke it in a colour picked from the list at 18 % opacity, then again at 85 % with a dash [5, 40] and dashPhase −((time × 30 + random × 45) mod 45), so short dashes travel along the curves (wrap the phase: a huge dash phase makes Core Graphics hang). With Reduce Motion on, show one still frame.
 
+## Network
+
+Drifting points link up with lines when close, and gather at your finger. Trigger: Loop / Hover / Drag. Requires iOS 17+. Files: Sources/MotionLibrary/Background/NetworkBackground.swift.
+
+```swift
+NetworkBackground(color: .cyan)
+    .background(.black)
+    .ignoresSafeArea()
+```
+
+How it works: Create a SwiftUI NetworkBackground(count:linkDistance:color:interactive:) view (iOS 17+): a plexus of drifting points. In TimelineView(.animation) + Canvas, point i starts at a hashed position, moves at 6–20 pt/s in a hashed direction, and wraps around the edges with 20 pt of slack. Join every pair closer than linkDistance (70 pt) with a line of opacity 0.55 × (1 − d / linkDistance) and width 0.6 + 0.6 × that strength, then draw each point as a 3.6 pt dot. Track the pointer with onContinuousHover and a DragGesture(minimumDistance: 0); points within 110 pt are pulled towards it by (1 − d / 110) × 0.45 of the gap, so the web gathers under the finger. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+
+## Topographic Lines
+
+Contour lines of a shifting landscape flow like a living map. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Background/TopographicLines.swift.
+
+```swift
+TopographicLines(color: .green)
+    .background(Color(white: 0.06))
+```
+
+How it works: Create a SwiftUI TopographicLines(levels:scale:color:speed:) view (iOS 17+). In TimelineView(.animation(minimumInterval: 1/30)) + Canvas, sample a height field on an 8 pt grid: h = 0.65 × noise(x + t, y − 0.6t) + 0.35 × noise(2.1x − 0.8t, 2.1y + 7), with x, y in units of scale (90 pt), t = time × speed (0.12), and noise a smoothstep-interpolated value noise from an integer hash. For each of levels (14) thresholds spread over 0.18…0.82, trace the contour with marching squares (16 cases, edge crossings linearly interpolated, saddles drawn as two segments) into one Path and stroke it: every fifth line at 1.4 pt and 85 % opacity, the others 0.7 pt at 45 %. With Reduce Motion on, pause the timeline.
+
+## Day & Night Sky
+
+A sky runs from starry night through dawn, noon and sunset, sun and moon arcing over. Trigger: Loop / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Background/DayNightSky.swift.
+
+```swift
+DayNightSky()                // loops a day every 16 s
+    .ignoresSafeArea()
+
+DayNightSky(time: hour / 24) // follows the time of day
+```
+
+How it works: Create a SwiftUI DayNightSky(time:cycle:) view (iOS 17+). time is 0…1 (0 midnight, 0.25 sunrise, 0.5 noon, 0.75 sunset); nil loops it with TimelineView every cycle (16 s). Draw an Animatable scene in a Canvas: a vertical gradient whose top and horizon colours are interpolated between stops (night navy, deep purple dawn, pink-orange sunrise horizon, bright blue noon, golden afternoon, orange sunset horizon under violet, dusk). Fade in 50 hashed stars near night, twinkling. Put the sun and moon on opposite sides of an arc: x = mid − cos(angle) × 0.45w, y = horizon − sin(angle) × 0.75h, sun angle = (t − 0.25) × 2π, each with a blurred halo; the sun turns orange near the horizon. Finish with a band of dark hills tinted from the sky colour. Animate a fixed time with .easeInOut(duration: 1.2). With Reduce Motion on, hold at early evening (0.7).
+
 ## Rolling Number
 
 Digits roll like an odometer when the value changes. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/RollingNumber.swift.
@@ -1141,6 +1259,29 @@ NeedleGauge(value: cpuLoad)
 ```
 
 How it works: Create a SwiftUI NeedleGauge(value:colors:label:) view (iOS 17+), value 0…1, square. Draw a 240° arc (from 150° to 30° clockwise, radius 42 % of the side, line width 8 %, round caps): a secondary-15 % track, and on top an animatable arc Shape trimmed to the value and stroked with an AngularGradient of green, yellow, red over the same angles. Add 11 tick capsules (longer every fifth) rotated from −120° to +120°, a primary-coloured needle capsule rotated −120° + 240° × value, and a hub circle. Animate the needle with .spring(duration: 0.9, bounce: 0.45) so it overshoots and settles. Below the hub, show the label or the percentage with .contentTransition(.numericText). With Reduce Motion on, use a 0.3 s ease.
+
+## Contribution Grid
+
+Activity squares pop in column by column, shaded by how busy each day was. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/ContributionGrid.swift.
+
+```swift
+ContributionGrid(values: commitsPerDay, color: .green)
+```
+
+How it works: Create a SwiftUI ContributionGrid(values:rows:color:cellSize:spacing:) view (iOS 17+) like a contributions calendar: values fill columns of rows (7) top to bottom, left to right, as 11 pt squares with 3 pt gaps and corner radius 0.22 × size. Shade each square by its share of the largest value, rounded up to quarters: 0 is secondary at 15 %, otherwise the colour at 0.25 + 0.75 × level. On appear, scale each square from 0.2 and fade it in with .spring(duration: 0.4, bounce: 0.45) delayed by 0.035 s per column + 0.02 s per row, so it sweeps in diagonally; changes of shade use the same staggered spring. With Reduce Motion on, no scaling and a plain 0.3 s ease. Make it one accessibility element whose value is "N of M days active".
+
+## Analog Clock
+
+A clock with a sweeping second hand; set a time and the hands spring to it. Trigger: Loop / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Number/AnalogClock.swift.
+
+```swift
+AnalogClock()                       // live
+    .frame(width: 160, height: 160)
+
+AnalogClock(date: meeting, accent: .pink)
+```
+
+How it works: Create a SwiftUI AnalogClock(date:color:accent:timeZone:) view (iOS 17+) drawn in a Canvas at a 1:1 aspect ratio. Convert the date to local seconds = timeIntervalSinceReferenceDate + the zone's offset, so the hands only ever move forward. Face: a ring at 25 % opacity and 60 ticks (every fifth 2.5 pt and longer). Hands from s = seconds mod 43 200: hour angle s / 43 200 × 2π (length 0.5r, width 4.5 % of the side), minute (s mod 3600) / 3600 × 2π (0.75r, 3 %), second (s mod 60) / 60 × 2π in the accent colour with a short tail and a centre dot. With no date, update from TimelineView(.animation) so the second hand sweeps; with a date, make the face Animatable on seconds and animate changes with .spring(duration: 0.9, bounce: 0.3) so the hands turn forward to the new time. With Reduce Motion on, tick once per second with TimelineView(.periodic). Label it "Clock" with the time as its value.
 
 ## Particle Field
 
@@ -1347,6 +1488,51 @@ Fireflies(count: 24)
 
 How it works: Create a SwiftUI Fireflies(count:color:speed:) view (iOS 17+) drawn in a Canvas inside TimelineView(.animation). Each firefly has three stable random values a, b, c; its position is the view centre plus two layered sines per axis (x: 0.38 sin(t(0.13 + 0.12a) + 20a) + 0.1 sin(t(0.5 + 0.3b) + 9b); y: 0.36 sin(t(0.11 + 0.1b) + 17b) + 0.1 cos(t(0.45 + 0.3c) + 5c), as fractions of the size), giving slow wandering loops. Its blink = (0.5 + 0.5 sin(t(0.8 + 1.6c) + 30a))³. Draw a glow circle 8 × r wide in a context with .blur(radius: 6) at opacity 0.25 + 0.75 × blink, then a white core of radius r (1.6–2.8 pt) at 0.35 + 0.65 × blink. Warm yellow by default. With Reduce Motion on, freeze positions but keep the blinking.
 
+## Flock
+
+Little arrows swim together like birds or fish, and chase your finger. Trigger: Loop / Drag / Hover. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Flock.swift.
+
+```swift
+Flock(count: 60, color: .white)
+    .background(.indigo.gradient)
+```
+
+How it works: Create a SwiftUI Flock(count:color:speed:) view (iOS 17+) that simulates boids. Keep the boids (position, velocity) in a reference-type model stored in @State and advance it from a Canvas inside TimelineView(.animation), with dt = time since the last frame capped at 1/20 s. For each boid, look at neighbours within 46 pt: steer 5 % towards their average velocity, 1.2 % towards their centre, and away from any closer than 16 pt by 0.14 × the overlap. If there's a target (from onContinuousHover or a DragGesture(minimumDistance: 0)), add 2 % of the gap to it. Push back by 9 within 24 pt of an edge. Clamp speed between 0.6 and 1.3 × cruise (90 pt/s, 1.5× when chasing). Draw each boid as a small arrowhead path rotated to atan2 of its velocity. With Reduce Motion on, freeze them. Hide it from accessibility.
+
+## Ink Trail
+
+The pointer or finger leaves puffs of ink that swell, drift up and fade. Trigger: Drag / Hover. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/InkTrail.swift.
+
+```swift
+Color.black
+    .inkTrail(color: .purple)
+```
+
+How it works: Create a SwiftUI .inkTrail(color:lifetime:size:) view modifier (iOS 17+). Record puffs (point, time, random seed) from onContinuousHover and a simultaneous DragGesture(minimumDistance: 0), skipping points closer than 0.18 × size to the last one within 50 ms and dropping puffs older than lifetime (1.2 s). Draw them in an overlay Canvas inside TimelineView(.animation) with a blur of 0.35 × size: at age a (0…1) a puff has radius size × (0.35 + 0.9a) (size 26 pt), rises 34a pt, sways sideways by sin(seed × 9 + 3a) × 14a pt, and has opacity 0.85 × (1 − a)². Disable hit testing on the overlay. With Reduce Motion on, record nothing.
+
+## Rain on Glass
+
+Raindrops cling to a window while bigger drops slide down in fits and starts. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/RainOnGlass.swift.
+
+```swift
+Image("city-night")
+    .blur(radius: 6)
+    .overlay(RainOnGlass())
+```
+
+How it works: Create a SwiftUI RainOnGlass(drops:tint:) overlay (iOS 17+) in TimelineView(.animation) + Canvas. Scatter one static bead per 900 pt² at hashed positions with radius 0.8–2.6 pt. Each of the sliding drops (9) has a cycle of 3.5–7.5 s; its progress l through the cycle becomes stick-slip motion with five steps, (floor(5l) + frac(5l)³) / 5, carrying it from a hashed start near the top past the bottom edge, with a 3 pt sideways wobble and radius 3.2–5.8 pt, stretched 1.25× vertically. Behind it, leave a trail of tiny beads every 9 pt with hashed jitter. Draw every drop like a tiny lens: an ellipse filled with a diagonal gradient (tint 35 % → tint 5 % → black 35 %) plus a bright fleck at the top-left. Disable hit testing. With Reduce Motion on, pause the timeline.
+
+## Orbits
+
+Planets circle a glowing star on tilted orbits, passing behind it and in front. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionLibrary/Particle/Orbits.swift.
+
+```swift
+Orbits(colors: [.orange, .cyan, .pink])
+    .frame(width: 240, height: 160)
+```
+
+How it works: Create a SwiftUI Orbits(colors:tilt:centerColor:) view (iOS 17+) in TimelineView(.animation) + Canvas. Each colour is a planet on its own orbit, radius spread from 0.38 to 1 × the largest radius that fits (an ellipse squashed vertically by tilt, 0.38). Period = 2.4 × (2r / maxR)^1.5 s so inner planets move faster; angle = time / period × 2π + 2.1 × index; position = centre + (cos a × r, sin a × r × tilt); depth = sin a. Stroke each orbit at white 14 %. Draw the planets with depth < 0 first, then the star (a 20 pt circle over a 32 pt blurred halo at 70 %), then the ones in front, so they pass behind and in front of it. Scale planets by 0.75 + 0.25 × (depth + 1) / 2 and dim the far ones. With Reduce Motion on, pause the timeline.
+
 ## Iris
 
 A circle opens from a point to reveal the view, like a camera iris. Trigger: Appear. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/MaskTransitions.swift.
@@ -1509,6 +1695,31 @@ if showTicket {
 
 How it works: Create a SwiftUI OrigamiTransition (iOS 17+, Transition) with .origami and .origami(folds:) accessors applying an Animatable ViewModifier with progress 0 (flat) → 1 (folded). At 0 render the content. Otherwise keep the footprint with content.hidden() and, in a top-aligned overlay GeometryReader, draw 4 copies of the content, each masked to its horizontal panel. With angle = 90° × p and c = cos(angle): even panels hinge on their top edge (rotation3DEffect +angle about x, anchor at y = i / n), odd panels on their bottom edge (−angle, anchor (i + 1) / n), and each is offset by hinge × panelHeight × (c − 1) so it starts where the previous one ends, collapsing like an accordion towards the top. Shade panels with black at (0.1 even, 0.4 odd) × (1 − c), perspective 0.4, and fade out over the last 15 %. Read Reduce Motion in an inner View and fade instead.
 
+## Ink Bleed
+
+New content spreads in like a blot of ink on wet paper, with a ragged edge. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/InkBleed.swift.
+
+```swift
+if showsDetail {
+    DetailCard()
+        .transition(.inkBleed(from: .topLeading))
+}
+```
+
+How it works: Create a SwiftUI Transition .inkBleed / .inkBleed(from: UnitPoint) (iOS 17+) that masks the content with an Animatable blot view whose progress is 1 when the phase is identity and 0 otherwise. The blot is a Canvas with .alphaThreshold(min: 0.5) and a blur of max(2, 0.06r), drawing into a layer: a circle of radius 0.82r at the origin plus 26 circles around it, at angle i / 26 × 2π + hashed jitter, distance r × (0.62–0.92) and radius r × (0.12–0.32). r = (1.25 × distance to the furthest corner + 30) × progress, so blurring then thresholding melts them into one ragged blot that clears the corners at 1. With Reduce Motion on, fade instead.
+
+## Zoom Blur
+
+Content rushes in from the camera, blurred and trailed by echoes, then snaps sharp. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Transition/ZoomBlur.swift.
+
+```swift
+Text(title)
+    .id(title)
+    .transition(.zoomBlur)
+```
+
+How it works: Create a SwiftUI Transition .zoomBlur / .zoomBlur(scale:) (iOS 17+). In an Animatable modifier with amount 0 (in place) … 1 (away), scale the content to 1 + (scale − 1) × amount (scale 1.6), blur it by 14 × amount and fade it to 1 − amount. While 0 < amount < 1, add three echo copies behind it, each a little larger (+ 0.12 × step × amount), blurrier (6 + 6 × step × amount) and fainter ((1 − amount) × 0.28 / step), as a cheap radial zoom blur. The phase maps identity to 0 and both insertion and removal to 1, so it rushes in from the camera and out past it. With Reduce Motion on, fade instead.
+
 ## Water Ripple
 
 A real ripple distorts the view's pixels outward from a tap. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionShaders/WaterRipple.swift, Sources/MotionShaders/Shaders/WaterRipple.metal.
@@ -1597,3 +1808,148 @@ if !isDeleted {
 ```
 
 How it works: Create a SwiftUI .noiseDissolve(_ progress:scale:edge:) view modifier (iOS 17+) as an Animatable ViewModifier over progress, applying .colorEffect(ShaderLibrary.motionDissolve(.float(progress), .float(scale), .color(edge)), isEnabled: progress > 0) with scale 18 pt and an orange edge, plus a NoiseDissolveTransition (.noiseDissolve) that uses progress 1 when not identity. The Metal [[stitchable]] colour shader (float2 position, half4 color, float progress, float scale, half4 edge): n = 0.7 × noise(position / scale) + 0.3 × noise(position / (0.35 × scale)) using smooth value noise; threshold = progress × 1.1 − 0.05; return transparent where n < threshold, and mix towards edge × alpha by 1 − smoothstep(threshold, threshold + 0.06, n) so a thin band glows just before it burns. With Reduce Motion on, the transition fades instead.
+
+## Disintegrate
+
+The view crumbles into grains of sand that blow away on the wind. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionShaders/Disintegrate.swift, Sources/MotionShaders/Shaders/Disintegrate.metal.
+
+```swift
+import MotionShaders
+
+Avatar()
+    .disintegrate(isGone ? 1 : 0)
+    .animation(.easeIn(duration: 1.6), value: isGone)
+
+if !isDeleted {
+    MessageRow().transition(.disintegrate)
+}
+```
+
+How it works: Create a SwiftUI .disintegrate(_ progress:wind:grain:) view modifier and matching Transition (iOS 17+) using a Metal [[stitchable]] layer shader with (position, layer, float2 size, float progress, float grain, float2 wind). Split the view into grain-sized cells (2 pt) with two hashes n, n2 per cell. along = dot(position / size, normalize(wind)) × 0.5 + 0.5; delay = (1 − along) × 0.55 + 0.3n; local = clamp((1.4 × progress − delay) / 0.5, 0, 1). If local is 0, return the layer unchanged; if n2 < 1.15 × local, return clear (the grain is gone); otherwise sample the layer at position − (wind × local² + (sin 40n, cos 31n) × local × 6 × grain) and multiply by 1 − local. Apply it through .visualEffect so the shader gets the size, with maxSampleOffset |wind| + 6 × grain, in an Animatable modifier on progress. The transition maps identity to 0 and removal/insertion to 1 (default wind (140, −60)); with Reduce Motion on it fades instead.
+
+## Genie
+
+The view pinches and pours into a point below it, like minimising a window. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionShaders/Genie.swift, Sources/MotionShaders/Shaders/Genie.metal.
+
+```swift
+import MotionShaders
+
+Panel()
+    .genie(isMinimised ? 1 : 0, toward: 0.8)
+    .animation(.easeInOut(duration: 0.7), value: isMinimised)
+```
+
+How it works: Create a SwiftUI .genie(_ progress:toward:) view modifier and matching Transition (iOS 17+) using a Metal [[stitchable]] distortion shader (position, float2 size, float progress, float target) that returns where to sample. pinch = clamp(2p, 0, 1), slide = clamp(2p − 1, 0, 1). Return an off-view point below the bottom edge (that part has gone into the target, and maxSampleOffset widens the drawn area). y = position.y − slide × height (return an off-view point if y < 0). bend = smoothstep(0, 1, clamp(y / height + slide, 0, 1)) and squeeze = pinch × bend; the row's edges move from 0 and width towards target × width ∓ 3 pt by squeeze. Return off-view for x outside them, else x = (position.x − left) / (right − left) × width. So the bottom first pinches towards the target in an S-curve, then the whole shape slides down into it. Apply through .visualEffect for the size, maxSampleOffset = size, in an Animatable modifier on progress. The transition defaults to the middle of the bottom edge; with Reduce Motion on it fades instead.
+
+## Glass Lens
+
+A round glass lens magnifies what's under it, bending light at its rim. Trigger: Drag / Hover. Requires iOS 17+. Files: Sources/MotionShaders/GlassLens.swift, Sources/MotionShaders/Shaders/GlassLens.metal.
+
+```swift
+import MotionShaders
+
+ArticleView()
+    .glassLensOnDrag(radius: 60)
+```
+
+How it works: Create SwiftUI .glassLens(at:radius:magnification:) and .glassLensOnDrag() view modifiers (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float2 centre, float radius, float magnification). u = distance from centre / radius. Outside (u ≥ 1), darken the layer by up to 22 % in a soft ring that fades out by u = 1.12. Inside, sample at centre + offset × scale with scale = mix(1 / magnification, 1, u³), so the middle is magnified (1.8×) and the rim isn't; sample red at scale + 0.035u⁴ and blue at scale − 0.035u⁴ for colour fringing. Brighten towards white by a rim term smoothstep(0.86, 1, u) × 0.35 plus a specular spot centred at (−0.38, −0.42) × radius that fades over 0.32 × radius. maxSampleOffset = radius. The drag version follows a DragGesture(minimumDistance: 0) and the hover location, starting in the middle.
+
+## Swirl
+
+The view twists around a point like water going down a drain. Trigger: Drag / Value change. Requires iOS 17+. Files: Sources/MotionShaders/Swirl.swift, Sources/MotionShaders/Shaders/Swirl.metal.
+
+```swift
+import MotionShaders
+
+Image("galaxy")
+    .swirlOnDrag()
+
+Logo()
+    .swirl(at: centre, strength: isStirred ? 4 : 0)
+    .animation(.spring(duration: 1), value: isStirred)
+```
+
+How it works: Create SwiftUI .swirl(at:radius:strength:) and .swirlOnDrag(radius:strength:) view modifiers (iOS 17+) using a Metal [[stitchable]] distortion shader (position, float2 centre, float radius, float strength): within radius (110 pt), rotate the offset from the centre by strength × t² where t = 1 − distance / radius, so it twists most at the centre and not at all at the edge; outside, return the position unchanged. Animate strength in an Animatable modifier, maxSampleOffset = radius. The drag version moves the centre to the finger and sets strength to 4 × min(1, 0.35 + travel / 160) with an interactive spring, then springs back to 0 with .spring(duration: 0.8, bounce: 0.45) on release. With Reduce Motion on, the drag doesn't twist.
+
+## Kaleidoscope
+
+One wedge of the view mirrored round the centre, turning into new patterns. Trigger: Loop / Value change. Requires iOS 17+. Files: Sources/MotionShaders/Kaleidoscope.swift, Sources/MotionShaders/Shaders/Kaleidoscope.metal.
+
+```swift
+import MotionShaders
+
+Image("flowers")
+    .kaleidoscope(segments: 8)
+    .clipShape(Circle())
+```
+
+How it works: Create a SwiftUI .kaleidoscope(segments:rotation:spins:) view modifier (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float2 size, float segments, float rotation). Around the centre, take the polar angle modulo the wedge 2π / segments and mirror the second half of each wedge (a > wedge / 2 → wedge − a), add rotation, and sample at centre + r' × (cos a, sin a), where r' folds the radius back into the view (reach − |r mod 2 reach − reach|, reach = half the shorter side) so the corners aren't empty. Pass the size through .visualEffect with maxSampleOffset = size, in an Animatable modifier on rotation. When spins is on, add time × 0.25 rad from TimelineView(.animation) so the pattern keeps blooming. With Reduce Motion on, don't spin.
+
+## Halftone
+
+The view is printed in round dots, bigger where it's darker, like newsprint. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionShaders/Halftone.swift, Sources/MotionShaders/Shaders/Halftone.metal.
+
+```swift
+import MotionShaders
+
+Image("portrait")
+    .halftone(dotSize: isPrinted ? 8 : 1)
+    .animation(.easeInOut, value: isPrinted)
+```
+
+How it works: Create a SwiftUI .halftone(dotSize:angle:paper:) view modifier (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float dotSize, float angle, half4 paper). Rotate the position into a grid at angle (45°), find the centre of its dotSize cell (8 pt), rotate that back and sample the layer there for the dot's colour. Un-premultiply, take luminance L, coverage = (1 − 0.85L) × alpha, dot radius = √coverage × 0.72 × dotSize, and draw the dot with a 0.8 pt smoothstep edge over the paper colour, keeping the alpha of the layer at the pixel so transparent areas stay transparent. Animate dotSize in an Animatable modifier and disable the effect below 1.5 pt, so animating from 1 brings the dots in. maxSampleOffset = dotSize.
+
+## Dither
+
+Chunky pixels in a few flat colours with a Bayer cross-hatch, like a retro handheld. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionShaders/Dither.swift, Sources/MotionShaders/Shaders/Dither.metal.
+
+```swift
+import MotionShaders
+
+GameScene()
+    .dither(pixelSize: 3)                             // four greens
+Avatar()
+    .dither(pixelSize: 2, palette: DitherPalette.mono) // 1-bit
+```
+
+How it works: Create a SwiftUI .dither(pixelSize:palette:) view modifier (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float pixelSize, device const half4 *palette, int count). Sample the layer at the centre of the position's pixelSize block (3 pt), un-premultiply, take luminance, and add a 4 × 4 Bayer threshold ((bayer[i] + 0.5) / 16 − 0.5) / (levels − 1) indexed by the block coordinates mod 4. Round to the nearest of the palette's colours (darkest first) and return it premultiplied by the sample's alpha. Pass the palette with .colorArray. Ship palettes: four greens like an early handheld (0.06, 0.22, 0.06) … (0.61, 0.74, 0.06), mono black/white, and sepia. Animate pixelSize in an Animatable modifier; maxSampleOffset = pixelSize.
+
+## Thermal Vision
+
+Brightness turns into heat colours, from cold indigo to white hot. Trigger: Value change. Requires iOS 17+. Files: Sources/MotionShaders/Thermal.swift, Sources/MotionShaders/Shaders/Thermal.metal.
+
+```swift
+import MotionShaders
+
+CameraFeed()
+    .thermal(isScanning ? 1 : 0)
+    .animation(.easeInOut(duration: 0.6), value: isScanning)
+```
+
+How it works: Create a SwiftUI .thermal(_ intensity:) view modifier (iOS 17+) using a Metal [[stitchable]] colour shader (position, half4 colour, float intensity). Un-premultiply, take luminance as heat, and map it through seven evenly spaced stops: (0, 0, 0.05), (0.2, 0.05, 0.45), (0.65, 0.05, 0.6), (0.95, 0.15, 0.2), (1, 0.5, 0), (1, 0.9, 0.2), (1, 1, 1), interpolating linearly. Mix the original colour with the heat colour by intensity and premultiply again. Animate intensity in an Animatable modifier and disable the effect at 0, so the view can switch into heat vision.
+
+## Flag Wave
+
+The view ripples like a flag on a pole, its folds catching the light. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionShaders/FlagWave.swift, Sources/MotionShaders/Shaders/FlagWave.metal.
+
+```swift
+import MotionShaders
+
+Image("banner")
+    .flagWave(amplitude: 10)
+```
+
+How it works: Create a SwiftUI .flagWave(amplitude:wavelength:speed:) view modifier (iOS 17+) using a Metal [[stitchable]] layer shader (position, layer, float2 size, float time, float amplitude, float wavelength). reach = x / width (0 at the pole on the leading edge, 1 at the free end); phase = x / wavelength × 2π − 4 × time; wave = sin(phase) + 0.35 sin(2.3 phase + 1.1). Sample at (x + 0.25 × amplitude × reach × cos(phase), y − amplitude × reach × wave) and multiply the colour by 1 + 0.18 × reach × (cos(phase) + 0.8 cos(2.3 phase + 1.1)) so slopes catch light and shade, clamped to alpha. Drive time from TimelineView(.animation), pad the view vertically by 1.4 × amplitude (and take it back with negative padding) so the ripples have room, and apply through .visualEffect for the size. With Reduce Motion on, leave the view still.
+
+## Voronoi Cells
+
+Slowly drifting cells like stained glass, with soft seams between them. Trigger: Loop. Requires iOS 17+. Files: Sources/MotionShaders/Voronoi.swift, Sources/MotionShaders/Shaders/Voronoi.metal.
+
+```swift
+import MotionShaders
+
+VoronoiCells(colors: [.indigo, .purple, .pink, .orange, .teal])
+    .ignoresSafeArea()
+```
+
+How it works: Create a SwiftUI VoronoiCells(colors:cellSize:speed:) view (iOS 17+): a Rectangle with a Metal [[stitchable]] colour shader (position, colour, float time, float scale, device const half4 *palette, int count) driven by TimelineView(.animation). Work in cells of scale (60 pt); for the 3 × 3 neighbouring cells, the seed is cell + 0.5 + 0.4 × sin(time + 2π × hash2(cell)), so seeds drift. Track the nearest and second-nearest distances; colour the pixel with palette[hash(nearest cell) × count], darkened by smoothstep(0, 0.08, second − nearest) for soft seams and by 1 − 0.35 × nearest for a gentle glow at each seed. Pass the colours with .colorArray. With Reduce Motion on, pause the timeline. Hide it from accessibility.
