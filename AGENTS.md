@@ -28,7 +28,7 @@ skills/swiftui-motion/                # generated Agent Skill
 .cursor/rules/swiftui-motion.mdc      # generated Cursor rule
 mcp/server.mjs                        # zero-dependency MCP server (reads the JSON)
 Examples/MotionLibraryDemo/           # iOS demo app (XcodeGen project.yml + committed .xcodeproj) + scroll UI tests
-Scripts/                              # check-build, check-standalone, generate-docs, record-readme-gifs, record-simulator-gifs
+Scripts/                              # check-build, check-standalone, generate-docs, record-readme-gifs, record-simulator-gifs, make-hero, make-social-preview
 ```
 
 - `MotionLibrary` must never import `MotionGallery`.
@@ -62,6 +62,8 @@ Scripts/check-standalone.sh       # each effect compiles from just its listed fi
 Scripts/generate-docs.sh          # regenerate catalog-derived files (--check to verify)
 Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
 Scripts/record-simulator-gifs.sh  # GIFs that need real scrolling, recorded in the iOS Simulator
+Scripts/make-hero.sh              # Docs/hero.gif, the README's top mosaic (rerun after re-recording its GIFs)
+swift Scripts/make-social-preview.swift  # Docs/social-preview.png, upload in Settings → Social preview
 ```
 
 With Xcode, also build for iOS and visionOS (`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -scheme MotionLibrary-Package -destination 'generic/platform=iOS Simulator' -derivedDataPath .build/xcode build`, same with `visionOS Simulator`) and check effects in the canvas. `sensoryFeedback` needs visionOS 26, so use the internal `.haptic(…)` helpers instead.

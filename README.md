@@ -6,6 +6,8 @@
 Each one comes with a live demo, usage code and an AI prompt. Pure SwiftUI, zero dependencies.<br>
 <sub>🇹🇼 中文使用者請看 <a href="README.zh-TW.md">繁體中文說明</a></sub>
 
+<img src="Docs/hero.gif" width="760" alt="Holographic card, disintegrate, liquid fill text, like button, dot globe and kaleidoscope effects">
+
 <a href="https://swift.org"><img alt="Swift 5.9" src="https://img.shields.io/badge/Swift-5.9-F05138?style=for-the-badge&logo=swift&logoColor=white"></a> <img alt="iOS 17 · macOS 14 · visionOS 1" src="https://img.shields.io/badge/iOS%2017%20%C2%B7%20macOS%2014%20%C2%B7%20visionOS%201-555?style=for-the-badge"> <img alt="Swift Package Manager" src="https://img.shields.io/badge/SPM-compatible-2E7DF7?style=for-the-badge"> <a href="#license"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-2EA44F?style=for-the-badge"></a> <a href="README.zh-TW.md"><img alt="繁體中文" src="https://img.shields.io/badge/README-%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87-555?style=for-the-badge"></a>
 
 🤖 **Made for AI coding tools.** `llms.txt`, an Agent Skill, a Cursor rule and an MCP server<br>
