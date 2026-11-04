@@ -61,7 +61,7 @@ Add the package, then use an effect in one line or let your AI assistant pick on
 In Xcode, **File → Add Package Dependencies…** and enter this repository's URL, or in `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.4.0")
+.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.5.0")
 ```
 
 ```swift

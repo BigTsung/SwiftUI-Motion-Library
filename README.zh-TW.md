@@ -61,7 +61,7 @@
 在 Xcode 選 **File → Add Package Dependencies…**，輸入本 repo 的網址；或在 `Package.swift` 加入：
 
 ```swift
-.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.4.0")
+.package(url: "https://github.com/BigTsung/SwiftUI-Motion-Library", from: "0.5.0")
 ```
 
 ```swift
