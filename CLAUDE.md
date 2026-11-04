@@ -59,7 +59,7 @@ Full Xcode isn't required. The `#Preview` macro needs Xcode's plugin, so the scr
 ```sh
 Scripts/check-build.sh            # compile MotionLibrary + MotionGallery for macOS
 Scripts/check-standalone.sh       # each effect compiles from just its listed files (after generate-docs)
-Scripts/generate-docs.sh          # regenerate catalog-derived files (--check in CI)
+Scripts/generate-docs.sh          # regenerate catalog-derived files (--check to verify)
 Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
 Scripts/record-simulator-gifs.sh  # GIFs that need real scrolling, recorded in the iOS Simulator
 ```

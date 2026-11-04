@@ -127,7 +127,7 @@ The assistant finds the effect there, adds the package (or copies the effect's l
 | [MCP server](mcp) | Claude Code, Claude Desktop, Cursor, VS Code… | `claude mcp add swiftui-motion -- node /path/to/mcp/server.mjs`. Tools: `list_motion_effects`, `get_motion_effect`. |
 | [`motion-catalog.json`](Docs/motion-catalog.json) | Your own tools | Every effect as structured data. |
 
-All of these are generated from the catalog by `Scripts/generate-docs.sh`, and CI fails if they fall out of date.
+All of these are generated from the catalog by `Scripts/generate-docs.sh`; `Scripts/generate-docs.sh --check` reports any that are out of date.
 
 ### Before you start
 

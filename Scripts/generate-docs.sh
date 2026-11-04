@@ -4,7 +4,7 @@
 # Cursor rule. Run it after adding or changing an effect.
 #
 #   Scripts/generate-docs.sh          # write the files
-#   Scripts/generate-docs.sh --check  # exit 1 if any file is out of date (CI)
+#   Scripts/generate-docs.sh --check  # exit 1 if any file is out of date
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

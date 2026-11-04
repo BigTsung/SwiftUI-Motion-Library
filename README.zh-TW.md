@@ -127,7 +127,7 @@ AI 會在裡面找到該效果，加入套件（如果你不想加依賴，就�
 | [MCP server](mcp) | Claude Code、Claude Desktop、Cursor、VS Code… | `claude mcp add swiftui-motion -- node /path/to/mcp/server.mjs`。提供 `list_motion_effects`、`get_motion_effect` 兩個工具。 |
 | [`motion-catalog.json`](Docs/motion-catalog.json) | 你自己的工具 | 所有效果的結構化資料。 |
 
-以上全部由 `Scripts/generate-docs.sh` 從 catalog 自動產生，內容過期時 CI 會失敗。
+以上全部由 `Scripts/generate-docs.sh` 從 catalog 自動產生；`Scripts/generate-docs.sh --check` 會檢查是否有檔案過期。
 
 ### 開始之前
 
