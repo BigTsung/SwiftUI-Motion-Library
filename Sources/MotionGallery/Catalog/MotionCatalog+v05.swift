@@ -60,7 +60,7 @@ extension MotionCatalog {
             component: .card,
             triggers: [.tap, .change],
             sourceFile: "Card/IslandPill.swift",
-            api: "IslandPill(isExpanded:compact:expanded:)",
+            api: "IslandPill(isExpanded:) { } expanded: { }",
             usage: #"""
             IslandPill(isExpanded: showsPlayer) {
                 Image(systemName: "waveform")
@@ -102,7 +102,7 @@ extension MotionCatalog {
             component: .card,
             triggers: [.loop],
             sourceFile: "Card/MarqueeWall.swift",
-            api: "MarqueeWall(count:columns:content:)",
+            api: "MarqueeWall(count:) { index in }",
             usage: #"""
             MarqueeWall(count: shots.count, columns: 4) { index in
                 Image(shots[index]).resizable().scaledToFill()

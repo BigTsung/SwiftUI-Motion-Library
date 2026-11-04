@@ -4535,7 +4535,7 @@ extension View {
 
 A capsule shrinks into a progress ring, then pops into a checkmark.
 
-- API: `DownloadButton(progress:action:)`
+- API: `DownloadButton(progress:) { }`
 - Component: Button
 - Trigger: Tap / Value change
 - Requires: iOS 17+ · macOS 14+ · visionOS 1+
@@ -7008,7 +7008,7 @@ public extension View {
 
 A deck splits in two, mixes, and springs back into a messy stack.
 
-- API: `DeckShuffle(_:trigger:content:)`
+- API: `DeckShuffle(items, trigger:) { item in }`
 - Component: Card & Group
 - Trigger: Value change / Tap
 - Requires: iOS 17+ · macOS 14+ · visionOS 1+
@@ -7126,7 +7126,7 @@ where Data.Element: Identifiable {
 
 A paging carousel that wraps around forever, with peeking neighbours.
 
-- API: `LoopingCarousel(_:autoplay:content:)`
+- API: `LoopingCarousel(items) { item in }`
 - Component: Card & Group
 - Trigger: Drag / Loop
 - Requires: iOS 17+ · macOS 14+ · visionOS 1+
@@ -7663,7 +7663,7 @@ public extension View {
 
 A black pill springs open into a card and back, its contents blurring across.
 
-- API: `IslandPill(isExpanded:compact:expanded:)`
+- API: `IslandPill(isExpanded:) { } expanded: { }`
 - Component: Card & Group
 - Trigger: Tap / Value change
 - Requires: iOS 17+ · macOS 14+ · visionOS 1+
@@ -7912,7 +7912,7 @@ public extension View {
 
 A tilted wall of cards, columns scrolling endlessly up and down.
 
-- API: `MarqueeWall(count:columns:content:)`
+- API: `MarqueeWall(count:) { index in }`
 - Component: Card & Group
 - Trigger: Loop
 - Requires: iOS 17+ · macOS 14+ · visionOS 1+
@@ -16502,7 +16502,7 @@ public extension Transition where Self == FilmExposureTransition {
 
 New content spreads out in a circle from where you tapped.
 
-- API: `CircularReveal(value:origin:content:)`
+- API: `CircularReveal(value:) { value in }`
 - Component: Transition
 - Trigger: Tap / Value change
 - Requires: iOS 17+ · macOS 14+ · visionOS 1+

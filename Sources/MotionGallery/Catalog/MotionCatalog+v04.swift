@@ -145,7 +145,7 @@ extension MotionCatalog {
             component: .button,
             triggers: [.tap, .change],
             sourceFile: "Button/DownloadButton.swift",
-            api: "DownloadButton(progress:action:)",
+            api: "DownloadButton(progress:) { }",
             usage: #"""
             DownloadButton(progress: download.progress) {
                 download.start()
@@ -244,7 +244,7 @@ extension MotionCatalog {
             component: .card,
             triggers: [.change, .tap],
             sourceFile: "Card/DeckShuffle.swift",
-            api: "DeckShuffle(_:trigger:content:)",
+            api: "DeckShuffle(items, trigger:) { item in }",
             usage: #"""
             DeckShuffle(cards, trigger: shuffles) { card in
                 CardFace(card)
@@ -263,7 +263,7 @@ extension MotionCatalog {
             component: .card,
             triggers: [.drag, .loop],
             sourceFile: "Card/LoopingCarousel.swift",
-            api: "LoopingCarousel(_:autoplay:content:)",
+            api: "LoopingCarousel(items) { item in }",
             usage: #"""
             LoopingCarousel(banners, autoplay: 3) { banner in
                 BannerCard(banner)
@@ -667,7 +667,7 @@ extension MotionCatalog {
             component: .transition,
             triggers: [.tap, .change],
             sourceFile: "Transition/CircularReveal.swift",
-            api: "CircularReveal(value:origin:content:)",
+            api: "CircularReveal(value:) { value in }",
             usage: #"""
             CircularReveal(value: isDark, origin: tapPoint) { dark in
                 ThemePreview(dark: dark)

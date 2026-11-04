@@ -22,7 +22,7 @@ Thanks for helping grow the library! Adding an effect takes three files.
    - `id`: kebab-case, unique, never changed once released.
    - `triggers`: every `MotionTrigger` that applies.
    - `requirement`: `.ios18` if the effect needs iOS 18; omit it otherwise.
-   - `api`: the public API in one line, e.g. `".shimmer()"` or `"PulseRings()"`. It appears in the README, llms.txt, the Skill and the MCP server.
+   - `api`: the public API in one line, e.g. `".shimmer()"` or `"PulseRings()"`. It appears in the README, llms.txt, the Skill and the MCP server. Keep every run without a space to 30 characters or fewer, or it widens the README grid: write `"MarqueeWall(count:) { index in }"`, not `"MarqueeWall(count:columns:content:)"` (the generator checks this).
    - `usage`: a copy-paste snippet, written as a raw string `#""" … """#`.
    - `prompt`: an AI prompt (see below), also a raw string.
 4. **Check it compiles:** `Scripts/check-build.sh` builds both targets with just the Command Line Tools (no Xcode needed). After step 6, `Scripts/check-standalone.sh <id>` checks that the effect also compiles from just its listed files.

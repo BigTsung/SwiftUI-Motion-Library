@@ -573,6 +573,16 @@ if Set(ids).count != ids.count {
 for effect in effects where effect.api.isEmpty {
     fatalError("\(effect.id) has no `api` in MotionCatalog.swift")
 }
+// The README shows `api` in <code> under a 240 pt GIF. Code doesn't wrap
+// (and GitHub strips <wbr>), so a run without spaces wider than the GIF
+// widens its column and pushes the table off the page.
+let maxAPIRun = 30
+for effect in effects {
+    let longest = effect.api.split(separator: " ").map(\.count).max() ?? 0
+    if longest > maxAPIRun {
+        fatalError("\(effect.id): `api` has \(longest) characters without a space (max \(maxAPIRun)), which breaks the README grid. Use the trailing-closure form, e.g. \"Name(items) { item in }\".")
+    }
+}
 
 for language in [ReadmeLanguage.english, .traditionalChinese] {
     let readme = try! String(contentsOf: root.appendingPathComponent(language.file), encoding: .utf8)

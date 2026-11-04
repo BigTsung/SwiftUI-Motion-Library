@@ -75,7 +75,7 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Liquid Toggle | `.toggleStyle(.liquid)` | Tap | A switch whose knob stretches like a drop of liquid as it slides. |
 | Gooey Menu | `GooeyMenu(symbols:action:)` | Tap | A round button splits into a fan of buttons like a drop of liquid. |
 | Slide to Confirm | `SlideToConfirm(_:action:)` | Drag | Drag the knob all the way across to run the action; let go early and it springs back. |
-| Download Button | `DownloadButton(progress:action:)` | Tap / Value change | A capsule shrinks into a progress ring, then pops into a checkmark. |
+| Download Button | `DownloadButton(progress:) { }` | Tap / Value change | A capsule shrinks into a progress ring, then pops into a checkmark. |
 | Star Rating | `StarRating(rating:)` | Tap / Value change | Stars fill one after another with a springy pop and a burst of sparks. |
 | Bouncy Tab Bar | `BouncyTabBar(selection:items:)` | Tap / Value change | A pill glides to the selected tab and its icon squashes and hops. |
 | Pull Cord | `PullCord(isOn:)` | Drag / Tap | A lamp cord toggle: pull the knob down, it clicks and springs back swinging. |
@@ -98,14 +98,14 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Fan Stack | `FanStack(items, isSpread:) { item in }` | Tap / Value change | A pile of cards fans out like a hand of playing cards, and gathers back. |
 | Scratch Card | `.scratchToReveal(_:onReveal:)` | Drag | Rub away a scratch-off cover to reveal what's underneath. |
 | Stacking Cards | `.stackingCard()` | Scroll | Cards stick at the top while scrolling and shrink as the next one covers them. |
-| Deck Shuffle | `DeckShuffle(_:trigger:content:)` | Value change / Tap | A deck splits in two, mixes, and springs back into a messy stack. |
-| Looping Carousel | `LoopingCarousel(_:autoplay:content:)` | Drag / Loop | A paging carousel that wraps around forever, with peeking neighbours. |
+| Deck Shuffle | `DeckShuffle(items, trigger:) { item in }` | Value change / Tap | A deck splits in two, mixes, and springs back into a messy stack. |
+| Looping Carousel | `LoopingCarousel(items) { item in }` | Drag / Loop | A paging carousel that wraps around forever, with peeking neighbours. |
 | Drag to Dismiss | `.dragToDismiss(isPresented:)` | Drag | Fling a card away; it flies off with your throw or springs back. |
 | Shrinking Header | `.shrinkingHeader()` | Scroll | The header sticks to the top and shrinks as content scrolls under it. |
 | Stretchy Header | `.stretchyHeader()` | Scroll | A header image stretches when pulled down and drifts with parallax when scrolled. |
-| Island Pill | `IslandPill(isExpanded:compact:expanded:)` | Tap / Value change | A black pill springs open into a card and back, its contents blurring across. |
+| Island Pill | `IslandPill(isExpanded:) { } expanded: { }` | Tap / Value change | A black pill springs open into a card and back, its contents blurring across. |
 | Hover Lift | `.hoverLift(isActive:)` | Hover | Cards rise, grow and lean towards the pointer on iPad and Mac. |
-| Marquee Wall | `MarqueeWall(count:columns:content:)` | Loop | A tilted wall of cards, columns scrolling endlessly up and down. |
+| Marquee Wall | `MarqueeWall(count:) { index in }` | Loop | A tilted wall of cards, columns scrolling endlessly up and down. |
 | Photo Develop | `.photoDevelop()` | Appear / Value change | The view develops like an instant photo, from murky dark to full colour. |
 
 ### Shape
@@ -192,7 +192,7 @@ In an Xcode app project, add the package with **File → Add Package Dependencie
 | Poof | `.transition(.poof)` | Appear | The view puffs away like smoke: it swells and blurs out. |
 | Swoosh | `.transition(.swoosh)` | Appear | The view whooshes in leaning forward, with a motion blur. |
 | Film Exposure | `.transition(.filmExposure)` | Appear | The view develops like a photo, from over-exposed white to full colour. |
-| Circular Reveal | `CircularReveal(value:origin:content:)` | Tap / Value change | New content spreads out in a circle from where you tapped. |
+| Circular Reveal | `CircularReveal(value:) { value in }` | Tap / Value change | New content spreads out in a circle from where you tapped. |
 | Liquid Swipe | `.transition(.liquidSwipe)` | Value change | The next page pours in from the edge behind a bulging liquid wave. |
 | Page Turn | `.transition(.pageTurn)` | Value change | The old page swings away like a book page, revealing the next one. |
 | Glitch Transition | `.transition(.glitch)` | Value change | The view breaks up like a bad signal on its way in or out. |

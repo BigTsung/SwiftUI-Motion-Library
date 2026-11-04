@@ -444,7 +444,7 @@ Effects are grouped by component: text, buttons, cards, shapes, backgrounds, num
 <img src="Docs/gifs/download-button.gif" width="240" alt="Download Button"><br>
 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Button/DownloadButton.swift"><b>Download Button</b></a><br>
 <sub>Tap / Value change</sub><br>
-<code>DownloadButton(progress:action:)</code><br><sub>Copying the file? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
+<code>DownloadButton(progress:) { }</code><br><sub>Copying the file? Also copy <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Support/Haptics.swift">Haptics.swift</a></sub>
 </td>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/star-rating.gif" width="240" alt="Star Rating"><br>
@@ -569,7 +569,7 @@ Effects are grouped by component: text, buttons, cards, shapes, backgrounds, num
 <img src="Docs/gifs/deck-shuffle.gif" width="240" alt="Deck Shuffle"><br>
 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/DeckShuffle.swift"><b>Deck Shuffle</b></a><br>
 <sub>Value change / Tap</sub><br>
-<code>DeckShuffle(_:trigger:content:)</code>
+<code>DeckShuffle(items, trigger:) { item in }</code>
 </td>
 </tr>
 <tr>
@@ -577,7 +577,7 @@ Effects are grouped by component: text, buttons, cards, shapes, backgrounds, num
 <img src="Docs/gifs/looping-carousel.gif" width="240" alt="Looping Carousel"><br>
 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/LoopingCarousel.swift"><b>Looping Carousel</b></a><br>
 <sub>Drag / Loop</sub><br>
-<code>LoopingCarousel(_:autoplay:content:)</code>
+<code>LoopingCarousel(items) { item in }</code>
 </td>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/drag-to-dismiss.gif" width="240" alt="Drag to Dismiss"><br>
@@ -603,7 +603,7 @@ Effects are grouped by component: text, buttons, cards, shapes, backgrounds, num
 <img src="Docs/gifs/island-pill.gif" width="240" alt="Island Pill"><br>
 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/IslandPill.swift"><b>Island Pill</b></a><br>
 <sub>Tap / Value change</sub><br>
-<code>IslandPill(isExpanded:compact:expanded:)</code>
+<code>IslandPill(isExpanded:) { } expanded: { }</code>
 </td>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/hover-lift.gif" width="240" alt="Hover Lift"><br>
@@ -617,7 +617,7 @@ Effects are grouped by component: text, buttons, cards, shapes, backgrounds, num
 <img src="Docs/gifs/marquee-wall.gif" width="240" alt="Marquee Wall"><br>
 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Card/MarqueeWall.swift"><b>Marquee Wall</b></a><br>
 <sub>Loop</sub><br>
-<code>MarqueeWall(count:columns:content:)</code>
+<code>MarqueeWall(count:) { index in }</code>
 </td>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/photo-develop.gif" width="240" alt="Photo Develop"><br>
@@ -1058,7 +1058,7 @@ Effects are grouped by component: text, buttons, cards, shapes, backgrounds, num
 <img src="Docs/gifs/circular-reveal.gif" width="240" alt="Circular Reveal"><br>
 <a href="https://github.com/BigTsung/SwiftUI-Motion-Library/blob/main/Sources/MotionLibrary/Transition/CircularReveal.swift"><b>Circular Reveal</b></a><br>
 <sub>Tap / Value change</sub><br>
-<code>CircularReveal(value:origin:content:)</code>
+<code>CircularReveal(value:) { value in }</code>
 </td>
 <td align="center" valign="top" width="33%">
 <img src="Docs/gifs/liquid-swipe.gif" width="240" alt="Liquid Swipe"><br>

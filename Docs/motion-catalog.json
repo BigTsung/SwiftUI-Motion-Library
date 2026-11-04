@@ -790,7 +790,7 @@
       "usage" : "SlideToConfirm(\"Slide to pay\", color: .green) {\n    pay()\n}\n.frame(width: 280)"
     },
     {
-      "api" : "DownloadButton(progress:action:)",
+      "api" : "DownloadButton(progress:) { }",
       "component" : "button",
       "componentTitle" : "Button",
       "files" : [
@@ -1199,7 +1199,7 @@
       "usage" : "ScrollView {\n    VStack(spacing: 16) {\n        ForEach(cards) { card in\n            CardView(card).stackingCard()\n        }\n    }\n}"
     },
     {
-      "api" : "DeckShuffle(_:trigger:content:)",
+      "api" : "DeckShuffle(items, trigger:) { item in }",
       "component" : "card",
       "componentTitle" : "Card & Group",
       "files" : [
@@ -1222,7 +1222,7 @@
       "usage" : "DeckShuffle(cards, trigger: shuffles) { card in\n    CardFace(card)\n}\n.onTapGesture { shuffles += 1 }"
     },
     {
-      "api" : "LoopingCarousel(_:autoplay:content:)",
+      "api" : "LoopingCarousel(items) { item in }",
       "component" : "card",
       "componentTitle" : "Card & Group",
       "files" : [
@@ -1311,7 +1311,7 @@
       "usage" : "ScrollView {\n    Image(\"cover\")\n        .resizable()\n        .scaledToFill()\n        .frame(height: 260)\n        .clipped()\n        .stretchyHeader()\n    ArticleBody()\n}"
     },
     {
-      "api" : "IslandPill(isExpanded:compact:expanded:)",
+      "api" : "IslandPill(isExpanded:) { } expanded: { }",
       "component" : "card",
       "componentTitle" : "Card & Group",
       "files" : [
@@ -1356,7 +1356,7 @@
       "usage" : "LazyVGrid(columns: columns) {\n    ForEach(projects) { project in\n        ProjectCard(project)\n            .hoverLift()\n    }\n}"
     },
     {
-      "api" : "MarqueeWall(count:columns:content:)",
+      "api" : "MarqueeWall(count:) { index in }",
       "component" : "card",
       "componentTitle" : "Card & Group",
       "files" : [
@@ -2747,7 +2747,7 @@
       "usage" : "AsyncImage(url: url) { image in\n    image.resizable()\n        .transition(.filmExposure)\n} placeholder: {\n    ProgressView()\n}"
     },
     {
-      "api" : "CircularReveal(value:origin:content:)",
+      "api" : "CircularReveal(value:) { value in }",
       "component" : "transition",
       "componentTitle" : "Transition",
       "files" : [
