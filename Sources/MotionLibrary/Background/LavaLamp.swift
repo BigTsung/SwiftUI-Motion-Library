@@ -24,7 +24,7 @@ public struct LavaLamp: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             // Reduce Motion: a still frame.
             let time = reduceMotion ? 12 : timeline.date.timeIntervalSinceReferenceDate * speed
             LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom)

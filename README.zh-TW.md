@@ -138,6 +138,7 @@ AI 會在裡面找到該效果，加入套件（如果你不想加依賴，就�
 - iOS 17+、macOS 14+、visionOS 1+、Xcode 15+。
 - 少數效果需要 iOS 18（macOS 15、visionOS 2），在下方表格中有標示，程式碼裡也有 `@available`。
 - 著色器類效果（水波紋、馬賽克、CRT…）放在獨立的 `MotionShaders` product，因為它們是 Metal 著色器：Xcode 26 之後的 Metal Toolchain 要另外下載（**Settings → Components**）。`MotionLibrary` 本身不需要任何額外元件。Gallery 會同時依賴兩者。
+- 背景、粒子、載入指示器這類持續循環的效果，只要在畫面上就會每一幀重繪。放一兩個沒什麼負擔，但不要在列表裡一次放幾十個。傳入 `speed: 0` 可以讓它定格：時鐘會停下，完全不再重繪。由觸發驅動的效果（彩帶、物理 emoji、長按確認…）播放完就會停止重繪。
 
 ## 效果
 

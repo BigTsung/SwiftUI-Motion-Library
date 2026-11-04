@@ -33,7 +33,7 @@ public struct MotionLoader: View {
     }
 
     public var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(paused: speed == 0)) { timeline in
             // Reduce Motion: a slow opacity breathe instead of movement.
             let time = timeline.date.timeIntervalSinceReferenceDate * speed
             GeometryReader { geometry in

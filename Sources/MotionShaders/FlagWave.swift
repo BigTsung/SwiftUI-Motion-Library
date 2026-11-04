@@ -15,7 +15,7 @@ struct FlagWaveModifier: ViewModifier {
         if reduceMotion {
             content
         } else {
-            TimelineView(.animation) { timeline in
+            TimelineView(.animation(paused: speed == 0)) { timeline in
                 let time = Float(timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600) * speed)
                 let amplitude = Float(amplitude), wavelength = Float(max(10, wavelength))
                 let reach = CGSize(width: Double(amplitude), height: Double(amplitude) * 1.4)

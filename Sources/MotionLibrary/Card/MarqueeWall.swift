@@ -51,7 +51,7 @@ public struct MarqueeWall<Content: View>: View {
         // Each column shows its items twice over, so the loop is seamless.
         let perColumn = max(3, Int(ceil(Double(count) / Double(columns))))
         let loopHeight = CGFloat(perColumn) * (itemSize.height + spacing)
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             HStack(alignment: .top, spacing: spacing) {
                 ForEach(0..<columns, id: \.self) { column in

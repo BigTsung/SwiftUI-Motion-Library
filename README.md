@@ -138,6 +138,7 @@ All of these are generated from the catalog by `Scripts/generate-docs.sh`; `Scri
 - iOS 17+, macOS 14+, visionOS 1+, Xcode 15+.
 - A few effects need iOS 18 (macOS 15, visionOS 2); they are marked in the grid and `@available` in code.
 - The Shader effects (water ripple, pixellate, CRT…) live in the separate `MotionShaders` product because they are Metal shaders: Xcode 26 and later download the Metal Toolchain on demand (**Settings → Components**). `MotionLibrary` itself needs nothing extra. The gallery depends on both.
+- Backgrounds, particles, loaders and other looping effects redraw every frame while they're on screen. That's cheap for one or two, but avoid putting dozens of them in a list at once. Pass `speed: 0` to freeze one: the clock stops and it doesn't redraw at all. Effects that respond to a trigger (confetti, physics emoji, hold to confirm…) stop redrawing once they've finished.
 
 ## Effects
 

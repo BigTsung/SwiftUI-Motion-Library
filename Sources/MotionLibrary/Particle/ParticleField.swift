@@ -26,7 +26,7 @@ public struct ParticleField: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             Canvas { context, size in
                 let positions = seeds.map { $0.position(at: time, speed: speed, in: size) }

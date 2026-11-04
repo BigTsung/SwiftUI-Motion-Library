@@ -22,7 +22,7 @@ public struct VoronoiCells: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600) * speed
             Rectangle()
                 .fill(.white)

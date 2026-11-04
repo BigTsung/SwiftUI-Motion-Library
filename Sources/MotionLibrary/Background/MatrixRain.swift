@@ -23,7 +23,7 @@ public struct MatrixRain: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 7 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 let glyphs = Self.glyphs

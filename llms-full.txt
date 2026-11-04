@@ -654,7 +654,7 @@ public struct MarqueeText: View {
             .hidden()
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .leading) {
-                TimelineView(.animation(paused: !scrolls)) { timeline in
+                TimelineView(.animation(paused: !scrolls || speed == 0)) { timeline in
                     let cycle = textWidth + gap
                     let offset = scrolls
                         ? -CGFloat((timeline.date.timeIntervalSinceReferenceDate * speed)
@@ -778,7 +778,7 @@ public struct WaveText: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             text.textRenderer(WaveRenderer(
                 time: reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate,
                 amplitude: reduceMotion ? 0 : amplitude,
@@ -2012,7 +2012,7 @@ public struct WeightWaveText: View {
 
     public var body: some View {
         let characters = Array(string)
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = timeline.date.timeIntervalSinceReferenceDate
             HStack(spacing: 0) {
                 ForEach(characters.indices, id: \.self) { index in
@@ -8103,7 +8103,7 @@ public struct MarqueeWall<Content: View>: View {
         // Each column shows its items twice over, so the loop is seamless.
         let perColumn = max(3, Int(ceil(Double(count) / Double(columns))))
         let loopHeight = CGFloat(perColumn) * (itemSize.height + spacing)
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             HStack(alignment: .top, spacing: spacing) {
                 ForEach(0..<columns, id: \.self) { column in
@@ -8869,7 +8869,7 @@ public struct MotionLoader: View {
     }
 
     public var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(paused: speed == 0)) { timeline in
             // Reduce Motion: a slow opacity breathe instead of movement.
             let time = timeline.date.timeIntervalSinceReferenceDate * speed
             GeometryReader { geometry in
@@ -9025,7 +9025,7 @@ public struct MorphingBlob<Fill: ShapeStyle>: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             BlobShape(
                 time: reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed,
                 points: points,
@@ -9801,7 +9801,7 @@ public struct AuroraBackground: View {
 
     public var body: some View {
         // Reduce Motion: a still frame of the same blobs.
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             GeometryReader { geometry in
                 blobs(time: time, size: geometry.size)
@@ -9903,7 +9903,7 @@ public struct AnimatedMeshGradient: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let t = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             MeshGradient(width: 3, height: 3, points: Self.points(at: t), colors: colors)
         }
@@ -9988,7 +9988,7 @@ public struct RetroGrid: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             Canvas { context, size in
                 draw(in: &context, size: size, time: time)
@@ -10216,7 +10216,7 @@ public struct WaveBackground: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 for (layer, color) in colors.enumerated() {
@@ -10564,7 +10564,7 @@ public struct LavaLamp: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             // Reduce Motion: a still frame.
             let time = reduceMotion ? 12 : timeline.date.timeIntervalSinceReferenceDate * speed
             LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom)
@@ -10655,7 +10655,7 @@ public struct MatrixRain: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 7 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 let glyphs = Self.glyphs
@@ -10995,7 +10995,7 @@ public struct FlowField: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 3 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 let scale = 220 / max(1, min(size.width, size.height))
@@ -11240,7 +11240,7 @@ public struct TopographicLines: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 10_000) * speed
             Canvas { context, size in
                 let cell: CGFloat = 8
@@ -12625,7 +12625,7 @@ public struct ParticleField: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             Canvas { context, size in
                 let positions = seeds.map { $0.position(at: time, speed: speed, in: size) }
@@ -12781,7 +12781,7 @@ public struct Starfield: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             Canvas { context, size in
                 let centre = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -13324,7 +13324,7 @@ public struct Snowfall: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 for seed in seeds {
@@ -13645,7 +13645,7 @@ public struct WarpTunnel: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 let centre = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -13858,7 +13858,7 @@ PhysicsEmoji(trigger: drops)
 
 ### How it works
 
-Create a SwiftUI PhysicsEmoji(trigger:emojis:batch:size:) view (iOS 17+) with a tiny physics world in a plain reference type stepped from a Canvas inside TimelineView(.animation). Each change of trigger drops batch (6) bodies of radius size / 2 (30 pt emoji) at random x above the top with small random velocities and spin; keep at most 36, removing the oldest. Each frame (dt capped at 1/30 s, two substeps): add gravity 1400 pt/s², integrate, bounce off the floor with restitution 0.45 (stopping tiny bounces below 30 pt/s), damp sideways speed by 0.9 and make spin follow rolling speed (vx / r), bounce off the side walls, then resolve circle–circle overlaps by pushing pairs apart along the normal and exchanging the normal impulse −(1 + e) × relative / 2. Decay spin by 0.97 per frame. Draw each emoji (resolved once per frame) translated and rotated. Disable hit testing and hide from accessibility. With Reduce Motion on, place new emoji directly on the floor without falling.
+Create a SwiftUI PhysicsEmoji(trigger:emojis:batch:size:) view (iOS 17+) with a tiny physics world in a plain reference type stepped from a Canvas inside TimelineView(.animation). Each change of trigger drops batch (6) bodies of radius size / 2 (30 pt emoji) at random x above the top with small random velocities and spin; keep at most 36, removing the oldest. Each frame (dt capped at 1/30 s, two substeps): add gravity 1400 pt/s², integrate, bounce off the floor with restitution 0.45 (stopping tiny bounces below 30 pt/s), damp sideways speed by 0.9, bounce off the side walls, then resolve circle–circle overlaps by pushing pairs apart along the normal and exchanging the normal impulse −(1 + e) × relative / 2. Decay spin by 0.97 per frame, then for emoji on the floor set spin to the distance actually moved sideways this frame / r / dt, so one wedged against a wall or a neighbour doesn't spin in place. Pause the timeline once no emoji has moved or turned more than 1 pt in 0.5 s (measured from where they were, since stacks jitter by fractions of a point; or there are no emoji), and wake it on the next drop or a size change. Draw each emoji (resolved once per frame) translated and rotated. Disable hit testing and hide from accessibility. With Reduce Motion on, place new emoji directly on the floor without falling.
 
 ### Source
 
@@ -13875,6 +13875,9 @@ public struct PhysicsEmoji<Trigger: Equatable>: View {
     private let size: CGFloat
 
     @State private var world = EmojiWorld()
+    /// The clock only runs while something is moving; once the pile has
+    /// settled the view stops redrawing until the next drop.
+    @State private var isAwake = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// - Parameters:
@@ -13890,7 +13893,7 @@ public struct PhysicsEmoji<Trigger: Equatable>: View {
     }
 
     public var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(paused: !isAwake)) { timeline in
             Canvas { context, canvasSize in
                 world.step(to: timeline.date, size: canvasSize)
                 var resolved: [String: GraphicsContext.ResolvedText] = [:]
@@ -13904,9 +13907,19 @@ public struct PhysicsEmoji<Trigger: Equatable>: View {
                     copy.draw(text, at: .zero)
                 }
             }
+            .onChange(of: timeline.date) {
+                if world.isAtRest { isAwake = false }
+            }
+        }
+        .background {
+            // A new size moves the walls and floor, so let the pile resettle.
+            GeometryReader { proxy in
+                Color.clear.onChange(of: proxy.size) { isAwake = true }
+            }
         }
         .onChange(of: trigger) {
             world.drop(count: batch, emojis: emojis, radius: size / 2, settled: reduceMotion)
+            isAwake = true
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -13930,6 +13943,15 @@ final class EmojiWorld {
     private var size: CGSize = .zero
     private var last: Date?
     private let maximum = 36
+    /// Where every body was when the pile last moved, and how long ago.
+    /// Stacked bodies jitter by a fraction of a point each frame, so rest is
+    /// judged by how far they get, not by their speed.
+    private var anchor: [Body] = []
+    private var stillFor: Double = 0
+
+    /// True once no emoji has moved or turned more than a point in half a
+    /// second.
+    var isAtRest: Bool { bodies.isEmpty || stillFor >= 0.5 }
 
     func drop(count: Int, emojis: [String], radius: CGFloat, settled: Bool) {
         let width = max(size.width, radius * 4)
@@ -13947,6 +13969,8 @@ final class EmojiWorld {
             ))
         }
         if bodies.count > maximum { bodies.removeFirst(bodies.count - maximum) }
+        anchor = []
+        stillFor = 0
     }
 
     func step(to date: Date, size: CGSize) {
@@ -13954,6 +13978,7 @@ final class EmojiWorld {
         let dt = min(1.0 / 30, date.timeIntervalSince(last ?? date))
         last = date
         guard dt > 0, !bodies.isEmpty else { return }
+        let before = bodies
         let gravity: CGFloat = 1400
         let restitution: CGFloat = 0.45
         // Two substeps keep stacks stable.
@@ -13969,8 +13994,6 @@ final class EmojiWorld {
                     bodies[i].position.y = size.height - r
                     bodies[i].velocity.dy = -abs(bodies[i].velocity.dy) * restitution
                     bodies[i].velocity.dx *= 0.9
-                    // Rolling: spin follows horizontal speed.
-                    bodies[i].spin = Double(bodies[i].velocity.dx / r)
                     if abs(bodies[i].velocity.dy) < 30 { bodies[i].velocity.dy = 0 }
                 }
                 if bodies[i].position.x < r {
@@ -14008,6 +14031,22 @@ final class EmojiWorld {
         }
         // Spin decays so resting emoji stop turning.
         for i in bodies.indices { bodies[i].spin *= 0.97 }
+        // Rolling: on the floor, turn by the distance actually rolled. An
+        // emoji wedged against a wall or a neighbour keeps some sideways
+        // velocity but can't move, and shouldn't spin in place.
+        for i in bodies.indices where bodies[i].position.y >= size.height - bodies[i].radius - 0.5 {
+            bodies[i].spin = Double((bodies[i].position.x - before[i].position.x) / bodies[i].radius) / dt
+        }
+        let drift = anchor.count == bodies.count ? zip(anchor, bodies).reduce(0.0) { drift, pair in
+            let moved = hypot(pair.1.position.x - pair.0.position.x, pair.1.position.y - pair.0.position.y)
+            return max(drift, Double(moved), abs(pair.1.angle - pair.0.angle) * Double(pair.1.radius))
+        } : .infinity
+        if drift > 1 {
+            anchor = bodies
+            stillFor = 0
+        } else {
+            stillFor += dt
+        }
     }
 }
 
@@ -14409,7 +14448,7 @@ public struct DotGlobe: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 let radius = min(size.width, size.height) * 0.45
@@ -14506,7 +14545,7 @@ public struct Bubbles: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 5 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 for index in 0..<count {
@@ -19617,7 +19656,7 @@ struct FlagWaveModifier: ViewModifier {
         if reduceMotion {
             content
         } else {
-            TimelineView(.animation) { timeline in
+            TimelineView(.animation(paused: speed == 0)) { timeline in
                 let time = Float(timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600) * speed)
                 let amplitude = Float(amplitude), wavelength = Float(max(10, wavelength))
                 let reach = CGSize(width: Double(amplitude), height: Double(amplitude) * 1.4)
@@ -19745,7 +19784,7 @@ public struct VoronoiCells: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600) * speed
             Rectangle()
                 .fill(.white)

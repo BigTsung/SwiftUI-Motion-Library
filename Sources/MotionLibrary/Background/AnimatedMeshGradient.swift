@@ -27,7 +27,7 @@ public struct AnimatedMeshGradient: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let t = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             MeshGradient(width: 3, height: 3, points: Self.points(at: t), colors: colors)
         }

@@ -25,7 +25,7 @@ public struct WeightWaveText: View {
 
     public var body: some View {
         let characters = Array(string)
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = timeline.date.timeIntervalSinceReferenceDate
             HStack(spacing: 0) {
                 ForEach(characters.indices, id: \.self) { index in

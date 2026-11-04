@@ -32,7 +32,7 @@ public struct AuroraBackground: View {
 
     public var body: some View {
         // Reduce Motion: a still frame of the same blobs.
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             GeometryReader { geometry in
                 blobs(time: time, size: geometry.size)

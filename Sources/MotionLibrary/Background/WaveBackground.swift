@@ -24,7 +24,7 @@ public struct WaveBackground: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 for (layer, color) in colors.enumerated() {

@@ -23,7 +23,7 @@ public struct MorphingBlob<Fill: ShapeStyle>: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             BlobShape(
                 time: reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * speed,
                 points: points,

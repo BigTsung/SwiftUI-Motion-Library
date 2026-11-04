@@ -10,6 +10,9 @@ public struct PhysicsEmoji<Trigger: Equatable>: View {
     private let size: CGFloat
 
     @State private var world = EmojiWorld()
+    /// The clock only runs while something is moving; once the pile has
+    /// settled the view stops redrawing until the next drop.
+    @State private var isAwake = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// - Parameters:
@@ -25,7 +28,7 @@ public struct PhysicsEmoji<Trigger: Equatable>: View {
     }
 
     public var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(paused: !isAwake)) { timeline in
             Canvas { context, canvasSize in
                 world.step(to: timeline.date, size: canvasSize)
                 var resolved: [String: GraphicsContext.ResolvedText] = [:]
@@ -39,9 +42,19 @@ public struct PhysicsEmoji<Trigger: Equatable>: View {
                     copy.draw(text, at: .zero)
                 }
             }
+            .onChange(of: timeline.date) {
+                if world.isAtRest { isAwake = false }
+            }
+        }
+        .background {
+            // A new size moves the walls and floor, so let the pile resettle.
+            GeometryReader { proxy in
+                Color.clear.onChange(of: proxy.size) { isAwake = true }
+            }
         }
         .onChange(of: trigger) {
             world.drop(count: batch, emojis: emojis, radius: size / 2, settled: reduceMotion)
+            isAwake = true
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -65,6 +78,15 @@ final class EmojiWorld {
     private var size: CGSize = .zero
     private var last: Date?
     private let maximum = 36
+    /// Where every body was when the pile last moved, and how long ago.
+    /// Stacked bodies jitter by a fraction of a point each frame, so rest is
+    /// judged by how far they get, not by their speed.
+    private var anchor: [Body] = []
+    private var stillFor: Double = 0
+
+    /// True once no emoji has moved or turned more than a point in half a
+    /// second.
+    var isAtRest: Bool { bodies.isEmpty || stillFor >= 0.5 }
 
     func drop(count: Int, emojis: [String], radius: CGFloat, settled: Bool) {
         let width = max(size.width, radius * 4)
@@ -82,6 +104,8 @@ final class EmojiWorld {
             ))
         }
         if bodies.count > maximum { bodies.removeFirst(bodies.count - maximum) }
+        anchor = []
+        stillFor = 0
     }
 
     func step(to date: Date, size: CGSize) {
@@ -89,6 +113,7 @@ final class EmojiWorld {
         let dt = min(1.0 / 30, date.timeIntervalSince(last ?? date))
         last = date
         guard dt > 0, !bodies.isEmpty else { return }
+        let before = bodies
         let gravity: CGFloat = 1400
         let restitution: CGFloat = 0.45
         // Two substeps keep stacks stable.
@@ -104,8 +129,6 @@ final class EmojiWorld {
                     bodies[i].position.y = size.height - r
                     bodies[i].velocity.dy = -abs(bodies[i].velocity.dy) * restitution
                     bodies[i].velocity.dx *= 0.9
-                    // Rolling: spin follows horizontal speed.
-                    bodies[i].spin = Double(bodies[i].velocity.dx / r)
                     if abs(bodies[i].velocity.dy) < 30 { bodies[i].velocity.dy = 0 }
                 }
                 if bodies[i].position.x < r {
@@ -143,6 +166,22 @@ final class EmojiWorld {
         }
         // Spin decays so resting emoji stop turning.
         for i in bodies.indices { bodies[i].spin *= 0.97 }
+        // Rolling: on the floor, turn by the distance actually rolled. An
+        // emoji wedged against a wall or a neighbour keeps some sideways
+        // velocity but can't move, and shouldn't spin in place.
+        for i in bodies.indices where bodies[i].position.y >= size.height - bodies[i].radius - 0.5 {
+            bodies[i].spin = Double((bodies[i].position.x - before[i].position.x) / bodies[i].radius) / dt
+        }
+        let drift = anchor.count == bodies.count ? zip(anchor, bodies).reduce(0.0) { drift, pair in
+            let moved = hypot(pair.1.position.x - pair.0.position.x, pair.1.position.y - pair.0.position.y)
+            return max(drift, Double(moved), abs(pair.1.angle - pair.0.angle) * Double(pair.1.radius))
+        } : .infinity
+        if drift > 1 {
+            anchor = bodies
+            stillFor = 0
+        } else {
+            stillFor += dt
+        }
     }
 }
 

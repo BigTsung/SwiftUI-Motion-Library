@@ -32,7 +32,7 @@ public struct MarqueeText: View {
             .hidden()
             .frame(maxWidth: .infinity, alignment: .leading)
             .overlay(alignment: .leading) {
-                TimelineView(.animation(paused: !scrolls)) { timeline in
+                TimelineView(.animation(paused: !scrolls || speed == 0)) { timeline in
                     let cycle = textWidth + gap
                     let offset = scrolls
                         ? -CGFloat((timeline.date.timeIntervalSinceReferenceDate * speed)

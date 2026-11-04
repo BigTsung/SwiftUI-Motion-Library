@@ -20,7 +20,7 @@ public struct FlowField: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             let time = reduceMotion ? 3 : timeline.date.timeIntervalSinceReferenceDate * speed
             Canvas { context, size in
                 let scale = 220 / max(1, min(size.width, size.height))

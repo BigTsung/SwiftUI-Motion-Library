@@ -29,7 +29,7 @@ public struct WaveText: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        TimelineView(.animation(paused: reduceMotion || speed == 0)) { timeline in
             text.textRenderer(WaveRenderer(
                 time: reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate,
                 amplitude: reduceMotion ? 0 : amplitude,
