@@ -9,7 +9,7 @@ struct HalftoneModifier: ViewModifier, Animatable {
     var angle: Angle
     var paper: Color
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { dotSize }
         set { dotSize = newValue }
     }

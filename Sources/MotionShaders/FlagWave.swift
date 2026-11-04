@@ -46,7 +46,7 @@ public extension View {
     /// - Parameters:
     ///   - amplitude: Height of the ripples at the free end, in points.
     ///   - wavelength: Length of one ripple, in points.
-    ///   - speed: How fast the ripples run.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     func flagWave(amplitude: Double = 9, wavelength: Double = 120, speed: Double = 1) -> some View {
         modifier(FlagWaveModifier(amplitude: amplitude, wavelength: wavelength, speed: speed))
     }

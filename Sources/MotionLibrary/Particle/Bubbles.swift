@@ -12,7 +12,7 @@ public struct Bubbles: View {
     /// - Parameters:
     ///   - count: Number of bubbles in flight.
     ///   - color: Rim tint.
-    ///   - speed: Multiplier on the rising speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(count: Int = 18, color: Color = .cyan, speed: Double = 1) {
         self.count = max(1, count)
         self.color = color

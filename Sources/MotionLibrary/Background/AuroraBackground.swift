@@ -20,12 +20,12 @@ public struct AuroraBackground: View {
 
     public init(
         colors: [Color] = [.purple, .blue, .teal, .pink],
-        speed: Double = 0.4,
+        speed: Double = 1,
         blurRadius: CGFloat = 60,
         baseColor: Color = .black
     ) {
         self.colors = colors
-        self.speed = speed
+        self.speed = speed * 0.4
         self.blurRadius = blurRadius
         self.baseColor = baseColor
     }

@@ -14,12 +14,12 @@ public struct MarqueeText: View {
 
     /// - Parameters:
     ///   - text: The string to show.
-    ///   - speed: Scroll speed in points per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - gap: Space between the end of the text and its next repetition.
     ///   - fadeWidth: Width of the faded edges.
-    public init(_ text: String, speed: Double = 40, gap: CGFloat = 40, fadeWidth: CGFloat = 16) {
+    public init(_ text: String, speed: Double = 1, gap: CGFloat = 40, fadeWidth: CGFloat = 16) {
         self.text = text
-        self.speed = speed
+        self.speed = speed * 40
         self.gap = gap
         self.fadeWidth = fadeWidth
     }

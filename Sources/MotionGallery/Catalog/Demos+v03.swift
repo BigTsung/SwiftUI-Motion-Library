@@ -74,7 +74,7 @@ struct GlitchDemo: View {
 struct CircularTextDemo: View {
     var body: some View {
         ZStack {
-            CircularText("SWIFTUI • MOTION • LIBRARY • ", radius: 44, speed: 30)
+            CircularText("SWIFTUI • MOTION • LIBRARY • ", radius: 44, speed: 1.5)
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
             Image(systemName: "sparkles")
                 .font(.title)
@@ -182,7 +182,7 @@ struct LiquidToggleDemo: View {
             Toggle("Wi-Fi", isOn: $wifi)
                 .toggleStyle(.liquid)
             Toggle("Dark", isOn: $dark)
-                .toggleStyle(.liquid(tint: .purple))
+                .toggleStyle(.liquid(color: .purple))
         }
         .font(.subheadline.weight(.medium))
         .frame(width: 140)
@@ -393,7 +393,7 @@ struct MeshGradientDemo: View {
 
 struct RetroGridDemo: View {
     var body: some View {
-        RetroGrid(color: .pink, spacing: 24, speed: 1)
+        RetroGrid(color: .pink, spacing: 24, speed: 1.25)
             .background(
                 LinearGradient(colors: [Color(red: 0.1, green: 0.02, blue: 0.2), Color(red: 0.25, green: 0.05, blue: 0.3)], startPoint: .top, endPoint: .bottom)
             )

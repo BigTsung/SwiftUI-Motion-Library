@@ -111,7 +111,7 @@ extension MotionCatalog {
             .clipped()
             """#,
             prompt: #"""
-            Create a SwiftUI MarqueeWall(count:columns:itemSize:spacing:speed:angle:content:) view (iOS 17+), the scrolling showcase wall from landing pages. Each of the columns (default 4) shows perColumn = max(3, ceil(count / columns)) items twice in a VStack, cards of itemSize (110 × 140) with 14 pt continuous corners and 12 pt spacing, so the loop height is perColumn × (height + spacing). In TimelineView(.animation), distance = (time × speed × (1 + 0.15 × (column % 3))) mod loopHeight (speed 24 pt/s); even columns offset by −distance (moving up), odd ones by distance − loopHeight (moving down). Lay the columns in an HStack, rotate the whole thing by −14° and let the caller clip it. Disable hit testing. With Reduce Motion on, pause the timeline.
+            Create a SwiftUI MarqueeWall(count:columns:itemSize:spacing:speed:angle:content:) view (iOS 17+), the scrolling showcase wall from landing pages. Each of the columns (default 4) shows perColumn = max(3, ceil(count / columns)) items twice in a VStack, cards of itemSize (110 × 140) with 14 pt continuous corners and 12 pt spacing, so the loop height is perColumn × (height + spacing). In TimelineView(.animation), distance = (time × speed × (1 + 0.15 × (column % 3))) mod loopHeight (24 pt/s × speed, a multiplier defaulting to 1); even columns offset by −distance (moving up), odd ones by distance − loopHeight (moving down). Lay the columns in an HStack, rotate the whole thing by −14° and let the caller clip it. Disable hit testing. With Reduce Motion on, pause the timeline.
             """#
         ) { MarqueeWallDemo() },
 
@@ -153,7 +153,7 @@ extension MotionCatalog {
                 .ignoresSafeArea()
             """#,
             prompt: #"""
-            Create a SwiftUI NetworkBackground(count:linkDistance:color:interactive:) view (iOS 17+): a plexus of drifting points. In TimelineView(.animation) + Canvas, point i starts at a hashed position, moves at 6–20 pt/s in a hashed direction, and wraps around the edges with 20 pt of slack. Join every pair closer than linkDistance (70 pt) with a line of opacity 0.55 × (1 − d / linkDistance) and width 0.6 + 0.6 × that strength, then draw each point as a 3.6 pt dot. Track the pointer with onContinuousHover and a DragGesture(minimumDistance: 0); points within 110 pt are pulled towards it by (1 − d / 110) × 0.45 of the gap, so the web gathers under the finger. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+            Create a SwiftUI NetworkBackground(count:linkDistance:color:isInteractive:) view (iOS 17+): a plexus of drifting points. In TimelineView(.animation) + Canvas, point i starts at a hashed position, moves at 6–20 pt/s in a hashed direction, and wraps around the edges with 20 pt of slack. Join every pair closer than linkDistance (70 pt) with a line of opacity 0.55 × (1 − d / linkDistance) and width 0.6 + 0.6 × that strength, then draw each point as a 3.6 pt dot. Track the pointer with onContinuousHover and a DragGesture(minimumDistance: 0); points within 110 pt are pulled towards it by (1 − d / 110) × 0.45 of the gap, so the web gathers under the finger. With Reduce Motion on, pause the timeline. Hide it from accessibility.
             """#
         ) { NetworkDemo() },
 
@@ -170,7 +170,7 @@ extension MotionCatalog {
                 .background(Color(white: 0.06))
             """#,
             prompt: #"""
-            Create a SwiftUI TopographicLines(levels:scale:color:speed:) view (iOS 17+). In TimelineView(.animation(minimumInterval: 1/30)) + Canvas, sample a height field on an 8 pt grid: h = 0.65 × noise(x + t, y − 0.6t) + 0.35 × noise(2.1x − 0.8t, 2.1y + 7), with x, y in units of scale (90 pt), t = time × speed (0.12), and noise a smoothstep-interpolated value noise from an integer hash. For each of levels (14) thresholds spread over 0.18…0.82, trace the contour with marching squares (16 cases, edge crossings linearly interpolated, saddles drawn as two segments) into one Path and stroke it: every fifth line at 1.4 pt and 85 % opacity, the others 0.7 pt at 45 %. With Reduce Motion on, pause the timeline.
+            Create a SwiftUI TopographicLines(levels:scale:color:speed:) view (iOS 17+). In TimelineView(.animation(minimumInterval: 1/30)) + Canvas, sample a height field on an 8 pt grid: h = 0.65 × noise(x + t, y − 0.6t) + 0.35 × noise(2.1x − 0.8t, 2.1y + 7), with x, y in units of scale (90 pt), t = time × 0.12 × speed (a multiplier defaulting to 1), and noise a smoothstep-interpolated value noise from an integer hash. For each of levels (14) thresholds spread over 0.18…0.82, trace the contour with marching squares (16 cases, edge crossings linearly interpolated, saddles drawn as two segments) into one Path and stroke it: every fifth line at 1.4 pt and 85 % opacity, the others 0.7 pt at 45 %. With Reduce Motion on, pause the timeline.
             """#
         ) { TopographicDemo() },
 
@@ -249,7 +249,7 @@ extension MotionCatalog {
                 .background(.indigo.gradient)
             """#,
             prompt: #"""
-            Create a SwiftUI Flock(count:color:speed:) view (iOS 17+) that simulates boids. Keep the boids (position, velocity) in a reference-type model stored in @State and advance it from a Canvas inside TimelineView(.animation), with dt = time since the last frame capped at 1/20 s. For each boid, look at neighbours within 46 pt: steer 5 % towards their average velocity, 1.2 % towards their centre, and away from any closer than 16 pt by 0.14 × the overlap. If there's a target (from onContinuousHover or a DragGesture(minimumDistance: 0)), add 2 % of the gap to it. Push back by 9 within 24 pt of an edge. Clamp speed between 0.6 and 1.3 × cruise (90 pt/s, 1.5× when chasing). Draw each boid as a small arrowhead path rotated to atan2 of its velocity. With Reduce Motion on, freeze them. Hide it from accessibility.
+            Create a SwiftUI Flock(count:color:speed:) view (iOS 17+) that simulates boids. Keep the boids (position, velocity) in a reference-type model stored in @State and advance it from a Canvas inside TimelineView(.animation), with dt = time since the last frame capped at 1/20 s. For each boid, look at neighbours within 46 pt: steer 5 % towards their average velocity, 1.2 % towards their centre, and away from any closer than 16 pt by 0.14 × the overlap. If there's a target (from onContinuousHover or a DragGesture(minimumDistance: 0)), add 2 % of the gap to it. Push back by 9 within 24 pt of an edge. Clamp speed between 0.6 and 1.3 × cruise (90 pt/s × speed, a multiplier defaulting to 1; 1.5× when chasing). Draw each boid as a small arrowhead path rotated to atan2 of its velocity. With Reduce Motion on, freeze them. Hide it from accessibility.
             """#
         ) { FlockDemo() },
 
@@ -284,7 +284,7 @@ extension MotionCatalog {
                 .overlay(RainOnGlass())
             """#,
             prompt: #"""
-            Create a SwiftUI RainOnGlass(drops:tint:) overlay (iOS 17+) in TimelineView(.animation) + Canvas. Scatter one static bead per 900 pt² at hashed positions with radius 0.8–2.6 pt. Each of the sliding drops (9) has a cycle of 3.5–7.5 s; its progress l through the cycle becomes stick-slip motion with five steps, (floor(5l) + frac(5l)³) / 5, carrying it from a hashed start near the top past the bottom edge, with a 3 pt sideways wobble and radius 3.2–5.8 pt, stretched 1.25× vertically. Behind it, leave a trail of tiny beads every 9 pt with hashed jitter. Draw every drop like a tiny lens: an ellipse filled with a diagonal gradient (tint 35 % → tint 5 % → black 35 %) plus a bright fleck at the top-left. Disable hit testing. With Reduce Motion on, pause the timeline.
+            Create a SwiftUI RainOnGlass(drops:color:) overlay (iOS 17+) in TimelineView(.animation) + Canvas. Scatter one static bead per 900 pt² at hashed positions with radius 0.8–2.6 pt. Each of the sliding drops (9) has a cycle of 3.5–7.5 s; its progress l through the cycle becomes stick-slip motion with five steps, (floor(5l) + frac(5l)³) / 5, carrying it from a hashed start near the top past the bottom edge, with a 3 pt sideways wobble and radius 3.2–5.8 pt, stretched 1.25× vertically. Behind it, leave a trail of tiny beads every 9 pt with hashed jitter. Draw every drop like a tiny lens: an ellipse filled with a diagonal gradient (tint 35 % → tint 5 % → black 35 %) plus a bright fleck at the top-left. Disable hit testing. With Reduce Motion on, pause the timeline.
             """#
         ) { RainOnGlassDemo() },
 
@@ -320,11 +320,11 @@ extension MotionCatalog {
             usage: #"""
             if showsDetail {
                 DetailCard()
-                    .transition(.inkBleed(from: .topLeading))
+                    .transition(.inkBleed(origin: .topLeading))
             }
             """#,
             prompt: #"""
-            Create a SwiftUI Transition .inkBleed / .inkBleed(from: UnitPoint) (iOS 17+) that masks the content with an Animatable blot view whose progress is 1 when the phase is identity and 0 otherwise. The blot is a Canvas with .alphaThreshold(min: 0.5) and a blur of max(2, 0.06r), drawing into a layer: a circle of radius 0.82r at the origin plus 26 circles around it, at angle i / 26 × 2π + hashed jitter, distance r × (0.62–0.92) and radius r × (0.12–0.32). r = (1.25 × distance to the furthest corner + 30) × progress, so blurring then thresholding melts them into one ragged blot that clears the corners at 1. With Reduce Motion on, fade instead.
+            Create a SwiftUI Transition .inkBleed / .inkBleed(origin: UnitPoint) (iOS 17+) that masks the content with an Animatable blot view whose progress is 1 when the phase is identity and 0 otherwise. The blot is a Canvas with .alphaThreshold(min: 0.5) and a blur of max(2, 0.06r), drawing into a layer: a circle of radius 0.82r at the origin plus 26 circles around it, at angle i / 26 × 2π + hashed jitter, distance r × (0.62–0.92) and radius r × (0.12–0.32). r = (1.25 × distance to the furthest corner + 30) × progress, so blurring then thresholding melts them into one ragged blot that clears the corners at 1. With Reduce Motion on, fade instead.
             """#
         ) { InkBleedDemo() },
 

@@ -38,7 +38,7 @@ struct GlitchEffect: ViewModifier, Animatable {
     var amount: Double
     var slices: Int
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { amount }
         set { amount = newValue }
     }

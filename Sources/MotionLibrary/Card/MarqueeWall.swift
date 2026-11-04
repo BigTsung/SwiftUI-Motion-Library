@@ -26,7 +26,7 @@ public struct MarqueeWall<Content: View>: View {
     ///   - columns: Number of columns.
     ///   - itemSize: Size of each card.
     ///   - spacing: Gap between cards.
-    ///   - speed: Scroll speed, in points per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - angle: Rotation of the whole wall.
     ///   - content: Builds the card for an index in `0..<count`.
     public init(
@@ -34,7 +34,7 @@ public struct MarqueeWall<Content: View>: View {
         columns: Int = 4,
         itemSize: CGSize = CGSize(width: 110, height: 140),
         spacing: CGFloat = 12,
-        speed: Double = 24,
+        speed: Double = 1,
         angle: Angle = .degrees(-14),
         @ViewBuilder content: @escaping (Int) -> Content
     ) {
@@ -42,7 +42,7 @@ public struct MarqueeWall<Content: View>: View {
         self.columns = max(1, columns)
         self.itemSize = itemSize
         self.spacing = spacing
-        self.speed = speed
+        self.speed = speed * 24
         self.angle = angle
         self.content = content
     }

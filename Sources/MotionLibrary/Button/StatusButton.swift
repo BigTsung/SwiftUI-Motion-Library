@@ -1,13 +1,5 @@
 import SwiftUI
 
-/// The phases a `StatusButton` moves through.
-public enum MotionButtonStatus: Equatable, Sendable {
-    case idle
-    case loading
-    case success
-    case failure
-}
-
 /// A capsule button that morphs to show the result of its action: it shrinks
 /// into a spinning circle while loading, then turns green with a drawn
 /// checkmark on success, or red with a shake on failure.
@@ -15,7 +7,7 @@ public enum MotionButtonStatus: Equatable, Sendable {
 /// You own the status, so it works with any async work:
 ///
 /// ```swift
-/// @State private var status = MotionButtonStatus.idle
+/// @State private var status = StatusButton.Status.idle
 ///
 /// StatusButton("Pay now", status: status) {
 ///     status = .loading
@@ -27,9 +19,17 @@ public enum MotionButtonStatus: Equatable, Sendable {
 /// }
 /// ```
 public struct StatusButton: View {
-    private let title: LocalizedStringKey
-    private let status: MotionButtonStatus
-    private let tint: Color
+    /// The phases a `StatusButton` moves through.
+    public enum Status: Equatable, Sendable {
+        case idle
+        case loading
+        case success
+        case failure
+    }
+
+    private let title: Text
+    private let status: Status
+    private let color: Color
     private let action: () -> Void
 
     @State private var spin = false
@@ -38,22 +38,46 @@ public struct StatusButton: View {
 
     private let height: CGFloat = 50
 
+    /// - Parameters:
+    ///   - title: The button's label, looked up in your app's strings.
+    ///   - status: The current phase; change it to morph the button.
+    ///   - color: Background while idle or loading.
+    ///   - action: Runs on tap (only while idle).
     public init(
         _ title: LocalizedStringKey,
-        status: MotionButtonStatus,
-        tint: Color = .accentColor,
+        status: Status,
+        color: Color = .accentColor,
         action: @escaping () -> Void
     ) {
-        self.title = title
+        self.title = Text(title)
         self.status = status
-        self.tint = tint
+        self.color = color
         self.action = action
+    }
+
+    /// A button whose label is a string you already have, shown as is.
+    @_disfavoredOverload
+    public init<S: StringProtocol>(
+        _ title: S,
+        status: Status,
+        color: Color = .accentColor,
+        action: @escaping () -> Void
+    ) {
+        self.title = Text(title)
+        self.status = status
+        self.color = color
+        self.action = action
+    }
+
+    @available(*, deprecated, renamed: "init(_:status:color:action:)")
+    public init(_ title: LocalizedStringKey, status: Status, tint: Color, action: @escaping () -> Void) {
+        self.init(title, status: status, color: tint, action: action)
     }
 
     public var body: some View {
         Button(action: action) {
             ZStack {
-                Text(title)
+                title
                     .font(.headline)
                     .lineLimit(1)
                     .fixedSize()
@@ -108,13 +132,13 @@ public struct StatusButton: View {
             default: nil
             }
         }
-        .accessibilityLabel(Text(title))
+        .accessibilityLabel(title)
         .accessibilityValue(accessibilityStatus)
     }
 
     private var background: Color {
         switch status {
-        case .idle, .loading: tint
+        case .idle, .loading: color
         case .success: .green
         case .failure: .red
         }
@@ -138,11 +162,15 @@ private struct StatusPressStyle: ButtonStyle {
     }
 }
 
+/// The old name of `StatusButton.Status`.
+@available(*, deprecated, renamed: "StatusButton.Status")
+public typealias MotionButtonStatus = StatusButton.Status
+
 /// Horizontal shake, one full shake per unit of `shakes`.
 private struct StatusShake: GeometryEffect {
     var shakes: CGFloat
 
-    var animatableData: CGFloat {
+    nonisolated var animatableData: CGFloat {
         get { shakes }
         set { shakes = newValue }
     }
@@ -154,7 +182,7 @@ private struct StatusShake: GeometryEffect {
 
 #Preview {
     struct Demo: View {
-        @State private var status = MotionButtonStatus.idle
+        @State private var status = StatusButton.Status.idle
 
         var body: some View {
             StatusButton("Pay now", status: status) {

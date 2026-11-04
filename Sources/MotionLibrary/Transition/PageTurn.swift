@@ -30,7 +30,7 @@ struct PageTurnEffect: ViewModifier, Animatable {
     var progress: Double
     var reduceMotion: Bool
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }

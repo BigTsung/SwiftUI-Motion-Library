@@ -47,6 +47,7 @@ Scripts/                              # check-build, check-standalone, generate-
 - Every effect file ends with a `#Preview`.
 - Don't rename existing catalog `id`s or public API (it's a library; breaking changes need a major version).
 - Shader effects go in `Sources/MotionShaders/<Name>.swift` + `Shaders/<Name>.metal`, with `sourceFile: "MotionShaders/<Name>.swift"` in the catalog (paths starting with `MotionShaders/` are resolved from `Sources/`). The scripts use Xcode's toolchain when Xcode is installed (it can compile Metal); with only the Command Line Tools the shaders are swapped for a placeholder so the Swift still compiles.
+- Mark every `path(in:)` and `animatableData` `nonisolated`. Apps in the Swift 6 language mode (and with MainActor default isolation) infer view types as MainActor, and a copied effect then fails with "conformance … crosses into main actor-isolated code". `SWIFT_FLAGS="-swift-version 6 -default-isolation MainActor" Scripts/check-standalone.sh` checks it.
 - Keyframes must have a positive duration (a 0 s keyframe crashes), and never feed a raw clock value into `dashPhase` (Core Graphics walks the dash pattern up to it and hangs): wrap it to one dash period.
 - Scroll-driven effects: test them with real scrolling on iOS. Add a full-screen example and a UI test to `Examples/MotionLibraryDemo` (its tests drag with a finger and assert on accessibility frames, which follow `visualEffect` transforms), and run them with `xcodebuild test -project Examples/MotionLibraryDemo/MotionLibraryDemo.xcodeproj -scheme MotionLibraryDemo -destination 'platform=iOS Simulator,name=iPhone 17 Pro' CODE_SIGNING_ALLOWED=NO`. In `visualEffect`, apply `scaleEffect` before the pinning `offset`, or the scale shrinks the offset and the view drifts away. Don't rely on a `PreferenceKey` getting out of an iOS `ScrollView`: drive the effect from `visualEffect` geometry instead. The macOS GIF recorder can't animate scrolling, so record these GIFs with `Scripts/record-simulator-gifs.sh <id>` (and add the id to `simulatorRecorded` in `Scripts/ReadmeGIFs/main.swift`).
 - Releases: bump `packageVersion` in `Scripts/DocsGenerator/main.swift` and the `from:` install line in both READMEs, run `Scripts/generate-docs.sh`, then tag the commit with the bare version (`0.4.0`, no `v`). SwiftPM resolves `from:` against these tags.
@@ -59,6 +60,7 @@ Full Xcode isn't required. The `#Preview` macro needs Xcode's plugin, so the scr
 ```sh
 Scripts/check-build.sh            # compile MotionLibrary + MotionGallery for macOS
 Scripts/check-standalone.sh       # each effect compiles from just its listed files (after generate-docs)
+SWIFT_FLAGS="-swift-version 6 -default-isolation MainActor" Scripts/check-standalone.sh  # same, as a Swift 6 app
 Scripts/generate-docs.sh          # regenerate catalog-derived files (--check to verify)
 Scripts/record-readme-gifs.sh id  # record Docs/gifs/<id>.gif off-screen, then look at the frames
 Scripts/record-simulator-gifs.sh  # GIFs that need real scrolling, recorded in the iOS Simulator

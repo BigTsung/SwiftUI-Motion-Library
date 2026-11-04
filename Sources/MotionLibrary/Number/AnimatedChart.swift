@@ -119,7 +119,7 @@ struct ChartLine: Shape {
         }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let points = Self.points(values, in: rect)
         var path = Path()
         guard let first = points.first, let last = points.last else { return path }

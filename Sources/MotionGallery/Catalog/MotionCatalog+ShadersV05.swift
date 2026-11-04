@@ -206,7 +206,7 @@ extension MotionCatalog {
                 .ignoresSafeArea()
             """#,
             prompt: #"""
-            Create a SwiftUI VoronoiCells(colors:cellSize:speed:) view (iOS 17+): a Rectangle with a Metal [[stitchable]] colour shader (position, colour, float time, float scale, device const half4 *palette, int count) driven by TimelineView(.animation). Work in cells of scale (60 pt); for the 3 × 3 neighbouring cells, the seed is cell + 0.5 + 0.4 × sin(time + 2π × hash2(cell)), so seeds drift. Track the nearest and second-nearest distances; colour the pixel with palette[hash(nearest cell) × count], darkened by smoothstep(0, 0.08, second − nearest) for soft seams and by 1 − 0.35 × nearest for a gentle glow at each seed. Pass the colours with .colorArray. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+            Create a SwiftUI VoronoiCells(colors:cellSize:speed:) view (iOS 17+): a Rectangle with a Metal [[stitchable]] colour shader (position, colour, float time, float scale, device const half4 *palette, int count) driven by TimelineView(.animation). Work in cells of scale (60 pt); for the 3 × 3 neighbouring cells, the seed is cell + 0.5 + 0.4 × sin(0.6 × speed × time + 2π × hash2(cell)) (speed is a multiplier defaulting to 1), so seeds drift. Track the nearest and second-nearest distances; colour the pixel with palette[hash(nearest cell) × count], darkened by smoothstep(0, 0.08, second − nearest) for soft seams and by 1 − 0.35 × nearest for a gentle glow at each seed. Pass the colours with .colorArray. With Reduce Motion on, pause the timeline. Hide it from accessibility.
             """#
         ) { VoronoiDemo() },
     ]

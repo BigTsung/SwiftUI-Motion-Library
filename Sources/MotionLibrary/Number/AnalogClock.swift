@@ -65,7 +65,7 @@ struct ClockFace: View, Animatable {
     var color: Color
     var accent: Color
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { seconds }
         set { seconds = newValue }
     }

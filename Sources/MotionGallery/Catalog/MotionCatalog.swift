@@ -41,7 +41,7 @@ public enum MotionCatalog {
             sourceFile: "Text/TypewriterText.swift",
             api: "TypewriterText(\"…\")",
             usage: #"""
-            TypewriterText("Hello, SwiftUI!", interval: .milliseconds(60))
+            TypewriterText("Hello, SwiftUI!", interval: 0.06)
                 .font(.title.bold())
             """#,
             prompt: #"""
@@ -142,10 +142,10 @@ public enum MotionCatalog {
                 .font(.headline)
                 .frame(width: 200)
 
-            MarqueeText(longTitle, speed: 60, gap: 24)
+            MarqueeText(longTitle, speed: 1.5, gap: 24)
             """#,
             prompt: #"""
-            Create a SwiftUI MarqueeText view (iOS 17+) for a single line of text. Measure the text's natural width (fixedSize text with a GeometryReader background) and the container width. If the text fits, show it still. If not, show two copies in an HStack separated by a gap (40 pt) and offset them left by (time × speed) modulo (textWidth + gap) using TimelineView(.animation), so the second copy takes the first copy's place and the loop is seamless. Speed defaults to 40 pt/s. Clip to the container and mask the edges with 16 pt linear fades. Reserve one line of height with a hidden copy of the text. Expose the full text to accessibility, and with Reduce Motion on, don't scroll.
+            Create a SwiftUI MarqueeText view (iOS 17+) for a single line of text. Measure the text's natural width (fixedSize text with a GeometryReader background) and the container width. If the text fits, show it still. If not, show two copies in an HStack separated by a gap (40 pt) and offset them left by (time × 40 pt/s × speed, a multiplier defaulting to 1) modulo (textWidth + gap) using TimelineView(.animation), so the second copy takes the first copy's place and the loop is seamless. Speed defaults to 40 pt/s. Clip to the container and mask the edges with 16 pt linear fades. Reserve one line of height with a hidden copy of the text. Expose the full text to accessibility, and with Reduce Motion on, don't scroll.
             """#
         ) { MarqueeDemo() },
 
@@ -269,7 +269,7 @@ public enum MotionCatalog {
             }
             """#,
             prompt: #"""
-            Create a SwiftUI CircularText view (iOS 17+) with text, radius (60 pt) and speed (20° per second). Split the string into characters and place each one in a ZStack as Text(character).offset(y: −radius).rotationEffect(.degrees(index / count × 360)), so letters stand evenly spaced around the circle. Wrap the ZStack in TimelineView(.animation) and rotate it by time × speed degrees (modulo 360). Frame it to 2 × radius plus 12 pt padding. Use the full text as a single accessibility label. With Reduce Motion on (or speed 0), pause the timeline.
+            Create a SwiftUI CircularText view (iOS 17+) with text, radius (60 pt) and speed (a multiplier, default 1, on 20° per second; negative turns the other way). Split the string into characters and place each one in a ZStack as Text(character).offset(y: −radius).rotationEffect(.degrees(index / count × 360)), so letters stand evenly spaced around the circle. Wrap the ZStack in TimelineView(.animation) and rotate it by time × 20 × speed degrees (modulo 360). Frame it to 2 × radius plus 12 pt padding. Use the full text as a single accessibility label. With Reduce Motion on (or speed 0), pause the timeline.
             """#
         ) { CircularTextDemo() },
 
@@ -412,14 +412,14 @@ public enum MotionCatalog {
                 deleteAccount()
             }
 
-            HoldToConfirmButton(duration: 2, fillColor: .orange) {
+            HoldToConfirmButton(duration: 2, color: .orange) {
                 launch()
             } label: {
                 Label("Hold to launch", systemImage: "flame")
             }
             """#,
             prompt: #"""
-            Create a SwiftUI HoldToConfirmButton (iOS 17+) for destructive actions. A capsule with a 15% tint of fillColor (red) shows the label in fillColor. While pressed (onLongPressGesture(minimumDuration:perform:onPressingChanged:)), animate a progress value linearly from its current value to 1 over the remaining duration (1.2 s); releasing early animates it back to 0 with easeOut(0.35). Draw the liquid as a Shape filled from the bottom up to progress, with a sine-wave top edge (4 pt amplitude, phase driven by TimelineView) that flattens when empty or full. Mask a stack of the liquid plus a white copy of the label with the same shape, so the submerged part of the text turns white. On completion, run the action, swap the label for a checkmark with a spring, play a success haptic and reset after 1.2 s. Scale to 0.97 while pressing.
+            Create a SwiftUI HoldToConfirmButton (iOS 17+) for destructive actions. A capsule with a 15% tint of color (red) shows the label in color. While pressed (onLongPressGesture(minimumDuration:perform:onPressingChanged:)), animate a progress value linearly from its current value to 1 over the remaining duration (1.2 s); releasing early animates it back to 0 with easeOut(0.35). Draw the liquid as a Shape filled from the bottom up to progress, with a sine-wave top edge (4 pt amplitude, phase driven by TimelineView) that flattens when empty or full. Mask a stack of the liquid plus a white copy of the label with the same shape, so the submerged part of the text turns white. On completion, run the action, swap the label for a checkmark with a spring, play a success haptic and reset after 1.2 s. Scale to 0.97 while pressing.
             """#
         ) { HoldToConfirmDemo() },
 
@@ -432,7 +432,7 @@ public enum MotionCatalog {
             sourceFile: "Button/StatusButton.swift",
             api: "StatusButton(\"…\", status:) { }",
             usage: #"""
-            @State private var status = MotionButtonStatus.idle
+            @State private var status = StatusButton.Status.idle
 
             StatusButton("Pay now", status: status) {
                 status = .loading
@@ -579,10 +579,10 @@ public enum MotionCatalog {
                 .toggleStyle(.liquid)
 
             Toggle("Dark mode", isOn: $dark)
-                .toggleStyle(.liquid(tint: .purple))
+                .toggleStyle(.liquid(color: .purple))
             """#,
             prompt: #"""
-            Create a SwiftUI LiquidToggleStyle (iOS 17+) with a tint (green) and static accessors .liquid and .liquid(tint:). makeBody puts the label, a Spacer and a 52 × 32 pt switch in an HStack. The switch is a plain Button that toggles configuration.isOn inside withAnimation(.spring(response: 0.35, dampingFraction: 0.7)); it shows a ZStack aligned .trailing when on and .leading when off, with a capsule track (tint when on, gray 35 % when off) and a white capsule knob (26 pt tall, 3 pt padding, small shadow). The knob's width runs a keyframeAnimator triggered by isOn: CubicKeyframe to 1.5 × 26 pt over 0.12 s, then SpringKeyframe(.bouncy) back to 26 over 0.35 s, so it stretches as it slides and snaps back round. Give it an "On"/"Off" accessibility value. With Reduce Motion on, don't stretch and use a short ease.
+            Create a SwiftUI LiquidToggleStyle (iOS 17+) with a color (green) and static accessors .liquid and .liquid(color:). makeBody puts the label, a Spacer and a 52 × 32 pt switch in an HStack. The switch is a plain Button that toggles configuration.isOn inside withAnimation(.spring(response: 0.35, dampingFraction: 0.7)); it shows a ZStack aligned .trailing when on and .leading when off, with a capsule track (tint when on, gray 35 % when off) and a white capsule knob (26 pt tall, 3 pt padding, small shadow). The knob's width runs a keyframeAnimator triggered by isOn: CubicKeyframe to 1.5 × 26 pt over 0.12 s, then SpringKeyframe(.bouncy) back to 26 over 0.35 s, so it stretches as it slides and snaps back round. Give it an "On"/"Off" accessibility value. With Reduce Motion on, don't stretch and use a short ease.
             """#
         ) { LiquidToggleDemo() },
     ]
@@ -870,10 +870,10 @@ public enum MotionCatalog {
             usage: #"""
             Image(systemName: isLiked ? "heart.fill" : "heart")
                 .contentTransition(.symbolEffect(.replace))
-                .burst(trigger: isLiked, color: .pink, isEnabled: isLiked)
+                .burst(trigger: isLiked, color: .pink, isActive: isLiked)
             """#,
             prompt: #"""
-            Create a SwiftUI .burst(trigger:) view modifier (iOS 17+) for "like" feedback. Every time the Equatable trigger changes (and isEnabled is true), spawn a burst in an overlay: 12 small circles (alternating 7 pt and 4 pt) placed evenly around a circle, which move outward from the centre to a ~36 pt radius while shrinking to 30% and fading out with easeOut over 0.6 s. Remove each burst after it finishes, allow overlapping bursts, and never intercept touches. Color, count and radius are parameters.
+            Create a SwiftUI .burst(trigger:) view modifier (iOS 17+) for "like" feedback. Every time the Equatable trigger changes (and isActive is true), spawn a burst in an overlay: 12 small circles (alternating 7 pt and 4 pt) placed evenly around a circle, which move outward from the centre to a ~36 pt radius while shrinking to 30% and fading out with easeOut over 0.6 s. Remove each burst after it finishes, allow overlapping bursts, and never intercept touches. Color, count and radius are parameters.
             """#
         ) { BurstDemo() },
         MotionEffect(
@@ -1032,7 +1032,7 @@ public enum MotionCatalog {
             SlidingTabs(Category.allCases, selection: $category, indicator: .underline) { $0.title }
             """#,
             prompt: #"""
-            Create a generic SwiftUI SlidingTabs control (iOS 17+) over Hashable options with a selection binding, an indicator style (.pill or .underline), a tint and a title closure (plus a convenience init for [String]). Show the options as plain Buttons in an HStack inside a 4 pt padded capsule tinted secondary at 12 % (pill style only). Behind the selected title only, draw the indicator — a capsule filled with the tint (title turns white), or a 3 pt capsule at the bottom inset 10 pt (title turns tint) — with .matchedGeometryEffect(id: "indicator", in: namespace), so it glides between options. Change the selection inside withAnimation(.spring(response: 0.35, dampingFraction: 0.8)), and add the .isSelected trait. With Reduce Motion on, use a 0.15 s ease.
+            Create a generic SwiftUI SlidingTabs control (iOS 17+) over Hashable options with a selection binding, an indicator style (.pill or .underline), a color and a title closure (plus a convenience init for [String]). Show the options as plain Buttons in an HStack inside a 4 pt padded capsule tinted secondary at 12 % (pill style only). Behind the selected title only, draw the indicator — a capsule filled with the color (title turns white), or a 3 pt capsule at the bottom inset 10 pt (title turns tint) — with .matchedGeometryEffect(id: "indicator", in: namespace), so it glides between options. Change the selection inside withAnimation(.spring(response: 0.35, dampingFraction: 0.8)), and add the .isSelected trait. With Reduce Motion on, use a 0.15 s ease.
             """#
         ) { SlidingTabsDemo() },
     ]
@@ -1056,7 +1056,7 @@ public enum MotionCatalog {
             }
             """#,
             prompt: #"""
-            Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base color, draw one large circle per palette color (default purple, blue, teal, pink; 80% opacity, diameter 70% of the larger side). Each circle drifts on its own Lissajous path, x = cos(t·0.6 + phase)·30% width and y = sin(t·0.8 + phase·1.3)·30% height, where phase differs per index. Drive time from TimelineView(.animation) scaled by a speed parameter, blur the whole group with a ~60 pt radius, clip to bounds and hide it from accessibility.
+            Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base color, draw one large circle per palette color (default purple, blue, teal, pink; 80% opacity, diameter 70% of the larger side). Each circle drifts on its own Lissajous path, x = cos(t·0.6 + phase)·30% width and y = sin(t·0.8 + phase·1.3)·30% height, where phase differs per index. Drive time from TimelineView(.animation) scaled by 0.4 × a speed multiplier (default 1), blur the whole group with a ~60 pt radius, clip to bounds and hide it from accessibility.
             """#
         ) { AuroraDemo() },
 
@@ -1098,7 +1098,7 @@ public enum MotionCatalog {
             }
             """#,
             prompt: #"""
-            Create a SwiftUI RetroGrid view (iOS 17+) with color (pink), spacing (40 pt), speed (0.8 rows per second) and horizon (0.35 of the height). In a Canvas inside TimelineView(.animation): with top = height × horizon and depth = height − top, draw horizontal lines at y = top + depth / z for z = n + 1 − fract(time × speed), n = 0…39, so the bottom edge is z = 1, rows bunch up toward the horizon and every row moves toward the viewer; draw lines from the vanishing point (centre, top) to (centre + k × spacing, bottom) for enough k to cover the width. Stroke the path twice: 3 pt at 35 % opacity for a glow, then 1 pt solid. Mask the view with a vertical gradient that is clear down to the horizon and opaque 45 % lower, so lines fade into the distance. Hide from accessibility; Reduce Motion pauses it.
+            Create a SwiftUI RetroGrid view (iOS 17+) with color (pink), spacing (40 pt), speed (a multiplier, default 1, on 0.8 rows per second) and horizon (0.35 of the height). In a Canvas inside TimelineView(.animation): with top = height × horizon and depth = height − top, draw horizontal lines at y = top + depth / z for z = n + 1 − fract(time × 0.8 × speed), n = 0…39, so the bottom edge is z = 1, rows bunch up toward the horizon and every row moves toward the viewer; draw lines from the vanishing point (centre, top) to (centre + k × spacing, bottom) for enough k to cover the width. Stroke the path twice: 3 pt at 35 % opacity for a glow, then 1 pt solid. Mask the view with a vertical gradient that is clear down to the horizon and opaque 45 % lower, so lines fade into the distance. Hide from accessibility; Reduce Motion pauses it.
             """#
         ) { RetroGridDemo() },
 
@@ -1218,7 +1218,7 @@ public enum MotionCatalog {
             }
             """#,
             prompt: #"""
-            Create a SwiftUI ParticleField view (iOS 17+) with count (50), color, speed (14 pt/s) and linkDistance (70 pt). Generate each particle's traits once from a seeded SplitMix64 generator: start position (0…1 in each axis), direction, speed factor (0.4–1.2), radius (1–2.8 pt) and opacity (0.4–1). In TimelineView(.animation) with a Canvas, compute each position as start + direction × time × speed × factor, wrapped around the canvas edges, so there is no stored state. Stroke a 0.8 pt line between every pair closer than linkDistance with opacity 0.35 × (1 − distance / linkDistance), then fill each particle as a circle. Hide it from accessibility, and with Reduce Motion on, freeze time.
+            Create a SwiftUI ParticleField view (iOS 17+) with count (50), color, speed (a multiplier, default 1, on 14 pt/s) and linkDistance (70 pt). Generate each particle's traits once from a seeded SplitMix64 generator: start position (0…1 in each axis), direction, speed factor (0.4–1.2), radius (1–2.8 pt) and opacity (0.4–1). In TimelineView(.animation) with a Canvas, compute each position as start + direction × time × 14 × speed × factor, wrapped around the canvas edges, so there is no stored state. Stroke a 0.8 pt line between every pair closer than linkDistance with opacity 0.35 × (1 − distance / linkDistance), then fill each particle as a circle. Hide it from accessibility, and with Reduce Motion on, freeze time.
             """#
         ) { ParticleFieldDemo() },
 
@@ -1235,10 +1235,10 @@ public enum MotionCatalog {
                 .background(.black)
                 .ignoresSafeArea()
 
-            Starfield(count: 300, speed: 1.5) // warp jump
+            Starfield(count: 300, speed: 4) // warp jump
             """#,
             prompt: #"""
-            Create a SwiftUI Starfield view (iOS 17+) with count (200), speed (0.35 depth units per second) and color. Give each star a seeded random x and y in −1…1 and a depth in 0…1. In a Canvas inside TimelineView(.animation), compute z = 0.05 + 0.95 × fract(depth − time × speed), so stars approach the camera and wrap back to the far plane. Project with perspective: point = centre + (x, y) / z × 0.15 × half the larger side. Draw each star as a round-capped streak from its projection at a slightly larger z (z + min(0.08, speed × 0.05)) to its current projection, with opacity and line width growing as it gets closer. Hide it from accessibility, and with Reduce Motion on, freeze time.
+            Create a SwiftUI Starfield view (iOS 17+) with count (200), speed (a multiplier, default 1, on 0.35 depth units per second) and color. Give each star a seeded random x and y in −1…1 and a depth in 0…1. In a Canvas inside TimelineView(.animation), compute z = 0.05 + 0.95 × fract(depth − time × 0.35 × speed), so stars approach the camera and wrap back to the far plane. Project with perspective: point = centre + (x, y) / z × 0.15 × half the larger side. Draw each star as a round-capped streak from its projection at a slightly larger z (z + min(0.08, 0.35 × speed × 0.05)) to its current projection, with opacity and line width growing as it gets closer. Hide it from accessibility, and with Reduce Motion on, freeze time.
             """#
         ) { StarfieldDemo() },
 
@@ -1365,7 +1365,7 @@ public enum MotionCatalog {
             WarpTunnel(colors: [.green, .mint], sides: 6) // hexagons
             """#,
             prompt: #"""
-            Create a SwiftUI WarpTunnel view (iOS 17+) with rings (18), colors (cyan, blue, purple, pink), speed (1.2 rings per second) and sides (0 for circles, 3+ for polygons). In a Canvas inside TimelineView(.animation), for ring i let depth = 1 − (i + fract(time × speed)) / rings and skip depths below 0.02. Its radius is half the view's diagonal × 0.06 / depth (perspective), skipped once it's 1.5 × larger than that. Stroke a circle, or a polygon rotated by i × 0.12 + time × 0.1 rad, centred in the view, with opacity closeness² and line width 0.5 + 3 × closeness (closeness = 1 − depth), cycling colours by ring. Hide from accessibility; Reduce Motion pauses it.
+            Create a SwiftUI WarpTunnel view (iOS 17+) with rings (18), colors (cyan, blue, purple, pink), speed (a multiplier, default 1, on 1.2 rings per second) and sides (0 for circles, 3+ for polygons). In a Canvas inside TimelineView(.animation), for ring i let depth = 1 − (i + fract(time × 1.2 × speed)) / rings and skip depths below 0.02. Its radius is half the view's diagonal × 0.06 / depth (perspective), skipped once it's 1.5 × larger than that. Stroke a circle, or a polygon rotated by i × 0.12 + time × 0.1 rad, centred in the view, with opacity closeness² and line width 0.5 + 3 × closeness (closeness = 1 − depth), cycling colours by ring. Hide from accessibility; Reduce Motion pauses it.
             """#
         ) { WarpTunnelDemo() },
 

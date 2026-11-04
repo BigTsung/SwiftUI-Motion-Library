@@ -54,12 +54,12 @@ struct LiquidWave: Shape {
     var phase: Double
     var amplitude: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { level }
         set { level = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         // A line of text has room for descenders below the glyphs and accents
         // above them; fill between roughly the baseline and the cap height,
         // going a wave's height past both so 0 is empty and 1 full.

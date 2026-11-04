@@ -3,7 +3,7 @@ import SwiftUI
 /// A button that morphs through a download: a labelled capsule shrinks into
 /// a circle whose ring fills with progress, then pops into a checkmark.
 public struct DownloadButton: View {
-    private let title: String
+    private let title: Text
     private let progress: Double?
     private let color: Color
     private let action: () -> Void
@@ -17,8 +17,17 @@ public struct DownloadButton: View {
     ///   - progress: `nil` = not started, 0..<1 = downloading, 1 = finished.
     ///   - color: Tint of the button and the ring.
     ///   - action: Called when the idle button is tapped.
-    public init(_ title: String = "Download", progress: Double?, color: Color = .accentColor, action: @escaping () -> Void) {
-        self.title = title
+    public init(_ title: LocalizedStringKey = "Download", progress: Double?, color: Color = .accentColor, action: @escaping () -> Void) {
+        self.title = Text(title)
+        self.progress = progress
+        self.color = color
+        self.action = action
+    }
+
+    /// A download button whose label is a string you already have, shown as is.
+    @_disfavoredOverload
+    public init<S: StringProtocol>(_ title: S, progress: Double?, color: Color = .accentColor, action: @escaping () -> Void) {
+        self.title = Text(title)
         self.progress = progress
         self.color = color
         self.action = action
@@ -51,7 +60,7 @@ public struct DownloadButton: View {
                 }
 
                 if phase == .idle {
-                    Label(title, systemImage: "arrow.down")
+                    Label { title } icon: { Image(systemName: "arrow.down") }
                         .font(.headline)
                         .foregroundStyle(.white)
                         .fixedSize()
@@ -71,7 +80,7 @@ public struct DownloadButton: View {
         .buttonStyle(.plain)
         .animation(reduceMotion ? .easeInOut(duration: 0.25) : .spring(duration: 0.5, bounce: 0.35), value: phase)
         .haptic(.success, trigger: phase) { _, new in new == .done }
-        .accessibilityLabel(phase == .idle ? title : phase == .done ? "Downloaded" : "Downloading")
+        .accessibilityLabel(phase == .idle ? title : Text(phase == .done ? "Downloaded" : "Downloading"))
         .accessibilityValue(phase == .loading ? "\(Int((progress ?? 0) * 100)) percent" : "")
     }
 }

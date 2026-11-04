@@ -25,7 +25,7 @@ public struct MotionLoader: View {
     /// - Parameters:
     ///   - style: Which loader to draw.
     ///   - color: Fill or stroke colour.
-    ///   - speed: Multiplier on the default tempo.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(_ style: Style = .spinner, color: Color = .accentColor, speed: Double = 1) {
         self.style = style
         self.color = color

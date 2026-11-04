@@ -4,7 +4,7 @@ import SwiftUI
 /// action. Let go early and it springs back. The label fades as you slide and
 /// the track fills behind the knob.
 public struct SlideToConfirm: View {
-    private let title: String
+    private let title: Text
     private let color: Color
     private let resetAfter: Double?
     private let action: () -> Void
@@ -22,8 +22,17 @@ public struct SlideToConfirm: View {
     ///   - resetAfter: Seconds after confirming before the control resets;
     ///     `nil` keeps it confirmed.
     ///   - action: Runs once the knob reaches the end.
-    public init(_ title: String, color: Color = .accentColor, resetAfter: Double? = 1.5, action: @escaping () -> Void) {
-        self.title = title
+    public init(_ title: LocalizedStringKey, color: Color = .accentColor, resetAfter: Double? = 1.5, action: @escaping () -> Void) {
+        self.title = Text(title)
+        self.color = color
+        self.resetAfter = resetAfter
+        self.action = action
+    }
+
+    /// A slider whose label is a string you already have, shown as is.
+    @_disfavoredOverload
+    public init<S: StringProtocol>(_ title: S, color: Color = .accentColor, resetAfter: Double? = 1.5, action: @escaping () -> Void) {
+        self.title = Text(title)
         self.color = color
         self.resetAfter = resetAfter
         self.action = action
@@ -38,7 +47,7 @@ public struct SlideToConfirm: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.secondary.opacity(0.15))
 
-                Text(title)
+                title
                     .font(.headline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)

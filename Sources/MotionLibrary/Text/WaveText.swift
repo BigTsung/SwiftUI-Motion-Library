@@ -15,7 +15,7 @@ public struct WaveText: View {
     ///   - text: The string to show.
     ///   - amplitude: How far letters move up and down, in points.
     ///   - wavelength: Number of letters in one full wave.
-    ///   - speed: Waves per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(_ text: String, amplitude: CGFloat = 5, wavelength: Double = 8, speed: Double = 1) {
         self.init(Text(text), amplitude: amplitude, wavelength: wavelength, speed: speed)
     }

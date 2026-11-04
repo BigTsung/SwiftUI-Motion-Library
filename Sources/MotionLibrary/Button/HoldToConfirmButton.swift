@@ -5,7 +5,7 @@ import SwiftUI
 /// Good for destructive or irreversible actions.
 public struct HoldToConfirmButton<Label: View>: View {
     private let duration: Double
-    private let fillColor: Color
+    private let color: Color
     private let action: () -> Void
     private let label: Label
 
@@ -16,20 +16,30 @@ public struct HoldToConfirmButton<Label: View>: View {
 
     /// - Parameters:
     ///   - duration: Seconds the user must hold.
-    ///   - fillColor: Colour of the liquid. The resting background is a tint
+    ///   - color: Colour of the liquid. The resting background is a tint
     ///     of it and the label is drawn in it, turning white where submerged.
     ///   - action: Runs once the hold completes.
     ///   - label: The button's content.
     public init(
         duration: Double = 1.2,
-        fillColor: Color = .red,
+        color: Color = .red,
         action: @escaping () -> Void,
         @ViewBuilder label: () -> Label
     ) {
         self.duration = duration
-        self.fillColor = fillColor
+        self.color = color
         self.action = action
         self.label = label()
+    }
+
+    @available(*, deprecated, renamed: "init(duration:color:action:label:)")
+    public init(
+        duration: Double = 1.2,
+        fillColor: Color,
+        action: @escaping () -> Void,
+        @ViewBuilder label: () -> Label
+    ) {
+        self.init(duration: duration, color: fillColor, action: action, label: label)
     }
 
     public var body: some View {
@@ -41,12 +51,12 @@ public struct HoldToConfirmButton<Label: View>: View {
             )
             // The label sizes the button; the capsule and liquid only decorate it.
             content
-                .foregroundStyle(fillColor)
-                .background(Capsule().fill(fillColor.opacity(0.15)))
+                .foregroundStyle(color)
+                .background(Capsule().fill(color.opacity(0.15)))
                 .overlay {
                     // The liquid, with the label redrawn in white where it's submerged.
                     ZStack {
-                        liquid.fill(fillColor)
+                        liquid.fill(color)
                         content.foregroundStyle(.white)
                     }
                     .mask(liquid)
@@ -110,12 +120,35 @@ public extension HoldToConfirmButton where Label == Text {
     init(
         _ title: LocalizedStringKey,
         duration: Double = 1.2,
-        fillColor: Color = .red,
+        color: Color = .red,
         action: @escaping () -> Void
     ) {
-        self.init(duration: duration, fillColor: fillColor, action: action) {
+        self.init(duration: duration, color: color, action: action) {
             Text(title).font(.headline)
         }
+    }
+
+    /// A hold-to-confirm button whose label is a string you already have, shown as is.
+    @_disfavoredOverload
+    init<S: StringProtocol>(
+        _ title: S,
+        duration: Double = 1.2,
+        color: Color = .red,
+        action: @escaping () -> Void
+    ) {
+        self.init(duration: duration, color: color, action: action) {
+            Text(title).font(.headline)
+        }
+    }
+
+    @available(*, deprecated, renamed: "init(_:duration:color:action:)")
+    init(
+        _ title: LocalizedStringKey,
+        duration: Double = 1.2,
+        fillColor: Color,
+        action: @escaping () -> Void
+    ) {
+        self.init(title, duration: duration, color: fillColor, action: action)
     }
 }
 
@@ -125,12 +158,12 @@ private struct LiquidFill: Shape {
     var phase: Double
     var waveHeight: CGFloat
 
-    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+    nonisolated var animatableData: AnimatablePair<CGFloat, CGFloat> {
         get { AnimatablePair(progress, waveHeight) }
         set { progress = newValue.first; waveHeight = newValue.second }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         // Overfill slightly so the wave crests are hidden when full.
         let level = rect.maxY - (rect.height + waveHeight * 2) * progress
         var path = Path()

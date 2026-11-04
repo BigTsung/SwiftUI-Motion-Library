@@ -8,20 +8,32 @@ import SwiftUI
 ///     .toggleStyle(.liquid)
 ///
 /// Toggle("Dark mode", isOn: $dark)
-///     .toggleStyle(.liquid(tint: .purple))
+///     .toggleStyle(.liquid(color: .purple))
 /// ```
 public struct LiquidToggleStyle: ToggleStyle {
-    public var tint: Color
+    /// Colour of the track while on.
+    public var color: Color
 
-    public init(tint: Color = .green) {
-        self.tint = tint
+    public init(color: Color = .green) {
+        self.color = color
+    }
+
+    @available(*, deprecated, renamed: "init(color:)")
+    public init(tint: Color) {
+        self.color = tint
+    }
+
+    @available(*, deprecated, renamed: "color")
+    public var tint: Color {
+        get { color }
+        set { color = newValue }
     }
 
     public func makeBody(configuration: Configuration) -> some View {
         HStack {
             configuration.label
             Spacer(minLength: 12)
-            LiquidSwitch(isOn: configuration.$isOn, tint: tint)
+            LiquidSwitch(isOn: configuration.$isOn, tint: color)
         }
     }
 }
@@ -72,7 +84,10 @@ public extension ToggleStyle where Self == LiquidToggleStyle {
     static var liquid: LiquidToggleStyle { LiquidToggleStyle() }
 
     /// A switch with a stretchy, liquid knob in the given colour.
-    static func liquid(tint: Color) -> LiquidToggleStyle { LiquidToggleStyle(tint: tint) }
+    static func liquid(color: Color) -> LiquidToggleStyle { LiquidToggleStyle(color: color) }
+
+    @available(*, deprecated, renamed: "liquid(color:)")
+    static func liquid(tint: Color) -> LiquidToggleStyle { LiquidToggleStyle(color: tint) }
 }
 
 #Preview {

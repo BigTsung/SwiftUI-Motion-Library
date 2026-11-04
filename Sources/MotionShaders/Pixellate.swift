@@ -6,7 +6,7 @@ import SwiftUI
 struct PixellateModifier: ViewModifier, Animatable {
     var size: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { size }
         set { size = newValue }
     }

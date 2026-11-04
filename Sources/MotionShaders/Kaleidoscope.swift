@@ -26,7 +26,7 @@ struct KaleidoscopeEffect: ViewModifier, Animatable {
     var segments: Int
     var rotation: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { rotation }
         set { rotation = newValue }
     }

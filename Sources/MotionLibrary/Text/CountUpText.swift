@@ -56,7 +56,7 @@ private struct CountingLabel: View, Animatable {
     let prefix: String
     let suffix: String
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { value }
         set { value = newValue }
     }

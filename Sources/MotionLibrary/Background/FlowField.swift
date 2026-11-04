@@ -12,7 +12,7 @@ public struct FlowField: View {
     /// - Parameters:
     ///   - lines: Number of curves.
     ///   - colors: Curves are tinted along this list, left to right.
-    ///   - speed: Multiplier on how fast the field shifts.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(lines: Int = 140, colors: [Color] = [.cyan, .blue, .purple, .pink], speed: Double = 1) {
         self.lines = max(1, lines)
         self.colors = colors.isEmpty ? [.primary] : colors

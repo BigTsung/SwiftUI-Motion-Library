@@ -13,12 +13,12 @@ public struct RetroGrid: View {
     /// - Parameters:
     ///   - color: Line colour.
     ///   - spacing: Distance between lines at the bottom edge, in points.
-    ///   - speed: Grid rows passed per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - horizon: Height of the horizon, as a fraction of the view (0 = top).
-    public init(color: Color = .pink, spacing: CGFloat = 40, speed: Double = 0.8, horizon: CGFloat = 0.35) {
+    public init(color: Color = .pink, spacing: CGFloat = 40, speed: Double = 1, horizon: CGFloat = 0.35) {
         self.color = color
         self.spacing = spacing
-        self.speed = speed
+        self.speed = speed * 0.8
         self.horizon = horizon
     }
 

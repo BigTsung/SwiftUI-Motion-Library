@@ -38,7 +38,7 @@ struct OrigamiEffect: ViewModifier, Animatable {
     var progress: Double
     var folds: Int
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }

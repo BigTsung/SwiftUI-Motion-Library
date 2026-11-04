@@ -44,7 +44,7 @@ public struct DayNightSky: View {
 struct SkyScene: View, Animatable {
     var time: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { time }
         set { time = newValue }
     }

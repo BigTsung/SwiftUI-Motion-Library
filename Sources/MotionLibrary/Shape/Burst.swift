@@ -77,16 +77,27 @@ public extension View {
     ///
     /// ```swift
     /// Image(systemName: isLiked ? "heart.fill" : "heart")
-    ///     .burst(trigger: isLiked, color: .pink, isEnabled: isLiked)
+    ///     .burst(trigger: isLiked, color: .pink, isActive: isLiked)
     /// ```
     func burst<Trigger: Equatable>(
         trigger: Trigger,
         color: Color = .pink,
         count: Int = 12,
         radius: CGFloat = 36,
-        isEnabled: Bool = true
+        isActive: Bool = true
     ) -> some View {
-        modifier(BurstModifier(trigger: trigger, color: color, count: count, radius: radius, isEnabled: isEnabled))
+        modifier(BurstModifier(trigger: trigger, color: color, count: count, radius: radius, isEnabled: isActive))
+    }
+
+    @available(*, deprecated, renamed: "burst(trigger:color:count:radius:isActive:)")
+    func burst<Trigger: Equatable>(
+        trigger: Trigger,
+        color: Color = .pink,
+        count: Int = 12,
+        radius: CGFloat = 36,
+        isEnabled: Bool
+    ) -> some View {
+        burst(trigger: trigger, color: color, count: count, radius: radius, isActive: isEnabled)
     }
 }
 
@@ -103,7 +114,7 @@ public extension View {
                     .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(.plain)
-            .burst(trigger: liked, isEnabled: liked)
+            .burst(trigger: liked, isActive: liked)
         }
     }
     return Demo()

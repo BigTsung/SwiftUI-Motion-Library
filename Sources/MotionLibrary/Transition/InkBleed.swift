@@ -36,7 +36,7 @@ struct InkBlot: View, Animatable {
     var progress: Double
     var origin: UnitPoint
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -83,6 +83,9 @@ public extension Transition where Self == InkBleedTransition {
     static var inkBleed: InkBleedTransition { InkBleedTransition() }
 
     /// Spreads the view in from `origin` like a blot of ink.
+    static func inkBleed(origin: UnitPoint) -> InkBleedTransition { InkBleedTransition(origin: origin) }
+
+    @available(*, deprecated, renamed: "inkBleed(origin:)")
     static func inkBleed(from origin: UnitPoint) -> InkBleedTransition { InkBleedTransition(origin: origin) }
 }
 
@@ -95,7 +98,7 @@ public extension Transition where Self == InkBleedTransition {
                 if shown {
                     LinearGradient(colors: [.indigo, .purple], startPoint: .top, endPoint: .bottom)
                         .overlay(Text("Ink").font(.largeTitle.bold()).foregroundStyle(.white))
-                        .transition(.inkBleed(from: .topLeading))
+                        .transition(.inkBleed(origin: .topLeading))
                 }
             }
             .frame(width: 280, height: 180)

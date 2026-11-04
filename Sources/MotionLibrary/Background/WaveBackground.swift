@@ -12,7 +12,7 @@ public struct WaveBackground: View {
     /// - Parameters:
     ///   - colors: One colour per layer, back to front.
     ///   - amplitude: Wave height, in points.
-    ///   - speed: 1 = default pace.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(
         colors: [Color] = [.cyan.opacity(0.35), .blue.opacity(0.45), .indigo.opacity(0.7)],
         amplitude: CGFloat = 12,

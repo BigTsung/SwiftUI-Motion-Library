@@ -143,7 +143,7 @@ struct BurstDemo: View {
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(.plain)
-        .burst(trigger: liked, isEnabled: liked)
+        .burst(trigger: liked, isActive: liked)
     }
 }
 
@@ -189,7 +189,7 @@ struct HoldToConfirmDemo: View {
 }
 
 struct StatusButtonDemo: View {
-    @State private var status = MotionButtonStatus.idle
+    @State private var status = StatusButton.Status.idle
     @State private var attempts = 0
 
     var body: some View {

@@ -71,12 +71,12 @@ struct RevealCircle: Shape {
     var progress: Double
     var origin: UnitPoint
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let o = CGPoint(x: rect.minX + rect.width * origin.x, y: rect.minY + rect.height * origin.y)
         let corners = [CGPoint(x: rect.minX, y: rect.minY), CGPoint(x: rect.maxX, y: rect.minY), CGPoint(x: rect.minX, y: rect.maxY), CGPoint(x: rect.maxX, y: rect.maxY)]
         let reach = corners.map { hypot($0.x - o.x, $0.y - o.y) }.max() ?? 0

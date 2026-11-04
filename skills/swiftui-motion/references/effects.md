@@ -7,7 +7,7 @@ Usage and implementation notes for every effect. Full source: https://raw.github
 Characters appear one by one with a blinking cursor. Trigger: Appear / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Text/TypewriterText.swift.
 
 ```swift
-TypewriterText("Hello, SwiftUI!", interval: .milliseconds(60))
+TypewriterText("Hello, SwiftUI!", interval: 0.06)
     .font(.title.bold())
 ```
 
@@ -79,10 +79,10 @@ MarqueeText("Now playing: Midnight Drive — Neon Coast")
     .font(.headline)
     .frame(width: 200)
 
-MarqueeText(longTitle, speed: 60, gap: 24)
+MarqueeText(longTitle, speed: 1.5, gap: 24)
 ```
 
-How it works: Create a SwiftUI MarqueeText view (iOS 17+) for a single line of text. Measure the text's natural width (fixedSize text with a GeometryReader background) and the container width. If the text fits, show it still. If not, show two copies in an HStack separated by a gap (40 pt) and offset them left by (time × speed) modulo (textWidth + gap) using TimelineView(.animation), so the second copy takes the first copy's place and the loop is seamless. Speed defaults to 40 pt/s. Clip to the container and mask the edges with 16 pt linear fades. Reserve one line of height with a hidden copy of the text. Expose the full text to accessibility, and with Reduce Motion on, don't scroll.
+How it works: Create a SwiftUI MarqueeText view (iOS 17+) for a single line of text. Measure the text's natural width (fixedSize text with a GeometryReader background) and the container width. If the text fits, show it still. If not, show two copies in an HStack separated by a gap (40 pt) and offset them left by (time × 40 pt/s × speed, a multiplier defaulting to 1) modulo (textWidth + gap) using TimelineView(.animation), so the second copy takes the first copy's place and the loop is seamless. Speed defaults to 40 pt/s. Clip to the container and mask the edges with 16 pt linear fades. Reserve one line of height with a hidden copy of the text. Expose the full text to accessibility, and with Reduce Motion on, don't scroll.
 
 ## Wave Text
 
@@ -166,7 +166,7 @@ ZStack {
 }
 ```
 
-How it works: Create a SwiftUI CircularText view (iOS 17+) with text, radius (60 pt) and speed (20° per second). Split the string into characters and place each one in a ZStack as Text(character).offset(y: −radius).rotationEffect(.degrees(index / count × 360)), so letters stand evenly spaced around the circle. Wrap the ZStack in TimelineView(.animation) and rotate it by time × speed degrees (modulo 360). Frame it to 2 × radius plus 12 pt padding. Use the full text as a single accessibility label. With Reduce Motion on (or speed 0), pause the timeline.
+How it works: Create a SwiftUI CircularText view (iOS 17+) with text, radius (60 pt) and speed (a multiplier, default 1, on 20° per second; negative turns the other way). Split the string into characters and place each one in a ZStack as Text(character).offset(y: −radius).rotationEffect(.degrees(index / count × 360)), so letters stand evenly spaced around the circle. Wrap the ZStack in TimelineView(.animation) and rotate it by time × 20 × speed degrees (modulo 360). Frame it to 2 × radius plus 12 pt padding. Use the full text as a single accessibility label. With Reduce Motion on (or speed 0), pause the timeline.
 
 ## Focus Text
 
@@ -238,7 +238,7 @@ WeightWaveText("Variable weight")
     .font(.system(size: 36, design: .rounded))
 ```
 
-How it works: Create a SwiftUI WeightWaveText(_:speed:wavelength:) view (iOS 17+) that lays the characters out in an HStack(spacing: 0) inside TimelineView(.animation). Each character gets .fontWeight from the nine weights ultraLight…black, indexed by level = (sin(2π × (index / wavelength − time × speed)) + 1) / 2 (wavelength 8 letters, speed 0.6 waves/s), so a swell of bold travels through the word. The font comes from the environment. With Reduce Motion on, pause the timeline and use .regular. Combine into one accessibility element labelled with the string.
+How it works: Create a SwiftUI WeightWaveText(_:speed:wavelength:) view (iOS 17+) that lays the characters out in an HStack(spacing: 0) inside TimelineView(.animation). Each character gets .fontWeight from the nine weights ultraLight…black, indexed by level = (sin(2π × (index / wavelength − time × speed)) + 1) / 2 (wavelength 8 letters, 0.6 waves/s × speed, a multiplier defaulting to 1), so a swell of bold travels through the word. The font comes from the environment. With Reduce Motion on, pause the timeline and use .regular. Combine into one accessibility element labelled with the string.
 
 ## Exploding Text
 
@@ -332,21 +332,21 @@ HoldToConfirmButton("Hold to delete") {
     deleteAccount()
 }
 
-HoldToConfirmButton(duration: 2, fillColor: .orange) {
+HoldToConfirmButton(duration: 2, color: .orange) {
     launch()
 } label: {
     Label("Hold to launch", systemImage: "flame")
 }
 ```
 
-How it works: Create a SwiftUI HoldToConfirmButton (iOS 17+) for destructive actions. A capsule with a 15% tint of fillColor (red) shows the label in fillColor. While pressed (onLongPressGesture(minimumDuration:perform:onPressingChanged:)), animate a progress value linearly from its current value to 1 over the remaining duration (1.2 s); releasing early animates it back to 0 with easeOut(0.35). Draw the liquid as a Shape filled from the bottom up to progress, with a sine-wave top edge (4 pt amplitude, phase driven by TimelineView) that flattens when empty or full. Mask a stack of the liquid plus a white copy of the label with the same shape, so the submerged part of the text turns white. On completion, run the action, swap the label for a checkmark with a spring, play a success haptic and reset after 1.2 s. Scale to 0.97 while pressing.
+How it works: Create a SwiftUI HoldToConfirmButton (iOS 17+) for destructive actions. A capsule with a 15% tint of color (red) shows the label in color. While pressed (onLongPressGesture(minimumDuration:perform:onPressingChanged:)), animate a progress value linearly from its current value to 1 over the remaining duration (1.2 s); releasing early animates it back to 0 with easeOut(0.35). Draw the liquid as a Shape filled from the bottom up to progress, with a sine-wave top edge (4 pt amplitude, phase driven by TimelineView) that flattens when empty or full. Mask a stack of the liquid plus a white copy of the label with the same shape, so the submerged part of the text turns white. On completion, run the action, swap the label for a checkmark with a spring, play a success haptic and reset after 1.2 s. Scale to 0.97 while pressing.
 
 ## Loading → Success
 
 The button morphs into a spinner, then a green checkmark or a red shake. Trigger: Tap / Value change. Requires iOS 17+. Files: Sources/MotionLibrary/Button/StatusButton.swift, Sources/MotionLibrary/Support/CheckmarkShape.swift, Sources/MotionLibrary/Support/Haptics.swift.
 
 ```swift
-@State private var status = MotionButtonStatus.idle
+@State private var status = StatusButton.Status.idle
 
 StatusButton("Pay now", status: status) {
     status = .loading
@@ -449,10 +449,10 @@ Toggle("Wi-Fi", isOn: $wifi)
     .toggleStyle(.liquid)
 
 Toggle("Dark mode", isOn: $dark)
-    .toggleStyle(.liquid(tint: .purple))
+    .toggleStyle(.liquid(color: .purple))
 ```
 
-How it works: Create a SwiftUI LiquidToggleStyle (iOS 17+) with a tint (green) and static accessors .liquid and .liquid(tint:). makeBody puts the label, a Spacer and a 52 × 32 pt switch in an HStack. The switch is a plain Button that toggles configuration.isOn inside withAnimation(.spring(response: 0.35, dampingFraction: 0.7)); it shows a ZStack aligned .trailing when on and .leading when off, with a capsule track (tint when on, gray 35 % when off) and a white capsule knob (26 pt tall, 3 pt padding, small shadow). The knob's width runs a keyframeAnimator triggered by isOn: CubicKeyframe to 1.5 × 26 pt over 0.12 s, then SpringKeyframe(.bouncy) back to 26 over 0.35 s, so it stretches as it slides and snaps back round. Give it an "On"/"Off" accessibility value. With Reduce Motion on, don't stretch and use a short ease.
+How it works: Create a SwiftUI LiquidToggleStyle (iOS 17+) with a color (green) and static accessors .liquid and .liquid(color:). makeBody puts the label, a Spacer and a 52 × 32 pt switch in an HStack. The switch is a plain Button that toggles configuration.isOn inside withAnimation(.spring(response: 0.35, dampingFraction: 0.7)); it shows a ZStack aligned .trailing when on and .leading when off, with a capsule track (tint when on, gray 35 % when off) and a white capsule knob (26 pt tall, 3 pt padding, small shadow). The knob's width runs a keyframeAnimator triggered by isOn: CubicKeyframe to 1.5 × 26 pt over 0.12 s, then SpringKeyframe(.bouncy) back to 26 over 0.35 s, so it stretches as it slides and snaps back round. Give it an "On"/"Off" accessibility value. With Reduce Motion on, don't stretch and use a short ease.
 
 ## Gooey Menu
 
@@ -843,7 +843,7 @@ MarqueeWall(count: shots.count, columns: 4) { index in
 .clipped()
 ```
 
-How it works: Create a SwiftUI MarqueeWall(count:columns:itemSize:spacing:speed:angle:content:) view (iOS 17+), the scrolling showcase wall from landing pages. Each of the columns (default 4) shows perColumn = max(3, ceil(count / columns)) items twice in a VStack, cards of itemSize (110 × 140) with 14 pt continuous corners and 12 pt spacing, so the loop height is perColumn × (height + spacing). In TimelineView(.animation), distance = (time × speed × (1 + 0.15 × (column % 3))) mod loopHeight (speed 24 pt/s); even columns offset by −distance (moving up), odd ones by distance − loopHeight (moving down). Lay the columns in an HStack, rotate the whole thing by −14° and let the caller clip it. Disable hit testing. With Reduce Motion on, pause the timeline.
+How it works: Create a SwiftUI MarqueeWall(count:columns:itemSize:spacing:speed:angle:content:) view (iOS 17+), the scrolling showcase wall from landing pages. Each of the columns (default 4) shows perColumn = max(3, ceil(count / columns)) items twice in a VStack, cards of itemSize (110 × 140) with 14 pt continuous corners and 12 pt spacing, so the loop height is perColumn × (height + spacing). In TimelineView(.animation), distance = (time × speed × (1 + 0.15 × (column % 3))) mod loopHeight (24 pt/s × speed, a multiplier defaulting to 1); even columns offset by −distance (moving up), odd ones by distance − loopHeight (moving down). Lay the columns in an HStack, rotate the whole thing by −14° and let the caller clip it. Disable hit testing. With Reduce Motion on, pause the timeline.
 
 ## Photo Develop
 
@@ -880,10 +880,10 @@ Particles fly outward from the centre when a value changes. Trigger: Tap / Value
 ```swift
 Image(systemName: isLiked ? "heart.fill" : "heart")
     .contentTransition(.symbolEffect(.replace))
-    .burst(trigger: isLiked, color: .pink, isEnabled: isLiked)
+    .burst(trigger: isLiked, color: .pink, isActive: isLiked)
 ```
 
-How it works: Create a SwiftUI .burst(trigger:) view modifier (iOS 17+) for "like" feedback. Every time the Equatable trigger changes (and isEnabled is true), spawn a burst in an overlay: 12 small circles (alternating 7 pt and 4 pt) placed evenly around a circle, which move outward from the centre to a ~36 pt radius while shrinking to 30% and fading out with easeOut over 0.6 s. Remove each burst after it finishes, allow overlapping bursts, and never intercept touches. Color, count and radius are parameters.
+How it works: Create a SwiftUI .burst(trigger:) view modifier (iOS 17+) for "like" feedback. Every time the Equatable trigger changes (and isActive is true), spawn a burst in an overlay: 12 small circles (alternating 7 pt and 4 pt) placed evenly around a circle, which move outward from the centre to a ~36 pt radius while shrinking to 30% and fading out with easeOut over 0.6 s. Remove each burst after it finishes, allow overlapping bursts, and never intercept touches. Color, count and radius are parameters.
 
 ## Checkmark Draw
 
@@ -993,7 +993,7 @@ SlidingTabs(["Day", "Week", "Month"], selection: $range)
 SlidingTabs(Category.allCases, selection: $category, indicator: .underline) { $0.title }
 ```
 
-How it works: Create a generic SwiftUI SlidingTabs control (iOS 17+) over Hashable options with a selection binding, an indicator style (.pill or .underline), a tint and a title closure (plus a convenience init for [String]). Show the options as plain Buttons in an HStack inside a 4 pt padded capsule tinted secondary at 12 % (pill style only). Behind the selected title only, draw the indicator — a capsule filled with the tint (title turns white), or a 3 pt capsule at the bottom inset 10 pt (title turns tint) — with .matchedGeometryEffect(id: "indicator", in: namespace), so it glides between options. Change the selection inside withAnimation(.spring(response: 0.35, dampingFraction: 0.8)), and add the .isSelected trait. With Reduce Motion on, use a 0.15 s ease.
+How it works: Create a generic SwiftUI SlidingTabs control (iOS 17+) over Hashable options with a selection binding, an indicator style (.pill or .underline), a color and a title closure (plus a convenience init for [String]). Show the options as plain Buttons in an HStack inside a 4 pt padded capsule tinted secondary at 12 % (pill style only). Behind the selected title only, draw the indicator — a capsule filled with the color (title turns white), or a 3 pt capsule at the bottom inset 10 pt (title turns tint) — with .matchedGeometryEffect(id: "indicator", in: namespace), so it glides between options. Change the selection inside withAnimation(.spring(response: 0.35, dampingFraction: 0.8)), and add the .isSelected trait. With Reduce Motion on, use a 0.15 s ease.
 
 ## Reading Progress
 
@@ -1019,7 +1019,7 @@ ZStack {
 }
 ```
 
-How it works: Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base color, draw one large circle per palette color (default purple, blue, teal, pink; 80% opacity, diameter 70% of the larger side). Each circle drifts on its own Lissajous path, x = cos(t·0.6 + phase)·30% width and y = sin(t·0.8 + phase·1.3)·30% height, where phase differs per index. Drive time from TimelineView(.animation) scaled by a speed parameter, blur the whole group with a ~60 pt radius, clip to bounds and hide it from accessibility.
+How it works: Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base color, draw one large circle per palette color (default purple, blue, teal, pink; 80% opacity, diameter 70% of the larger side). Each circle drifts on its own Lissajous path, x = cos(t·0.6 + phase)·30% width and y = sin(t·0.8 + phase·1.3)·30% height, where phase differs per index. Drive time from TimelineView(.animation) scaled by 0.4 × a speed multiplier (default 1), blur the whole group with a ~60 pt radius, clip to bounds and hide it from accessibility.
 
 ## Mesh Gradient
 
@@ -1046,7 +1046,7 @@ ZStack {
 }
 ```
 
-How it works: Create a SwiftUI RetroGrid view (iOS 17+) with color (pink), spacing (40 pt), speed (0.8 rows per second) and horizon (0.35 of the height). In a Canvas inside TimelineView(.animation): with top = height × horizon and depth = height − top, draw horizontal lines at y = top + depth / z for z = n + 1 − fract(time × speed), n = 0…39, so the bottom edge is z = 1, rows bunch up toward the horizon and every row moves toward the viewer; draw lines from the vanishing point (centre, top) to (centre + k × spacing, bottom) for enough k to cover the width. Stroke the path twice: 3 pt at 35 % opacity for a glow, then 1 pt solid. Mask the view with a vertical gradient that is clear down to the horizon and opaque 45 % lower, so lines fade into the distance. Hide from accessibility; Reduce Motion pauses it.
+How it works: Create a SwiftUI RetroGrid view (iOS 17+) with color (pink), spacing (40 pt), speed (a multiplier, default 1, on 0.8 rows per second) and horizon (0.35 of the height). In a Canvas inside TimelineView(.animation): with top = height × horizon and depth = height − top, draw horizontal lines at y = top + depth / z for z = n + 1 − fract(time × 0.8 × speed), n = 0…39, so the bottom edge is z = 1, rows bunch up toward the horizon and every row moves toward the viewer; draw lines from the vanishing point (centre, top) to (centre + k × spacing, bottom) for enough k to cover the width. Stroke the path twice: 3 pt at 35 % opacity for a glow, then 1 pt solid. Mask the view with a vertical gradient that is clear down to the horizon and opaque 45 % lower, so lines fade into the distance. Hide from accessibility; Reduce Motion pauses it.
 
 ## Border Beam
 
@@ -1167,7 +1167,7 @@ NetworkBackground(color: .cyan)
     .ignoresSafeArea()
 ```
 
-How it works: Create a SwiftUI NetworkBackground(count:linkDistance:color:interactive:) view (iOS 17+): a plexus of drifting points. In TimelineView(.animation) + Canvas, point i starts at a hashed position, moves at 6–20 pt/s in a hashed direction, and wraps around the edges with 20 pt of slack. Join every pair closer than linkDistance (70 pt) with a line of opacity 0.55 × (1 − d / linkDistance) and width 0.6 + 0.6 × that strength, then draw each point as a 3.6 pt dot. Track the pointer with onContinuousHover and a DragGesture(minimumDistance: 0); points within 110 pt are pulled towards it by (1 − d / 110) × 0.45 of the gap, so the web gathers under the finger. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+How it works: Create a SwiftUI NetworkBackground(count:linkDistance:color:isInteractive:) view (iOS 17+): a plexus of drifting points. In TimelineView(.animation) + Canvas, point i starts at a hashed position, moves at 6–20 pt/s in a hashed direction, and wraps around the edges with 20 pt of slack. Join every pair closer than linkDistance (70 pt) with a line of opacity 0.55 × (1 − d / linkDistance) and width 0.6 + 0.6 × that strength, then draw each point as a 3.6 pt dot. Track the pointer with onContinuousHover and a DragGesture(minimumDistance: 0); points within 110 pt are pulled towards it by (1 − d / 110) × 0.45 of the gap, so the web gathers under the finger. With Reduce Motion on, pause the timeline. Hide it from accessibility.
 
 ## Topographic Lines
 
@@ -1178,7 +1178,7 @@ TopographicLines(color: .green)
     .background(Color(white: 0.06))
 ```
 
-How it works: Create a SwiftUI TopographicLines(levels:scale:color:speed:) view (iOS 17+). In TimelineView(.animation(minimumInterval: 1/30)) + Canvas, sample a height field on an 8 pt grid: h = 0.65 × noise(x + t, y − 0.6t) + 0.35 × noise(2.1x − 0.8t, 2.1y + 7), with x, y in units of scale (90 pt), t = time × speed (0.12), and noise a smoothstep-interpolated value noise from an integer hash. For each of levels (14) thresholds spread over 0.18…0.82, trace the contour with marching squares (16 cases, edge crossings linearly interpolated, saddles drawn as two segments) into one Path and stroke it: every fifth line at 1.4 pt and 85 % opacity, the others 0.7 pt at 45 %. With Reduce Motion on, pause the timeline.
+How it works: Create a SwiftUI TopographicLines(levels:scale:color:speed:) view (iOS 17+). In TimelineView(.animation(minimumInterval: 1/30)) + Canvas, sample a height field on an 8 pt grid: h = 0.65 × noise(x + t, y − 0.6t) + 0.35 × noise(2.1x − 0.8t, 2.1y + 7), with x, y in units of scale (90 pt), t = time × 0.12 × speed (a multiplier defaulting to 1), and noise a smoothstep-interpolated value noise from an integer hash. For each of levels (14) thresholds spread over 0.18…0.82, trace the contour with marching squares (16 cases, edge crossings linearly interpolated, saddles drawn as two segments) into one Path and stroke it: every fifth line at 1.4 pt and 85 % opacity, the others 0.7 pt at 45 %. With Reduce Motion on, pause the timeline.
 
 ## Day & Night Sky
 
@@ -1296,7 +1296,7 @@ ZStack {
 }
 ```
 
-How it works: Create a SwiftUI ParticleField view (iOS 17+) with count (50), color, speed (14 pt/s) and linkDistance (70 pt). Generate each particle's traits once from a seeded SplitMix64 generator: start position (0…1 in each axis), direction, speed factor (0.4–1.2), radius (1–2.8 pt) and opacity (0.4–1). In TimelineView(.animation) with a Canvas, compute each position as start + direction × time × speed × factor, wrapped around the canvas edges, so there is no stored state. Stroke a 0.8 pt line between every pair closer than linkDistance with opacity 0.35 × (1 − distance / linkDistance), then fill each particle as a circle. Hide it from accessibility, and with Reduce Motion on, freeze time.
+How it works: Create a SwiftUI ParticleField view (iOS 17+) with count (50), color, speed (a multiplier, default 1, on 14 pt/s) and linkDistance (70 pt). Generate each particle's traits once from a seeded SplitMix64 generator: start position (0…1 in each axis), direction, speed factor (0.4–1.2), radius (1–2.8 pt) and opacity (0.4–1). In TimelineView(.animation) with a Canvas, compute each position as start + direction × time × 14 × speed × factor, wrapped around the canvas edges, so there is no stored state. Stroke a 0.8 pt line between every pair closer than linkDistance with opacity 0.35 × (1 − distance / linkDistance), then fill each particle as a circle. Hide it from accessibility, and with Reduce Motion on, freeze time.
 
 ## Starfield
 
@@ -1307,10 +1307,10 @@ Starfield()
     .background(.black)
     .ignoresSafeArea()
 
-Starfield(count: 300, speed: 1.5) // warp jump
+Starfield(count: 300, speed: 4) // warp jump
 ```
 
-How it works: Create a SwiftUI Starfield view (iOS 17+) with count (200), speed (0.35 depth units per second) and color. Give each star a seeded random x and y in −1…1 and a depth in 0…1. In a Canvas inside TimelineView(.animation), compute z = 0.05 + 0.95 × fract(depth − time × speed), so stars approach the camera and wrap back to the far plane. Project with perspective: point = centre + (x, y) / z × 0.15 × half the larger side. Draw each star as a round-capped streak from its projection at a slightly larger z (z + min(0.08, speed × 0.05)) to its current projection, with opacity and line width growing as it gets closer. Hide it from accessibility, and with Reduce Motion on, freeze time.
+How it works: Create a SwiftUI Starfield view (iOS 17+) with count (200), speed (a multiplier, default 1, on 0.35 depth units per second) and color. Give each star a seeded random x and y in −1…1 and a depth in 0…1. In a Canvas inside TimelineView(.animation), compute z = 0.05 + 0.95 × fract(depth − time × 0.35 × speed), so stars approach the camera and wrap back to the far plane. Project with perspective: point = centre + (x, y) / z × 0.15 × half the larger side. Draw each star as a round-capped streak from its projection at a slightly larger z (z + min(0.08, 0.35 × speed × 0.05)) to its current projection, with opacity and line width growing as it gets closer. Hide it from accessibility, and with Reduce Motion on, freeze time.
 
 ## Cover Flow
 
@@ -1399,7 +1399,7 @@ WarpTunnel()
 WarpTunnel(colors: [.green, .mint], sides: 6) // hexagons
 ```
 
-How it works: Create a SwiftUI WarpTunnel view (iOS 17+) with rings (18), colors (cyan, blue, purple, pink), speed (1.2 rings per second) and sides (0 for circles, 3+ for polygons). In a Canvas inside TimelineView(.animation), for ring i let depth = 1 − (i + fract(time × speed)) / rings and skip depths below 0.02. Its radius is half the view's diagonal × 0.06 / depth (perspective), skipped once it's 1.5 × larger than that. Stroke a circle, or a polygon rotated by i × 0.12 + time × 0.1 rad, centred in the view, with opacity closeness² and line width 0.5 + 3 × closeness (closeness = 1 − depth), cycling colours by ring. Hide from accessibility; Reduce Motion pauses it.
+How it works: Create a SwiftUI WarpTunnel view (iOS 17+) with rings (18), colors (cyan, blue, purple, pink), speed (a multiplier, default 1, on 1.2 rings per second) and sides (0 for circles, 3+ for polygons). In a Canvas inside TimelineView(.animation), for ring i let depth = 1 − (i + fract(time × 1.2 × speed)) / rings and skip depths below 0.02. Its radius is half the view's diagonal × 0.06 / depth (perspective), skipped once it's 1.5 × larger than that. Stroke a circle, or a polygon rotated by i × 0.12 + time × 0.1 rad, centred in the view, with opacity closeness² and line width 0.5 + 3 × closeness (closeness = 1 − depth), cycling colours by ring. Hide from accessibility; Reduce Motion pauses it.
 
 ## Holographic Card
 
@@ -1497,7 +1497,7 @@ Flock(count: 60, color: .white)
     .background(.indigo.gradient)
 ```
 
-How it works: Create a SwiftUI Flock(count:color:speed:) view (iOS 17+) that simulates boids. Keep the boids (position, velocity) in a reference-type model stored in @State and advance it from a Canvas inside TimelineView(.animation), with dt = time since the last frame capped at 1/20 s. For each boid, look at neighbours within 46 pt: steer 5 % towards their average velocity, 1.2 % towards their centre, and away from any closer than 16 pt by 0.14 × the overlap. If there's a target (from onContinuousHover or a DragGesture(minimumDistance: 0)), add 2 % of the gap to it. Push back by 9 within 24 pt of an edge. Clamp speed between 0.6 and 1.3 × cruise (90 pt/s, 1.5× when chasing). Draw each boid as a small arrowhead path rotated to atan2 of its velocity. With Reduce Motion on, freeze them. Hide it from accessibility.
+How it works: Create a SwiftUI Flock(count:color:speed:) view (iOS 17+) that simulates boids. Keep the boids (position, velocity) in a reference-type model stored in @State and advance it from a Canvas inside TimelineView(.animation), with dt = time since the last frame capped at 1/20 s. For each boid, look at neighbours within 46 pt: steer 5 % towards their average velocity, 1.2 % towards their centre, and away from any closer than 16 pt by 0.14 × the overlap. If there's a target (from onContinuousHover or a DragGesture(minimumDistance: 0)), add 2 % of the gap to it. Push back by 9 within 24 pt of an edge. Clamp speed between 0.6 and 1.3 × cruise (90 pt/s × speed, a multiplier defaulting to 1; 1.5× when chasing). Draw each boid as a small arrowhead path rotated to atan2 of its velocity. With Reduce Motion on, freeze them. Hide it from accessibility.
 
 ## Ink Trail
 
@@ -1520,7 +1520,7 @@ Image("city-night")
     .overlay(RainOnGlass())
 ```
 
-How it works: Create a SwiftUI RainOnGlass(drops:tint:) overlay (iOS 17+) in TimelineView(.animation) + Canvas. Scatter one static bead per 900 pt² at hashed positions with radius 0.8–2.6 pt. Each of the sliding drops (9) has a cycle of 3.5–7.5 s; its progress l through the cycle becomes stick-slip motion with five steps, (floor(5l) + frac(5l)³) / 5, carrying it from a hashed start near the top past the bottom edge, with a 3 pt sideways wobble and radius 3.2–5.8 pt, stretched 1.25× vertically. Behind it, leave a trail of tiny beads every 9 pt with hashed jitter. Draw every drop like a tiny lens: an ellipse filled with a diagonal gradient (tint 35 % → tint 5 % → black 35 %) plus a bright fleck at the top-left. Disable hit testing. With Reduce Motion on, pause the timeline.
+How it works: Create a SwiftUI RainOnGlass(drops:color:) overlay (iOS 17+) in TimelineView(.animation) + Canvas. Scatter one static bead per 900 pt² at hashed positions with radius 0.8–2.6 pt. Each of the sliding drops (9) has a cycle of 3.5–7.5 s; its progress l through the cycle becomes stick-slip motion with five steps, (floor(5l) + frac(5l)³) / 5, carrying it from a hashed start near the top past the bottom edge, with a 3 pt sideways wobble and radius 3.2–5.8 pt, stretched 1.25× vertically. Behind it, leave a trail of tiny beads every 9 pt with hashed jitter. Draw every drop like a tiny lens: an ellipse filled with a diagonal gradient (tint 35 % → tint 5 % → black 35 %) plus a bright fleck at the top-left. Disable hit testing. With Reduce Motion on, pause the timeline.
 
 ## Orbits
 
@@ -1702,11 +1702,11 @@ New content spreads in like a blot of ink on wet paper, with a ragged edge. Trig
 ```swift
 if showsDetail {
     DetailCard()
-        .transition(.inkBleed(from: .topLeading))
+        .transition(.inkBleed(origin: .topLeading))
 }
 ```
 
-How it works: Create a SwiftUI Transition .inkBleed / .inkBleed(from: UnitPoint) (iOS 17+) that masks the content with an Animatable blot view whose progress is 1 when the phase is identity and 0 otherwise. The blot is a Canvas with .alphaThreshold(min: 0.5) and a blur of max(2, 0.06r), drawing into a layer: a circle of radius 0.82r at the origin plus 26 circles around it, at angle i / 26 × 2π + hashed jitter, distance r × (0.62–0.92) and radius r × (0.12–0.32). r = (1.25 × distance to the furthest corner + 30) × progress, so blurring then thresholding melts them into one ragged blot that clears the corners at 1. With Reduce Motion on, fade instead.
+How it works: Create a SwiftUI Transition .inkBleed / .inkBleed(origin: UnitPoint) (iOS 17+) that masks the content with an Animatable blot view whose progress is 1 when the phase is identity and 0 otherwise. The blot is a Canvas with .alphaThreshold(min: 0.5) and a blur of max(2, 0.06r), drawing into a layer: a circle of radius 0.82r at the origin plus 26 circles around it, at angle i / 26 × 2π + hashed jitter, distance r × (0.62–0.92) and radius r × (0.12–0.32). r = (1.25 × distance to the furthest corner + 30) × progress, so blurring then thresholding melts them into one ragged blot that clears the corners at 1. With Reduce Motion on, fade instead.
 
 ## Zoom Blur
 
@@ -1952,4 +1952,4 @@ VoronoiCells(colors: [.indigo, .purple, .pink, .orange, .teal])
     .ignoresSafeArea()
 ```
 
-How it works: Create a SwiftUI VoronoiCells(colors:cellSize:speed:) view (iOS 17+): a Rectangle with a Metal [[stitchable]] colour shader (position, colour, float time, float scale, device const half4 *palette, int count) driven by TimelineView(.animation). Work in cells of scale (60 pt); for the 3 × 3 neighbouring cells, the seed is cell + 0.5 + 0.4 × sin(time + 2π × hash2(cell)), so seeds drift. Track the nearest and second-nearest distances; colour the pixel with palette[hash(nearest cell) × count], darkened by smoothstep(0, 0.08, second − nearest) for soft seams and by 1 − 0.35 × nearest for a gentle glow at each seed. Pass the colours with .colorArray. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+How it works: Create a SwiftUI VoronoiCells(colors:cellSize:speed:) view (iOS 17+): a Rectangle with a Metal [[stitchable]] colour shader (position, colour, float time, float scale, device const half4 *palette, int count) driven by TimelineView(.animation). Work in cells of scale (60 pt); for the 3 × 3 neighbouring cells, the seed is cell + 0.5 + 0.4 × sin(0.6 × speed × time + 2π × hash2(cell)) (speed is a multiplier defaulting to 1), so seeds drift. Track the nearest and second-nearest distances; colour the pixel with palette[hash(nearest cell) × count], darkened by smoothstep(0, 0.08, second − nearest) for soft seams and by 1 − 0.35 × nearest for a gentle glow at each seed. Pass the colours with .colorArray. With Reduce Motion on, pause the timeline. Hide it from accessibility.

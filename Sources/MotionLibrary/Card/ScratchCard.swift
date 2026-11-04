@@ -89,7 +89,7 @@ struct ScratchModifier<Cover: ShapeStyle>: ViewModifier {
 struct ScratchPath: Shape {
     var strokes: [[CGPoint]]
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         var path = Path()
         for stroke in strokes {
             guard let first = stroke.first else { continue }

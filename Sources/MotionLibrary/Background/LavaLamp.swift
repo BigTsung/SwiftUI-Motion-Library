@@ -15,7 +15,7 @@ public struct LavaLamp: View {
     ///   - colors: Gradient of the wax, top to bottom.
     ///   - background: Colour behind the wax.
     ///   - blobs: Number of blobs.
-    ///   - speed: Multiplier on the drifting speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(colors: [Color] = [.yellow, .orange, .pink], background: Color = Color(red: 0.16, green: 0.05, blue: 0.25), blobs: Int = 7, speed: Double = 1) {
         self.colors = colors
         self.background = background

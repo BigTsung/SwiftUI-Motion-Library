@@ -76,7 +76,7 @@ private struct SwooshBody<Content: View>: View {
 struct SkewSlide: GeometryEffect {
     var progress: CGFloat
 
-    var animatableData: CGFloat {
+    nonisolated var animatableData: CGFloat {
         get { progress }
         set { progress = newValue }
     }

@@ -7,7 +7,7 @@ import SwiftUI
 struct ThermalModifier: ViewModifier, Animatable {
     var intensity: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { intensity }
         set { intensity = newValue }
     }

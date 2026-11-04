@@ -31,7 +31,7 @@ Characters appear one by one with a blinking cursor.
 ### Usage
 
 ```swift
-TypewriterText("Hello, SwiftUI!", interval: .milliseconds(60))
+TypewriterText("Hello, SwiftUI!", interval: 0.06)
     .font(.title.bold())
 ```
 
@@ -54,16 +54,21 @@ import SwiftUI
 /// The animation restarts whenever `text` changes.
 public struct TypewriterText: View {
     private let text: String
-    private let interval: Duration
+    private let interval: Double
     private let showsCursor: Bool
     private let cursor: String
 
     @State private var visibleCount = 0
     @State private var cursorVisible = true
 
+    /// - Parameters:
+    ///   - text: The text to type out.
+    ///   - interval: Seconds between characters.
+    ///   - showsCursor: Shows a blinking cursor after the text.
+    ///   - cursor: The cursor character.
     public init(
         _ text: String,
-        interval: Duration = .milliseconds(60),
+        interval: Double = 0.06,
         showsCursor: Bool = true,
         cursor: String = "|"
     ) {
@@ -71,6 +76,17 @@ public struct TypewriterText: View {
         self.interval = interval
         self.showsCursor = showsCursor
         self.cursor = cursor
+    }
+
+    @available(*, deprecated, message: "Pass interval in seconds as a Double, e.g. interval: 0.06")
+    public init(
+        _ text: String,
+        interval: Duration,
+        showsCursor: Bool = true,
+        cursor: String = "|"
+    ) {
+        let parts = interval.components
+        self.init(text, interval: Double(parts.seconds) + Double(parts.attoseconds) / 1e18, showsCursor: showsCursor, cursor: cursor)
     }
 
     public var body: some View {
@@ -84,7 +100,7 @@ public struct TypewriterText: View {
             visibleCount = 0
             guard !text.isEmpty else { return }
             for index in 1...text.count {
-                try? await Task.sleep(for: interval)
+                try? await Task.sleep(for: .seconds(interval))
                 if Task.isCancelled { return }
                 visibleCount = index
             }
@@ -594,12 +610,12 @@ MarqueeText("Now playing: Midnight Drive — Neon Coast")
     .font(.headline)
     .frame(width: 200)
 
-MarqueeText(longTitle, speed: 60, gap: 24)
+MarqueeText(longTitle, speed: 1.5, gap: 24)
 ```
 
 ### How it works
 
-Create a SwiftUI MarqueeText view (iOS 17+) for a single line of text. Measure the text's natural width (fixedSize text with a GeometryReader background) and the container width. If the text fits, show it still. If not, show two copies in an HStack separated by a gap (40 pt) and offset them left by (time × speed) modulo (textWidth + gap) using TimelineView(.animation), so the second copy takes the first copy's place and the loop is seamless. Speed defaults to 40 pt/s. Clip to the container and mask the edges with 16 pt linear fades. Reserve one line of height with a hidden copy of the text. Expose the full text to accessibility, and with Reduce Motion on, don't scroll.
+Create a SwiftUI MarqueeText view (iOS 17+) for a single line of text. Measure the text's natural width (fixedSize text with a GeometryReader background) and the container width. If the text fits, show it still. If not, show two copies in an HStack separated by a gap (40 pt) and offset them left by (time × 40 pt/s × speed, a multiplier defaulting to 1) modulo (textWidth + gap) using TimelineView(.animation), so the second copy takes the first copy's place and the loop is seamless. Speed defaults to 40 pt/s. Clip to the container and mask the edges with 16 pt linear fades. Reserve one line of height with a hidden copy of the text. Expose the full text to accessibility, and with Reduce Motion on, don't scroll.
 
 ### Source
 
@@ -620,12 +636,12 @@ public struct MarqueeText: View {
 
     /// - Parameters:
     ///   - text: The string to show.
-    ///   - speed: Scroll speed in points per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - gap: Space between the end of the text and its next repetition.
     ///   - fadeWidth: Width of the faded edges.
-    public init(_ text: String, speed: Double = 40, gap: CGFloat = 40, fadeWidth: CGFloat = 16) {
+    public init(_ text: String, speed: Double = 1, gap: CGFloat = 40, fadeWidth: CGFloat = 16) {
         self.text = text
-        self.speed = speed
+        self.speed = speed * 40
         self.gap = gap
         self.fadeWidth = fadeWidth
     }
@@ -748,7 +764,7 @@ public struct WaveText: View {
     ///   - text: The string to show.
     ///   - amplitude: How far letters move up and down, in points.
     ///   - wavelength: Number of letters in one full wave.
-    ///   - speed: Waves per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(_ text: String, amplitude: CGFloat = 5, wavelength: Double = 8, speed: Double = 1) {
         self.init(Text(text), amplitude: amplitude, wavelength: wavelength, speed: speed)
     }
@@ -897,7 +913,7 @@ private struct CountingLabel: View, Animatable {
     let prefix: String
     let suffix: String
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { value }
         set { value = newValue }
     }
@@ -1005,7 +1021,7 @@ struct SplitRenderer: TextRenderer, Animatable {
     var spread: Double
     var distance: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -1311,7 +1327,7 @@ ZStack {
 
 ### How it works
 
-Create a SwiftUI CircularText view (iOS 17+) with text, radius (60 pt) and speed (20° per second). Split the string into characters and place each one in a ZStack as Text(character).offset(y: −radius).rotationEffect(.degrees(index / count × 360)), so letters stand evenly spaced around the circle. Wrap the ZStack in TimelineView(.animation) and rotate it by time × speed degrees (modulo 360). Frame it to 2 × radius plus 12 pt padding. Use the full text as a single accessibility label. With Reduce Motion on (or speed 0), pause the timeline.
+Create a SwiftUI CircularText view (iOS 17+) with text, radius (60 pt) and speed (a multiplier, default 1, on 20° per second; negative turns the other way). Split the string into characters and place each one in a ZStack as Text(character).offset(y: −radius).rotationEffect(.degrees(index / count × 360)), so letters stand evenly spaced around the circle. Wrap the ZStack in TimelineView(.animation) and rotate it by time × 20 × speed degrees (modulo 360). Frame it to 2 × radius plus 12 pt padding. Use the full text as a single accessibility label. With Reduce Motion on (or speed 0), pause the timeline.
 
 ### Source
 
@@ -1332,13 +1348,13 @@ public struct CircularText: View {
     ///   - text: The text to wrap around the circle. Add a separator such as
     ///     " • " at the end so the start and end don't touch.
     ///   - radius: Radius of the circle the letters stand on, in points.
-    ///   - speed: Rotation speed in degrees per second (negative turns
-    ///     counter-clockwise, 0 stops it).
-    public init(_ text: String, radius: CGFloat = 60, speed: Double = 20) {
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
+    ///     Negative turns counter-clockwise, 0 stops it.
+    public init(_ text: String, radius: CGFloat = 60, speed: Double = 1) {
         self.text = text
         self.characters = text.map(String.init)
         self.radius = radius
-        self.speed = speed
+        self.speed = speed * 20
     }
 
     public var body: some View {
@@ -1964,7 +1980,7 @@ WeightWaveText("Variable weight")
 
 ### How it works
 
-Create a SwiftUI WeightWaveText(_:speed:wavelength:) view (iOS 17+) that lays the characters out in an HStack(spacing: 0) inside TimelineView(.animation). Each character gets .fontWeight from the nine weights ultraLight…black, indexed by level = (sin(2π × (index / wavelength − time × speed)) + 1) / 2 (wavelength 8 letters, speed 0.6 waves/s), so a swell of bold travels through the word. The font comes from the environment. With Reduce Motion on, pause the timeline and use .regular. Combine into one accessibility element labelled with the string.
+Create a SwiftUI WeightWaveText(_:speed:wavelength:) view (iOS 17+) that lays the characters out in an HStack(spacing: 0) inside TimelineView(.animation). Each character gets .fontWeight from the nine weights ultraLight…black, indexed by level = (sin(2π × (index / wavelength − time × speed)) + 1) / 2 (wavelength 8 letters, 0.6 waves/s × speed, a multiplier defaulting to 1), so a swell of bold travels through the word. The font comes from the environment. With Reduce Motion on, pause the timeline and use .regular. Combine into one accessibility element labelled with the string.
 
 ### Source
 
@@ -1986,11 +2002,11 @@ public struct WeightWaveText: View {
 
     /// - Parameters:
     ///   - string: The text to show.
-    ///   - speed: Waves per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - wavelength: Letters per wave.
-    public init(_ string: String, speed: Double = 0.6, wavelength: Double = 8) {
+    public init(_ string: String, speed: Double = 1, wavelength: Double = 8) {
         self.string = string
-        self.speed = speed
+        self.speed = speed * 0.6
         self.wavelength = max(1, wavelength)
     }
 
@@ -2096,7 +2112,7 @@ struct ExplodeRenderer: TextRenderer, Animatable {
     var progress: Double
     var distance: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -2242,12 +2258,12 @@ struct LiquidWave: Shape {
     var phase: Double
     var amplitude: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { level }
         set { level = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         // A line of text has room for descenders below the glyphs and accents
         // above them; fill between roughly the baseline and the cap height,
         // going a wave's height past both so 0 is empty and 1 full.
@@ -2777,7 +2793,7 @@ HoldToConfirmButton("Hold to delete") {
     deleteAccount()
 }
 
-HoldToConfirmButton(duration: 2, fillColor: .orange) {
+HoldToConfirmButton(duration: 2, color: .orange) {
     launch()
 } label: {
     Label("Hold to launch", systemImage: "flame")
@@ -2786,7 +2802,7 @@ HoldToConfirmButton(duration: 2, fillColor: .orange) {
 
 ### How it works
 
-Create a SwiftUI HoldToConfirmButton (iOS 17+) for destructive actions. A capsule with a 15% tint of fillColor (red) shows the label in fillColor. While pressed (onLongPressGesture(minimumDuration:perform:onPressingChanged:)), animate a progress value linearly from its current value to 1 over the remaining duration (1.2 s); releasing early animates it back to 0 with easeOut(0.35). Draw the liquid as a Shape filled from the bottom up to progress, with a sine-wave top edge (4 pt amplitude, phase driven by TimelineView) that flattens when empty or full. Mask a stack of the liquid plus a white copy of the label with the same shape, so the submerged part of the text turns white. On completion, run the action, swap the label for a checkmark with a spring, play a success haptic and reset after 1.2 s. Scale to 0.97 while pressing.
+Create a SwiftUI HoldToConfirmButton (iOS 17+) for destructive actions. A capsule with a 15% tint of color (red) shows the label in color. While pressed (onLongPressGesture(minimumDuration:perform:onPressingChanged:)), animate a progress value linearly from its current value to 1 over the remaining duration (1.2 s); releasing early animates it back to 0 with easeOut(0.35). Draw the liquid as a Shape filled from the bottom up to progress, with a sine-wave top edge (4 pt amplitude, phase driven by TimelineView) that flattens when empty or full. Mask a stack of the liquid plus a white copy of the label with the same shape, so the submerged part of the text turns white. On completion, run the action, swap the label for a checkmark with a spring, play a success haptic and reset after 1.2 s. Scale to 0.97 while pressing.
 
 ### Source
 
@@ -2798,7 +2814,7 @@ import SwiftUI
 /// Good for destructive or irreversible actions.
 public struct HoldToConfirmButton<Label: View>: View {
     private let duration: Double
-    private let fillColor: Color
+    private let color: Color
     private let action: () -> Void
     private let label: Label
 
@@ -2809,20 +2825,30 @@ public struct HoldToConfirmButton<Label: View>: View {
 
     /// - Parameters:
     ///   - duration: Seconds the user must hold.
-    ///   - fillColor: Colour of the liquid. The resting background is a tint
+    ///   - color: Colour of the liquid. The resting background is a tint
     ///     of it and the label is drawn in it, turning white where submerged.
     ///   - action: Runs once the hold completes.
     ///   - label: The button's content.
     public init(
         duration: Double = 1.2,
-        fillColor: Color = .red,
+        color: Color = .red,
         action: @escaping () -> Void,
         @ViewBuilder label: () -> Label
     ) {
         self.duration = duration
-        self.fillColor = fillColor
+        self.color = color
         self.action = action
         self.label = label()
+    }
+
+    @available(*, deprecated, renamed: "init(duration:color:action:label:)")
+    public init(
+        duration: Double = 1.2,
+        fillColor: Color,
+        action: @escaping () -> Void,
+        @ViewBuilder label: () -> Label
+    ) {
+        self.init(duration: duration, color: fillColor, action: action, label: label)
     }
 
     public var body: some View {
@@ -2834,12 +2860,12 @@ public struct HoldToConfirmButton<Label: View>: View {
             )
             // The label sizes the button; the capsule and liquid only decorate it.
             content
-                .foregroundStyle(fillColor)
-                .background(Capsule().fill(fillColor.opacity(0.15)))
+                .foregroundStyle(color)
+                .background(Capsule().fill(color.opacity(0.15)))
                 .overlay {
                     // The liquid, with the label redrawn in white where it's submerged.
                     ZStack {
-                        liquid.fill(fillColor)
+                        liquid.fill(color)
                         content.foregroundStyle(.white)
                     }
                     .mask(liquid)
@@ -2903,12 +2929,35 @@ public extension HoldToConfirmButton where Label == Text {
     init(
         _ title: LocalizedStringKey,
         duration: Double = 1.2,
-        fillColor: Color = .red,
+        color: Color = .red,
         action: @escaping () -> Void
     ) {
-        self.init(duration: duration, fillColor: fillColor, action: action) {
+        self.init(duration: duration, color: color, action: action) {
             Text(title).font(.headline)
         }
+    }
+
+    /// A hold-to-confirm button whose label is a string you already have, shown as is.
+    @_disfavoredOverload
+    init<S: StringProtocol>(
+        _ title: S,
+        duration: Double = 1.2,
+        color: Color = .red,
+        action: @escaping () -> Void
+    ) {
+        self.init(duration: duration, color: color, action: action) {
+            Text(title).font(.headline)
+        }
+    }
+
+    @available(*, deprecated, renamed: "init(_:duration:color:action:)")
+    init(
+        _ title: LocalizedStringKey,
+        duration: Double = 1.2,
+        fillColor: Color,
+        action: @escaping () -> Void
+    ) {
+        self.init(title, duration: duration, color: fillColor, action: action)
     }
 }
 
@@ -2918,12 +2967,12 @@ private struct LiquidFill: Shape {
     var phase: Double
     var waveHeight: CGFloat
 
-    var animatableData: AnimatablePair<CGFloat, CGFloat> {
+    nonisolated var animatableData: AnimatablePair<CGFloat, CGFloat> {
         get { AnimatablePair(progress, waveHeight) }
         set { progress = newValue.first; waveHeight = newValue.second }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         // Overfill slightly so the wave crests are hidden when full.
         let level = rect.maxY - (rect.height + waveHeight * 2) * progress
         var path = Path()
@@ -3016,7 +3065,7 @@ The button morphs into a spinner, then a green checkmark or a red shake.
 ### Usage
 
 ```swift
-@State private var status = MotionButtonStatus.idle
+@State private var status = StatusButton.Status.idle
 
 StatusButton("Pay now", status: status) {
     status = .loading
@@ -3037,14 +3086,6 @@ Create a SwiftUI StatusButton (iOS 17+) driven by a status enum: idle, loading, 
 ```swift
 import SwiftUI
 
-/// The phases a `StatusButton` moves through.
-public enum MotionButtonStatus: Equatable, Sendable {
-    case idle
-    case loading
-    case success
-    case failure
-}
-
 /// A capsule button that morphs to show the result of its action: it shrinks
 /// into a spinning circle while loading, then turns green with a drawn
 /// checkmark on success, or red with a shake on failure.
@@ -3052,7 +3093,7 @@ public enum MotionButtonStatus: Equatable, Sendable {
 /// You own the status, so it works with any async work:
 ///
 /// ```swift
-/// @State private var status = MotionButtonStatus.idle
+/// @State private var status = StatusButton.Status.idle
 ///
 /// StatusButton("Pay now", status: status) {
 ///     status = .loading
@@ -3064,9 +3105,17 @@ public enum MotionButtonStatus: Equatable, Sendable {
 /// }
 /// ```
 public struct StatusButton: View {
-    private let title: LocalizedStringKey
-    private let status: MotionButtonStatus
-    private let tint: Color
+    /// The phases a `StatusButton` moves through.
+    public enum Status: Equatable, Sendable {
+        case idle
+        case loading
+        case success
+        case failure
+    }
+
+    private let title: Text
+    private let status: Status
+    private let color: Color
     private let action: () -> Void
 
     @State private var spin = false
@@ -3075,22 +3124,46 @@ public struct StatusButton: View {
 
     private let height: CGFloat = 50
 
+    /// - Parameters:
+    ///   - title: The button's label, looked up in your app's strings.
+    ///   - status: The current phase; change it to morph the button.
+    ///   - color: Background while idle or loading.
+    ///   - action: Runs on tap (only while idle).
     public init(
         _ title: LocalizedStringKey,
-        status: MotionButtonStatus,
-        tint: Color = .accentColor,
+        status: Status,
+        color: Color = .accentColor,
         action: @escaping () -> Void
     ) {
-        self.title = title
+        self.title = Text(title)
         self.status = status
-        self.tint = tint
+        self.color = color
         self.action = action
+    }
+
+    /// A button whose label is a string you already have, shown as is.
+    @_disfavoredOverload
+    public init<S: StringProtocol>(
+        _ title: S,
+        status: Status,
+        color: Color = .accentColor,
+        action: @escaping () -> Void
+    ) {
+        self.title = Text(title)
+        self.status = status
+        self.color = color
+        self.action = action
+    }
+
+    @available(*, deprecated, renamed: "init(_:status:color:action:)")
+    public init(_ title: LocalizedStringKey, status: Status, tint: Color, action: @escaping () -> Void) {
+        self.init(title, status: status, color: tint, action: action)
     }
 
     public var body: some View {
         Button(action: action) {
             ZStack {
-                Text(title)
+                title
                     .font(.headline)
                     .lineLimit(1)
                     .fixedSize()
@@ -3145,13 +3218,13 @@ public struct StatusButton: View {
             default: nil
             }
         }
-        .accessibilityLabel(Text(title))
+        .accessibilityLabel(title)
         .accessibilityValue(accessibilityStatus)
     }
 
     private var background: Color {
         switch status {
-        case .idle, .loading: tint
+        case .idle, .loading: color
         case .success: .green
         case .failure: .red
         }
@@ -3175,11 +3248,15 @@ private struct StatusPressStyle: ButtonStyle {
     }
 }
 
+/// The old name of `StatusButton.Status`.
+@available(*, deprecated, renamed: "StatusButton.Status")
+public typealias MotionButtonStatus = StatusButton.Status
+
 /// Horizontal shake, one full shake per unit of `shakes`.
 private struct StatusShake: GeometryEffect {
     var shakes: CGFloat
 
-    var animatableData: CGFloat {
+    nonisolated var animatableData: CGFloat {
         get { shakes }
         set { shakes = newValue }
     }
@@ -3191,7 +3268,7 @@ private struct StatusShake: GeometryEffect {
 
 #Preview {
     struct Demo: View {
-        @State private var status = MotionButtonStatus.idle
+        @State private var status = StatusButton.Status.idle
 
         var body: some View {
             StatusButton("Pay now", status: status) {
@@ -3213,7 +3290,7 @@ import SwiftUI
 
 /// A checkmark drawn left to right, sized to its frame.
 struct CheckmarkShape: Shape {
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.midY))
         path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.38, y: rect.maxY))
@@ -4078,12 +4155,12 @@ Toggle("Wi-Fi", isOn: $wifi)
     .toggleStyle(.liquid)
 
 Toggle("Dark mode", isOn: $dark)
-    .toggleStyle(.liquid(tint: .purple))
+    .toggleStyle(.liquid(color: .purple))
 ```
 
 ### How it works
 
-Create a SwiftUI LiquidToggleStyle (iOS 17+) with a tint (green) and static accessors .liquid and .liquid(tint:). makeBody puts the label, a Spacer and a 52 × 32 pt switch in an HStack. The switch is a plain Button that toggles configuration.isOn inside withAnimation(.spring(response: 0.35, dampingFraction: 0.7)); it shows a ZStack aligned .trailing when on and .leading when off, with a capsule track (tint when on, gray 35 % when off) and a white capsule knob (26 pt tall, 3 pt padding, small shadow). The knob's width runs a keyframeAnimator triggered by isOn: CubicKeyframe to 1.5 × 26 pt over 0.12 s, then SpringKeyframe(.bouncy) back to 26 over 0.35 s, so it stretches as it slides and snaps back round. Give it an "On"/"Off" accessibility value. With Reduce Motion on, don't stretch and use a short ease.
+Create a SwiftUI LiquidToggleStyle (iOS 17+) with a color (green) and static accessors .liquid and .liquid(color:). makeBody puts the label, a Spacer and a 52 × 32 pt switch in an HStack. The switch is a plain Button that toggles configuration.isOn inside withAnimation(.spring(response: 0.35, dampingFraction: 0.7)); it shows a ZStack aligned .trailing when on and .leading when off, with a capsule track (tint when on, gray 35 % when off) and a white capsule knob (26 pt tall, 3 pt padding, small shadow). The knob's width runs a keyframeAnimator triggered by isOn: CubicKeyframe to 1.5 × 26 pt over 0.12 s, then SpringKeyframe(.bouncy) back to 26 over 0.35 s, so it stretches as it slides and snaps back round. Give it an "On"/"Off" accessibility value. With Reduce Motion on, don't stretch and use a short ease.
 
 ### Source
 
@@ -4098,20 +4175,32 @@ import SwiftUI
 ///     .toggleStyle(.liquid)
 ///
 /// Toggle("Dark mode", isOn: $dark)
-///     .toggleStyle(.liquid(tint: .purple))
+///     .toggleStyle(.liquid(color: .purple))
 /// ```
 public struct LiquidToggleStyle: ToggleStyle {
-    public var tint: Color
+    /// Colour of the track while on.
+    public var color: Color
 
-    public init(tint: Color = .green) {
-        self.tint = tint
+    public init(color: Color = .green) {
+        self.color = color
+    }
+
+    @available(*, deprecated, renamed: "init(color:)")
+    public init(tint: Color) {
+        self.color = tint
+    }
+
+    @available(*, deprecated, renamed: "color")
+    public var tint: Color {
+        get { color }
+        set { color = newValue }
     }
 
     public func makeBody(configuration: Configuration) -> some View {
         HStack {
             configuration.label
             Spacer(minLength: 12)
-            LiquidSwitch(isOn: configuration.$isOn, tint: tint)
+            LiquidSwitch(isOn: configuration.$isOn, tint: color)
         }
     }
 }
@@ -4162,7 +4251,10 @@ public extension ToggleStyle where Self == LiquidToggleStyle {
     static var liquid: LiquidToggleStyle { LiquidToggleStyle() }
 
     /// A switch with a stretchy, liquid knob in the given colour.
-    static func liquid(tint: Color) -> LiquidToggleStyle { LiquidToggleStyle(tint: tint) }
+    static func liquid(color: Color) -> LiquidToggleStyle { LiquidToggleStyle(color: color) }
+
+    @available(*, deprecated, renamed: "liquid(color:)")
+    static func liquid(tint: Color) -> LiquidToggleStyle { LiquidToggleStyle(color: tint) }
 }
 
 #Preview {
@@ -4366,7 +4458,7 @@ import SwiftUI
 /// action. Let go early and it springs back. The label fades as you slide and
 /// the track fills behind the knob.
 public struct SlideToConfirm: View {
-    private let title: String
+    private let title: Text
     private let color: Color
     private let resetAfter: Double?
     private let action: () -> Void
@@ -4384,8 +4476,17 @@ public struct SlideToConfirm: View {
     ///   - resetAfter: Seconds after confirming before the control resets;
     ///     `nil` keeps it confirmed.
     ///   - action: Runs once the knob reaches the end.
-    public init(_ title: String, color: Color = .accentColor, resetAfter: Double? = 1.5, action: @escaping () -> Void) {
-        self.title = title
+    public init(_ title: LocalizedStringKey, color: Color = .accentColor, resetAfter: Double? = 1.5, action: @escaping () -> Void) {
+        self.title = Text(title)
+        self.color = color
+        self.resetAfter = resetAfter
+        self.action = action
+    }
+
+    /// A slider whose label is a string you already have, shown as is.
+    @_disfavoredOverload
+    public init<S: StringProtocol>(_ title: S, color: Color = .accentColor, resetAfter: Double? = 1.5, action: @escaping () -> Void) {
+        self.title = Text(title)
         self.color = color
         self.resetAfter = resetAfter
         self.action = action
@@ -4400,7 +4501,7 @@ public struct SlideToConfirm: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.secondary.opacity(0.15))
 
-                Text(title)
+                title
                     .font(.headline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
@@ -4562,7 +4663,7 @@ import SwiftUI
 /// A button that morphs through a download: a labelled capsule shrinks into
 /// a circle whose ring fills with progress, then pops into a checkmark.
 public struct DownloadButton: View {
-    private let title: String
+    private let title: Text
     private let progress: Double?
     private let color: Color
     private let action: () -> Void
@@ -4576,8 +4677,17 @@ public struct DownloadButton: View {
     ///   - progress: `nil` = not started, 0..<1 = downloading, 1 = finished.
     ///   - color: Tint of the button and the ring.
     ///   - action: Called when the idle button is tapped.
-    public init(_ title: String = "Download", progress: Double?, color: Color = .accentColor, action: @escaping () -> Void) {
-        self.title = title
+    public init(_ title: LocalizedStringKey = "Download", progress: Double?, color: Color = .accentColor, action: @escaping () -> Void) {
+        self.title = Text(title)
+        self.progress = progress
+        self.color = color
+        self.action = action
+    }
+
+    /// A download button whose label is a string you already have, shown as is.
+    @_disfavoredOverload
+    public init<S: StringProtocol>(_ title: S, progress: Double?, color: Color = .accentColor, action: @escaping () -> Void) {
+        self.title = Text(title)
         self.progress = progress
         self.color = color
         self.action = action
@@ -4610,7 +4720,7 @@ public struct DownloadButton: View {
                 }
 
                 if phase == .idle {
-                    Label(title, systemImage: "arrow.down")
+                    Label { title } icon: { Image(systemName: "arrow.down") }
                         .font(.headline)
                         .foregroundStyle(.white)
                         .fixedSize()
@@ -4630,7 +4740,7 @@ public struct DownloadButton: View {
         .buttonStyle(.plain)
         .animation(reduceMotion ? .easeInOut(duration: 0.25) : .spring(duration: 0.5, bounce: 0.35), value: phase)
         .haptic(.success, trigger: phase) { _, new in new == .done }
-        .accessibilityLabel(phase == .idle ? title : phase == .done ? "Downloaded" : "Downloading")
+        .accessibilityLabel(phase == .idle ? title : Text(phase == .done ? "Downloaded" : "Downloading"))
         .accessibilityValue(phase == .loading ? "\(Int((progress ?? 0) * 100)) percent" : "")
     }
 }
@@ -5672,7 +5782,7 @@ private struct FlipFace: ViewModifier, Animatable {
     var axis: Axis
     var isBack: Bool
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { angle }
         set { angle = newValue }
     }
@@ -5745,11 +5855,15 @@ Create a generic SwiftUI SwipeCardStack (iOS 17+) over a collection of Identifia
 ```swift
 import SwiftUI
 
-/// Which way a card left the stack.
-public enum SwipeDirection: Sendable {
+/// Which way a card left a `SwipeCardStack`.
+public enum SwipeCardDirection: Sendable {
     case left
     case right
 }
+
+/// The old name of `SwipeCardDirection`.
+@available(*, deprecated, renamed: "SwipeCardDirection")
+public typealias SwipeDirection = SwipeCardDirection
 
 /// A Tinder-style deck. The top card follows the finger and tilts; past a
 /// threshold it flies off and the cards behind move up. Drag less and it
@@ -5758,12 +5872,12 @@ public struct SwipeCardStack<Data: RandomAccessCollection, Card: View>: View whe
     private let items: Data
     private let visibleCount: Int
     private let loops: Bool
-    private let onSwipe: (Data.Element, SwipeDirection) -> Void
+    private let onSwipe: (Data.Element, SwipeCardDirection) -> Void
     private let card: (Data.Element) -> Card
 
     @State private var position = 0
     @State private var drag: CGSize = .zero
-    @State private var flyingOff: SwipeDirection?
+    @State private var flyingOff: SwipeCardDirection?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let threshold: CGFloat = 110
@@ -5778,7 +5892,7 @@ public struct SwipeCardStack<Data: RandomAccessCollection, Card: View>: View whe
         _ items: Data,
         visibleCount: Int = 3,
         loops: Bool = true,
-        onSwipe: @escaping (Data.Element, SwipeDirection) -> Void = { _, _ in },
+        onSwipe: @escaping (Data.Element, SwipeCardDirection) -> Void = { _, _ in },
         @ViewBuilder card: @escaping (Data.Element) -> Card
     ) {
         self.items = items
@@ -5829,7 +5943,7 @@ public struct SwipeCardStack<Data: RandomAccessCollection, Card: View>: View whe
             }
     }
 
-    private func swipe(_ item: Data.Element, _ direction: SwipeDirection) {
+    private func swipe(_ item: Data.Element, _ direction: SwipeCardDirection) {
         flyingOff = direction
         let distance: CGFloat = direction == .right ? 600 : -600
         withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .easeIn(duration: 0.25)) {
@@ -6847,7 +6961,7 @@ struct ScratchModifier<Cover: ShapeStyle>: ViewModifier {
 struct ScratchPath: Shape {
     var strokes: [[CGPoint]]
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         var path = Path()
         for stroke in strokes {
             guard let first = stroke.first else { continue }
@@ -7931,7 +8045,7 @@ MarqueeWall(count: shots.count, columns: 4) { index in
 
 ### How it works
 
-Create a SwiftUI MarqueeWall(count:columns:itemSize:spacing:speed:angle:content:) view (iOS 17+), the scrolling showcase wall from landing pages. Each of the columns (default 4) shows perColumn = max(3, ceil(count / columns)) items twice in a VStack, cards of itemSize (110 × 140) with 14 pt continuous corners and 12 pt spacing, so the loop height is perColumn × (height + spacing). In TimelineView(.animation), distance = (time × speed × (1 + 0.15 × (column % 3))) mod loopHeight (speed 24 pt/s); even columns offset by −distance (moving up), odd ones by distance − loopHeight (moving down). Lay the columns in an HStack, rotate the whole thing by −14° and let the caller clip it. Disable hit testing. With Reduce Motion on, pause the timeline.
+Create a SwiftUI MarqueeWall(count:columns:itemSize:spacing:speed:angle:content:) view (iOS 17+), the scrolling showcase wall from landing pages. Each of the columns (default 4) shows perColumn = max(3, ceil(count / columns)) items twice in a VStack, cards of itemSize (110 × 140) with 14 pt continuous corners and 12 pt spacing, so the loop height is perColumn × (height + spacing). In TimelineView(.animation), distance = (time × speed × (1 + 0.15 × (column % 3))) mod loopHeight (24 pt/s × speed, a multiplier defaulting to 1); even columns offset by −distance (moving up), odd ones by distance − loopHeight (moving down). Lay the columns in an HStack, rotate the whole thing by −14° and let the caller clip it. Disable hit testing. With Reduce Motion on, pause the timeline.
 
 ### Source
 
@@ -7964,7 +8078,7 @@ public struct MarqueeWall<Content: View>: View {
     ///   - columns: Number of columns.
     ///   - itemSize: Size of each card.
     ///   - spacing: Gap between cards.
-    ///   - speed: Scroll speed, in points per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - angle: Rotation of the whole wall.
     ///   - content: Builds the card for an index in `0..<count`.
     public init(
@@ -7972,7 +8086,7 @@ public struct MarqueeWall<Content: View>: View {
         columns: Int = 4,
         itemSize: CGSize = CGSize(width: 110, height: 140),
         spacing: CGFloat = 12,
-        speed: Double = 24,
+        speed: Double = 1,
         angle: Angle = .degrees(-14),
         @ViewBuilder content: @escaping (Int) -> Content
     ) {
@@ -7980,7 +8094,7 @@ public struct MarqueeWall<Content: View>: View {
         self.columns = max(1, columns)
         self.itemSize = itemSize
         self.spacing = spacing
-        self.speed = speed
+        self.speed = speed * 24
         self.angle = angle
         self.content = content
     }
@@ -8086,7 +8200,7 @@ struct PhotoDevelopModifier<Trigger: Equatable>: ViewModifier {
 struct DevelopEffect: ViewModifier, Animatable {
     var progress: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -8263,12 +8377,12 @@ Particles fly outward from the centre when a value changes.
 ```swift
 Image(systemName: isLiked ? "heart.fill" : "heart")
     .contentTransition(.symbolEffect(.replace))
-    .burst(trigger: isLiked, color: .pink, isEnabled: isLiked)
+    .burst(trigger: isLiked, color: .pink, isActive: isLiked)
 ```
 
 ### How it works
 
-Create a SwiftUI .burst(trigger:) view modifier (iOS 17+) for "like" feedback. Every time the Equatable trigger changes (and isEnabled is true), spawn a burst in an overlay: 12 small circles (alternating 7 pt and 4 pt) placed evenly around a circle, which move outward from the centre to a ~36 pt radius while shrinking to 30% and fading out with easeOut over 0.6 s. Remove each burst after it finishes, allow overlapping bursts, and never intercept touches. Color, count and radius are parameters.
+Create a SwiftUI .burst(trigger:) view modifier (iOS 17+) for "like" feedback. Every time the Equatable trigger changes (and isActive is true), spawn a burst in an overlay: 12 small circles (alternating 7 pt and 4 pt) placed evenly around a circle, which move outward from the centre to a ~36 pt radius while shrinking to 30% and fading out with easeOut over 0.6 s. Remove each burst after it finishes, allow overlapping bursts, and never intercept touches. Color, count and radius are parameters.
 
 ### Source
 
@@ -8352,16 +8466,27 @@ public extension View {
     ///
     /// ```swift
     /// Image(systemName: isLiked ? "heart.fill" : "heart")
-    ///     .burst(trigger: isLiked, color: .pink, isEnabled: isLiked)
+    ///     .burst(trigger: isLiked, color: .pink, isActive: isLiked)
     /// ```
     func burst<Trigger: Equatable>(
         trigger: Trigger,
         color: Color = .pink,
         count: Int = 12,
         radius: CGFloat = 36,
-        isEnabled: Bool = true
+        isActive: Bool = true
     ) -> some View {
-        modifier(BurstModifier(trigger: trigger, color: color, count: count, radius: radius, isEnabled: isEnabled))
+        modifier(BurstModifier(trigger: trigger, color: color, count: count, radius: radius, isEnabled: isActive))
+    }
+
+    @available(*, deprecated, renamed: "burst(trigger:color:count:radius:isActive:)")
+    func burst<Trigger: Equatable>(
+        trigger: Trigger,
+        color: Color = .pink,
+        count: Int = 12,
+        radius: CGFloat = 36,
+        isEnabled: Bool
+    ) -> some View {
+        burst(trigger: trigger, color: color, count: count, radius: radius, isActive: isEnabled)
     }
 }
 
@@ -8378,7 +8503,7 @@ public extension View {
                     .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(.plain)
-            .burst(trigger: liked, isEnabled: liked)
+            .burst(trigger: liked, isActive: liked)
         }
     }
     return Demo()
@@ -8495,7 +8620,7 @@ import SwiftUI
 
 /// A checkmark drawn left to right, sized to its frame.
 struct CheckmarkShape: Shape {
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         var path = Path()
         path.move(to: CGPoint(x: rect.minX, y: rect.midY))
         path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.38, y: rect.maxY))
@@ -8736,7 +8861,7 @@ public struct MotionLoader: View {
     /// - Parameters:
     ///   - style: Which loader to draw.
     ///   - color: Fill or stroke colour.
-    ///   - speed: Multiplier on the default tempo.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(_ style: Style = .spinner, color: Color = .accentColor, speed: Double = 1) {
         self.style = style
         self.color = color
@@ -8891,7 +9016,7 @@ public struct MorphingBlob<Fill: ShapeStyle>: View {
     ///   - fill: Any shape style: a colour, gradient or material.
     ///   - points: Number of lobes around the outline (4…10 looks organic).
     ///   - wobble: How far the outline moves in and out, as a fraction of the radius.
-    ///   - speed: Multiplier on the morphing tempo.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(fill: Fill, points: Int = 6, wobble: CGFloat = 0.18, speed: Double = 1) {
         self.fill = fill
         self.points = points
@@ -8932,7 +9057,7 @@ struct BlobShape: Shape {
     var points: Int
     var wobble: CGFloat
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let count = max(3, points)
         let centre = CGPoint(x: rect.midX, y: rect.midY)
         let baseRadius = min(rect.width, rect.height) / 2 * (1 - wobble)
@@ -9381,7 +9506,7 @@ SlidingTabs(Category.allCases, selection: $category, indicator: .underline) { $0
 
 ### How it works
 
-Create a generic SwiftUI SlidingTabs control (iOS 17+) over Hashable options with a selection binding, an indicator style (.pill or .underline), a tint and a title closure (plus a convenience init for [String]). Show the options as plain Buttons in an HStack inside a 4 pt padded capsule tinted secondary at 12 % (pill style only). Behind the selected title only, draw the indicator — a capsule filled with the tint (title turns white), or a 3 pt capsule at the bottom inset 10 pt (title turns tint) — with .matchedGeometryEffect(id: "indicator", in: namespace), so it glides between options. Change the selection inside withAnimation(.spring(response: 0.35, dampingFraction: 0.8)), and add the .isSelected trait. With Reduce Motion on, use a 0.15 s ease.
+Create a generic SwiftUI SlidingTabs control (iOS 17+) over Hashable options with a selection binding, an indicator style (.pill or .underline), a color and a title closure (plus a convenience init for [String]). Show the options as plain Buttons in an HStack inside a 4 pt padded capsule tinted secondary at 12 % (pill style only). Behind the selected title only, draw the indicator — a capsule filled with the color (title turns white), or a 3 pt capsule at the bottom inset 10 pt (title turns tint) — with .matchedGeometryEffect(id: "indicator", in: namespace), so it glides between options. Change the selection inside withAnimation(.spring(response: 0.35, dampingFraction: 0.8)), and add the .isSelected trait. With Reduce Motion on, use a 0.15 s ease.
 
 ### Source
 
@@ -9403,7 +9528,7 @@ public struct SlidingTabs<Value: Hashable>: View {
     private let options: [Value]
     private let title: (Value) -> String
     private let indicator: Indicator
-    private let tint: Color
+    private let color: Color
 
     @Namespace private var namespace
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -9412,20 +9537,31 @@ public struct SlidingTabs<Value: Hashable>: View {
     ///   - options: The options, in order.
     ///   - selection: The selected option.
     ///   - indicator: `.pill` or `.underline`.
-    ///   - tint: Colour of the indicator.
+    ///   - color: Colour of the indicator.
     ///   - title: The title of an option.
     public init(
         _ options: [Value],
         selection: Binding<Value>,
         indicator: Indicator = .pill,
-        tint: Color = .accentColor,
+        color: Color = .accentColor,
         title: @escaping (Value) -> String
     ) {
         self.options = options
         _selection = selection
         self.indicator = indicator
-        self.tint = tint
+        self.color = color
         self.title = title
+    }
+
+    @available(*, deprecated, renamed: "init(_:selection:indicator:color:title:)")
+    public init(
+        _ options: [Value],
+        selection: Binding<Value>,
+        indicator: Indicator = .pill,
+        tint: Color,
+        title: @escaping (Value) -> String
+    ) {
+        self.init(options, selection: selection, indicator: indicator, color: tint, title: title)
     }
 
     public var body: some View {
@@ -9441,7 +9577,7 @@ public struct SlidingTabs<Value: Hashable>: View {
                         .font(.subheadline.weight(.semibold))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .foregroundStyle(indicator == .pill && selected ? Color.white : selected ? tint : Color.secondary)
+                        .foregroundStyle(indicator == .pill && selected ? Color.white : selected ? color : Color.secondary)
                         .background { marker(selected) }
                         .contentShape(Rectangle())
                 }
@@ -9463,13 +9599,13 @@ public struct SlidingTabs<Value: Hashable>: View {
             switch indicator {
             case .pill:
                 Capsule()
-                    .fill(tint)
+                    .fill(color)
                     .matchedGeometryEffect(id: "indicator", in: namespace)
             case .underline:
                 VStack {
                     Spacer()
                     Capsule()
-                        .fill(tint)
+                        .fill(color)
                         .frame(height: 3)
                         .padding(.horizontal, 10)
                 }
@@ -9485,8 +9621,13 @@ public extension SlidingTabs where Value == String {
     /// ```swift
     /// SlidingTabs(["Day", "Week", "Month"], selection: $range)
     /// ```
-    init(_ options: [String], selection: Binding<String>, indicator: Indicator = .pill, tint: Color = .accentColor) {
-        self.init(options, selection: selection, indicator: indicator, tint: tint) { $0 }
+    init(_ options: [String], selection: Binding<String>, indicator: Indicator = .pill, color: Color = .accentColor) {
+        self.init(options, selection: selection, indicator: indicator, color: color) { $0 }
+    }
+
+    @available(*, deprecated, renamed: "init(_:selection:indicator:color:)")
+    init(_ options: [String], selection: Binding<String>, indicator: Indicator = .pill, tint: Color) {
+        self.init(options, selection: selection, indicator: indicator, color: tint) { $0 }
     }
 }
 
@@ -9621,7 +9762,7 @@ ZStack {
 
 ### How it works
 
-Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base color, draw one large circle per palette color (default purple, blue, teal, pink; 80% opacity, diameter 70% of the larger side). Each circle drifts on its own Lissajous path, x = cos(t·0.6 + phase)·30% width and y = sin(t·0.8 + phase·1.3)·30% height, where phase differs per index. Drive time from TimelineView(.animation) scaled by a speed parameter, blur the whole group with a ~60 pt radius, clip to bounds and hide it from accessibility.
+Create a SwiftUI AuroraBackground view (iOS 17+). On a dark base color, draw one large circle per palette color (default purple, blue, teal, pink; 80% opacity, diameter 70% of the larger side). Each circle drifts on its own Lissajous path, x = cos(t·0.6 + phase)·30% width and y = sin(t·0.8 + phase·1.3)·30% height, where phase differs per index. Drive time from TimelineView(.animation) scaled by 0.4 × a speed multiplier (default 1), blur the whole group with a ~60 pt radius, clip to bounds and hide it from accessibility.
 
 ### Source
 
@@ -9648,12 +9789,12 @@ public struct AuroraBackground: View {
 
     public init(
         colors: [Color] = [.purple, .blue, .teal, .pink],
-        speed: Double = 0.4,
+        speed: Double = 1,
         blurRadius: CGFloat = 60,
         baseColor: Color = .black
     ) {
         self.colors = colors
-        self.speed = speed
+        self.speed = speed * 0.4
         self.blurRadius = blurRadius
         self.baseColor = baseColor
     }
@@ -9747,7 +9888,7 @@ public struct AnimatedMeshGradient: View {
     /// - Parameters:
     ///   - colors: Nine colours, row by row from the top left. Fewer are
     ///     repeated; more are ignored.
-    ///   - speed: 1 = default pace; 0.5 is half as fast.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(
         colors: [Color] = [
             .indigo, .purple, .pink,
@@ -9817,7 +9958,7 @@ ZStack {
 
 ### How it works
 
-Create a SwiftUI RetroGrid view (iOS 17+) with color (pink), spacing (40 pt), speed (0.8 rows per second) and horizon (0.35 of the height). In a Canvas inside TimelineView(.animation): with top = height × horizon and depth = height − top, draw horizontal lines at y = top + depth / z for z = n + 1 − fract(time × speed), n = 0…39, so the bottom edge is z = 1, rows bunch up toward the horizon and every row moves toward the viewer; draw lines from the vanishing point (centre, top) to (centre + k × spacing, bottom) for enough k to cover the width. Stroke the path twice: 3 pt at 35 % opacity for a glow, then 1 pt solid. Mask the view with a vertical gradient that is clear down to the horizon and opaque 45 % lower, so lines fade into the distance. Hide from accessibility; Reduce Motion pauses it.
+Create a SwiftUI RetroGrid view (iOS 17+) with color (pink), spacing (40 pt), speed (a multiplier, default 1, on 0.8 rows per second) and horizon (0.35 of the height). In a Canvas inside TimelineView(.animation): with top = height × horizon and depth = height − top, draw horizontal lines at y = top + depth / z for z = n + 1 − fract(time × 0.8 × speed), n = 0…39, so the bottom edge is z = 1, rows bunch up toward the horizon and every row moves toward the viewer; draw lines from the vanishing point (centre, top) to (centre + k × spacing, bottom) for enough k to cover the width. Stroke the path twice: 3 pt at 35 % opacity for a glow, then 1 pt solid. Mask the view with a vertical gradient that is clear down to the horizon and opaque 45 % lower, so lines fade into the distance. Hide from accessibility; Reduce Motion pauses it.
 
 ### Source
 
@@ -9837,12 +9978,12 @@ public struct RetroGrid: View {
     /// - Parameters:
     ///   - color: Line colour.
     ///   - spacing: Distance between lines at the bottom edge, in points.
-    ///   - speed: Grid rows passed per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - horizon: Height of the horizon, as a fraction of the view (0 = top).
-    public init(color: Color = .pink, spacing: CGFloat = 40, speed: Double = 0.8, horizon: CGFloat = 0.35) {
+    public init(color: Color = .pink, spacing: CGFloat = 40, speed: Double = 1, horizon: CGFloat = 0.35) {
         self.color = color
         self.spacing = spacing
-        self.speed = speed
+        self.speed = speed * 0.8
         self.horizon = horizon
     }
 
@@ -10063,7 +10204,7 @@ public struct WaveBackground: View {
     /// - Parameters:
     ///   - colors: One colour per layer, back to front.
     ///   - amplitude: Wave height, in points.
-    ///   - speed: 1 = default pace.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(
         colors: [Color] = [.cyan.opacity(0.35), .blue.opacity(0.45), .indigo.opacity(0.7)],
         amplitude: CGFloat = 12,
@@ -10414,7 +10555,7 @@ public struct LavaLamp: View {
     ///   - colors: Gradient of the wax, top to bottom.
     ///   - background: Colour behind the wax.
     ///   - blobs: Number of blobs.
-    ///   - speed: Multiplier on the drifting speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(colors: [Color] = [.yellow, .orange, .pink], background: Color = Color(red: 0.16, green: 0.05, blue: 0.25), blobs: Int = 7, speed: Double = 1) {
         self.colors = colors
         self.background = background
@@ -10506,7 +10647,7 @@ public struct MatrixRain: View {
     /// - Parameters:
     ///   - color: Colour of the trails. Heads are drawn white.
     ///   - fontSize: Glyph size; also sets the column width.
-    ///   - speed: Multiplier on the falling speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(color: Color = .green, fontSize: CGFloat = 14, speed: Double = 1) {
         self.color = color
         self.fontSize = fontSize
@@ -10846,7 +10987,7 @@ public struct FlowField: View {
     /// - Parameters:
     ///   - lines: Number of curves.
     ///   - colors: Curves are tinted along this list, left to right.
-    ///   - speed: Multiplier on how fast the field shifts.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(lines: Int = 140, colors: [Color] = [.cyan, .blue, .purple, .pink], speed: Double = 1) {
         self.lines = max(1, lines)
         self.colors = colors.isEmpty ? [.primary] : colors
@@ -10926,7 +11067,7 @@ NetworkBackground(color: .cyan)
 
 ### How it works
 
-Create a SwiftUI NetworkBackground(count:linkDistance:color:interactive:) view (iOS 17+): a plexus of drifting points. In TimelineView(.animation) + Canvas, point i starts at a hashed position, moves at 6–20 pt/s in a hashed direction, and wraps around the edges with 20 pt of slack. Join every pair closer than linkDistance (70 pt) with a line of opacity 0.55 × (1 − d / linkDistance) and width 0.6 + 0.6 × that strength, then draw each point as a 3.6 pt dot. Track the pointer with onContinuousHover and a DragGesture(minimumDistance: 0); points within 110 pt are pulled towards it by (1 − d / 110) × 0.45 of the gap, so the web gathers under the finger. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+Create a SwiftUI NetworkBackground(count:linkDistance:color:isInteractive:) view (iOS 17+): a plexus of drifting points. In TimelineView(.animation) + Canvas, point i starts at a hashed position, moves at 6–20 pt/s in a hashed direction, and wraps around the edges with 20 pt of slack. Join every pair closer than linkDistance (70 pt) with a line of opacity 0.55 × (1 − d / linkDistance) and width 0.6 + 0.6 × that strength, then draw each point as a 3.6 pt dot. Track the pointer with onContinuousHover and a DragGesture(minimumDistance: 0); points within 110 pt are pulled towards it by (1 − d / 110) × 0.45 of the gap, so the web gathers under the finger. With Reduce Motion on, pause the timeline. Hide it from accessibility.
 
 ### Source
 
@@ -10946,7 +11087,7 @@ public struct NetworkBackground: View {
     private let count: Int
     private let linkDistance: CGFloat
     private let color: Color
-    private let interactive: Bool
+    private let isInteractive: Bool
 
     @State private var pointer: CGPoint?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -10955,12 +11096,17 @@ public struct NetworkBackground: View {
     ///   - count: Number of points.
     ///   - linkDistance: Points closer than this are joined, in points.
     ///   - color: Colour of points and lines.
-    ///   - interactive: Pull points towards the pointer or a drag.
-    public init(count: Int = 46, linkDistance: CGFloat = 70, color: Color = .white, interactive: Bool = true) {
+    ///   - isInteractive: Pull points towards the pointer or a drag.
+    public init(count: Int = 46, linkDistance: CGFloat = 70, color: Color = .white, isInteractive: Bool = true) {
         self.count = max(2, count)
         self.linkDistance = linkDistance
         self.color = color
-        self.interactive = interactive
+        self.isInteractive = isInteractive
+    }
+
+    @available(*, deprecated, renamed: "init(count:linkDistance:color:isInteractive:)")
+    public init(count: Int = 46, linkDistance: CGFloat = 70, color: Color = .white, interactive: Bool) {
+        self.init(count: count, linkDistance: linkDistance, color: color, isInteractive: interactive)
     }
 
     public var body: some View {
@@ -10986,10 +11132,10 @@ public struct NetworkBackground: View {
         }
         .contentShape(Rectangle())
         .onContinuousHover { phase in
-            guard interactive else { return }
+            guard isInteractive else { return }
             if case let .active(location) = phase { pointer = location } else { pointer = nil }
         }
-        .gesture(interactive ? DragGesture(minimumDistance: 0)
+        .gesture(isInteractive ? DragGesture(minimumDistance: 0)
             .onChanged { pointer = $0.location }
             .onEnded { _ in pointer = nil } : nil)
         .accessibilityHidden(true)
@@ -11058,7 +11204,7 @@ TopographicLines(color: .green)
 
 ### How it works
 
-Create a SwiftUI TopographicLines(levels:scale:color:speed:) view (iOS 17+). In TimelineView(.animation(minimumInterval: 1/30)) + Canvas, sample a height field on an 8 pt grid: h = 0.65 × noise(x + t, y − 0.6t) + 0.35 × noise(2.1x − 0.8t, 2.1y + 7), with x, y in units of scale (90 pt), t = time × speed (0.12), and noise a smoothstep-interpolated value noise from an integer hash. For each of levels (14) thresholds spread over 0.18…0.82, trace the contour with marching squares (16 cases, edge crossings linearly interpolated, saddles drawn as two segments) into one Path and stroke it: every fifth line at 1.4 pt and 85 % opacity, the others 0.7 pt at 45 %. With Reduce Motion on, pause the timeline.
+Create a SwiftUI TopographicLines(levels:scale:color:speed:) view (iOS 17+). In TimelineView(.animation(minimumInterval: 1/30)) + Canvas, sample a height field on an 8 pt grid: h = 0.65 × noise(x + t, y − 0.6t) + 0.35 × noise(2.1x − 0.8t, 2.1y + 7), with x, y in units of scale (90 pt), t = time × 0.12 × speed (a multiplier defaulting to 1), and noise a smoothstep-interpolated value noise from an integer hash. For each of levels (14) thresholds spread over 0.18…0.82, trace the contour with marching squares (16 cases, edge crossings linearly interpolated, saddles drawn as two segments) into one Path and stroke it: every fifth line at 1.4 pt and 85 % opacity, the others 0.7 pt at 45 %. With Reduce Motion on, pause the timeline.
 
 ### Source
 
@@ -11085,12 +11231,12 @@ public struct TopographicLines: View {
     ///   - levels: Number of contour lines between the lowest and highest ground.
     ///   - scale: Size of the hills, in points.
     ///   - color: Colour of the lines.
-    ///   - speed: How fast the landscape shifts.
-    public init(levels: Int = 14, scale: Double = 90, color: Color = .primary, speed: Double = 0.12) {
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
+    public init(levels: Int = 14, scale: Double = 90, color: Color = .primary, speed: Double = 1) {
         self.levels = max(1, levels)
         self.scale = max(10, scale)
         self.color = color
-        self.speed = speed
+        self.speed = speed * 0.12
     }
 
     public var body: some View {
@@ -11249,7 +11395,7 @@ public struct DayNightSky: View {
 struct SkyScene: View, Animatable {
     var time: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { time }
         set { time = newValue }
     }
@@ -11984,7 +12130,7 @@ struct ChartLine: Shape {
         }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let points = Self.points(values, in: rect)
         var path = Path()
         guard let first = points.first, let last = points.last else { return path }
@@ -12119,12 +12265,12 @@ struct GaugeArc: Shape {
     var sweep: Double
     var fraction: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { fraction }
         set { fraction = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let radius = min(rect.width, rect.height) * 0.42
         let start = 90 + (360 - sweep) / 2
         var path = Path()
@@ -12358,7 +12504,7 @@ struct ClockFace: View, Animatable {
     var color: Color
     var accent: Color
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { seconds }
         set { seconds = newValue }
     }
@@ -12446,7 +12592,7 @@ ZStack {
 
 ### How it works
 
-Create a SwiftUI ParticleField view (iOS 17+) with count (50), color, speed (14 pt/s) and linkDistance (70 pt). Generate each particle's traits once from a seeded SplitMix64 generator: start position (0…1 in each axis), direction, speed factor (0.4–1.2), radius (1–2.8 pt) and opacity (0.4–1). In TimelineView(.animation) with a Canvas, compute each position as start + direction × time × speed × factor, wrapped around the canvas edges, so there is no stored state. Stroke a 0.8 pt line between every pair closer than linkDistance with opacity 0.35 × (1 − distance / linkDistance), then fill each particle as a circle. Hide it from accessibility, and with Reduce Motion on, freeze time.
+Create a SwiftUI ParticleField view (iOS 17+) with count (50), color, speed (a multiplier, default 1, on 14 pt/s) and linkDistance (70 pt). Generate each particle's traits once from a seeded SplitMix64 generator: start position (0…1 in each axis), direction, speed factor (0.4–1.2), radius (1–2.8 pt) and opacity (0.4–1). In TimelineView(.animation) with a Canvas, compute each position as start + direction × time × 14 × speed × factor, wrapped around the canvas edges, so there is no stored state. Stroke a 0.8 pt line between every pair closer than linkDistance with opacity 0.35 × (1 − distance / linkDistance), then fill each particle as a circle. Hide it from accessibility, and with Reduce Motion on, freeze time.
 
 ### Source
 
@@ -12467,12 +12613,12 @@ public struct ParticleField: View {
     /// - Parameters:
     ///   - count: Number of particles.
     ///   - color: Particle and line colour.
-    ///   - speed: Drift speed in points per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - linkDistance: Particles closer than this are joined by a line (0 turns lines off).
-    public init(count: Int = 50, color: Color = .white, speed: Double = 14, linkDistance: CGFloat = 70) {
+    public init(count: Int = 50, color: Color = .white, speed: Double = 1, linkDistance: CGFloat = 70) {
         self.count = count
         self.color = color
-        self.speed = speed
+        self.speed = speed * 14
         self.linkDistance = linkDistance
         var generator = SplitMix64(seed: 42)
         seeds = (0..<max(0, count)).map { _ in ParticleSeed(using: &generator) }
@@ -12596,12 +12742,12 @@ Starfield()
     .background(.black)
     .ignoresSafeArea()
 
-Starfield(count: 300, speed: 1.5) // warp jump
+Starfield(count: 300, speed: 4) // warp jump
 ```
 
 ### How it works
 
-Create a SwiftUI Starfield view (iOS 17+) with count (200), speed (0.35 depth units per second) and color. Give each star a seeded random x and y in −1…1 and a depth in 0…1. In a Canvas inside TimelineView(.animation), compute z = 0.05 + 0.95 × fract(depth − time × speed), so stars approach the camera and wrap back to the far plane. Project with perspective: point = centre + (x, y) / z × 0.15 × half the larger side. Draw each star as a round-capped streak from its projection at a slightly larger z (z + min(0.08, speed × 0.05)) to its current projection, with opacity and line width growing as it gets closer. Hide it from accessibility, and with Reduce Motion on, freeze time.
+Create a SwiftUI Starfield view (iOS 17+) with count (200), speed (a multiplier, default 1, on 0.35 depth units per second) and color. Give each star a seeded random x and y in −1…1 and a depth in 0…1. In a Canvas inside TimelineView(.animation), compute z = 0.05 + 0.95 × fract(depth − time × 0.35 × speed), so stars approach the camera and wrap back to the far plane. Project with perspective: point = centre + (x, y) / z × 0.15 × half the larger side. Draw each star as a round-capped streak from its projection at a slightly larger z (z + min(0.08, 0.35 × speed × 0.05)) to its current projection, with opacity and line width growing as it gets closer. Hide it from accessibility, and with Reduce Motion on, freeze time.
 
 ### Source
 
@@ -12619,10 +12765,10 @@ public struct Starfield: View {
 
     /// - Parameters:
     ///   - count: Number of stars.
-    ///   - speed: Depth units per second; 0.3 cruises, 1.5 is warp speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - color: Star colour.
-    public init(count: Int = 200, speed: Double = 0.35, color: Color = .white) {
-        self.speed = speed
+    public init(count: Int = 200, speed: Double = 1, color: Color = .white) {
+        self.speed = speed * 0.35
         self.color = color
         var generator = SplitMix64(seed: 7)
         stars = (0..<max(0, count)).map { _ in
@@ -13168,7 +13314,7 @@ public struct Snowfall: View {
     ///   - style: `.snow` or `.rain`.
     ///   - count: Number of flakes or drops.
     ///   - color: Flake or drop colour.
-    ///   - speed: 1 = default pace.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(_ style: Style = .snow, count: Int = 80, color: Color = .white, speed: Double = 1) {
         self.style = style
         self.color = color
@@ -13464,7 +13610,7 @@ WarpTunnel(colors: [.green, .mint], sides: 6) // hexagons
 
 ### How it works
 
-Create a SwiftUI WarpTunnel view (iOS 17+) with rings (18), colors (cyan, blue, purple, pink), speed (1.2 rings per second) and sides (0 for circles, 3+ for polygons). In a Canvas inside TimelineView(.animation), for ring i let depth = 1 − (i + fract(time × speed)) / rings and skip depths below 0.02. Its radius is half the view's diagonal × 0.06 / depth (perspective), skipped once it's 1.5 × larger than that. Stroke a circle, or a polygon rotated by i × 0.12 + time × 0.1 rad, centred in the view, with opacity closeness² and line width 0.5 + 3 × closeness (closeness = 1 − depth), cycling colours by ring. Hide from accessibility; Reduce Motion pauses it.
+Create a SwiftUI WarpTunnel view (iOS 17+) with rings (18), colors (cyan, blue, purple, pink), speed (a multiplier, default 1, on 1.2 rings per second) and sides (0 for circles, 3+ for polygons). In a Canvas inside TimelineView(.animation), for ring i let depth = 1 − (i + fract(time × 1.2 × speed)) / rings and skip depths below 0.02. Its radius is half the view's diagonal × 0.06 / depth (perspective), skipped once it's 1.5 × larger than that. Stroke a circle, or a polygon rotated by i × 0.12 + time × 0.1 rad, centred in the view, with opacity closeness² and line width 0.5 + 3 × closeness (closeness = 1 − depth), cycling colours by ring. Hide from accessibility; Reduce Motion pauses it.
 
 ### Source
 
@@ -13484,17 +13630,17 @@ public struct WarpTunnel: View {
     /// - Parameters:
     ///   - rings: Number of rings in the tunnel.
     ///   - colors: Ring colours, cycled from the back of the tunnel.
-    ///   - speed: Rings passed per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - sides: 0 for circles, 3 or more for polygons (6 = hexagons).
     public init(
         rings: Int = 18,
         colors: [Color] = [.cyan, .blue, .purple, .pink],
-        speed: Double = 1.2,
+        speed: Double = 1,
         sides: Int = 0
     ) {
         self.rings = max(2, rings)
         self.colors = colors.isEmpty ? [.white] : colors
-        self.speed = speed
+        self.speed = speed * 1.2
         self.sides = sides
     }
 
@@ -13966,7 +14112,7 @@ struct ShatterEffect: ViewModifier, Animatable {
     var distance: CGFloat
     var spin: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -14044,7 +14190,7 @@ enum ShatterGrid {
 struct ShardShape: Shape {
     var points: [CGPoint]
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         var path = Path()
         let mapped = points.map { CGPoint(x: rect.minX + $0.x * rect.width, y: rect.minY + $0.y * rect.height) }
         path.addLines(mapped)
@@ -14254,7 +14400,7 @@ public struct DotGlobe: View {
     ///   - dots: Number of dots on the sphere.
     ///   - color: Dot colour.
     ///   - accent: Colour of the pulsing cities.
-    ///   - speed: Turns per minute ÷ 6 (1 = one turn every 10 s… roughly).
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(dots: Int = 700, color: Color = .cyan, accent: Color = .pink, speed: Double = 1) {
         self.dots = max(10, dots)
         self.color = color
@@ -14352,7 +14498,7 @@ public struct Bubbles: View {
     /// - Parameters:
     ///   - count: Number of bubbles in flight.
     ///   - color: Rim tint.
-    ///   - speed: Multiplier on the rising speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(count: Int = 18, color: Color = .cyan, speed: Double = 1) {
         self.count = max(1, count)
         self.color = color
@@ -14447,7 +14593,7 @@ public struct Fireflies: View {
     /// - Parameters:
     ///   - count: Number of fireflies.
     ///   - color: Glow colour.
-    ///   - speed: Multiplier on the drifting speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(count: Int = 24, color: Color = Color(red: 1, green: 0.9, blue: 0.45), speed: Double = 1) {
         self.count = max(1, count)
         self.color = color
@@ -14517,7 +14663,7 @@ Flock(count: 60, color: .white)
 
 ### How it works
 
-Create a SwiftUI Flock(count:color:speed:) view (iOS 17+) that simulates boids. Keep the boids (position, velocity) in a reference-type model stored in @State and advance it from a Canvas inside TimelineView(.animation), with dt = time since the last frame capped at 1/20 s. For each boid, look at neighbours within 46 pt: steer 5 % towards their average velocity, 1.2 % towards their centre, and away from any closer than 16 pt by 0.14 × the overlap. If there's a target (from onContinuousHover or a DragGesture(minimumDistance: 0)), add 2 % of the gap to it. Push back by 9 within 24 pt of an edge. Clamp speed between 0.6 and 1.3 × cruise (90 pt/s, 1.5× when chasing). Draw each boid as a small arrowhead path rotated to atan2 of its velocity. With Reduce Motion on, freeze them. Hide it from accessibility.
+Create a SwiftUI Flock(count:color:speed:) view (iOS 17+) that simulates boids. Keep the boids (position, velocity) in a reference-type model stored in @State and advance it from a Canvas inside TimelineView(.animation), with dt = time since the last frame capped at 1/20 s. For each boid, look at neighbours within 46 pt: steer 5 % towards their average velocity, 1.2 % towards their centre, and away from any closer than 16 pt by 0.14 × the overlap. If there's a target (from onContinuousHover or a DragGesture(minimumDistance: 0)), add 2 % of the gap to it. Push back by 9 within 24 pt of an edge. Clamp speed between 0.6 and 1.3 × cruise (90 pt/s × speed, a multiplier defaulting to 1; 1.5× when chasing). Draw each boid as a small arrowhead path rotated to atan2 of its velocity. With Reduce Motion on, freeze them. Hide it from accessibility.
 
 ### Source
 
@@ -14544,11 +14690,11 @@ public struct Flock: View {
     /// - Parameters:
     ///   - count: Number of boids.
     ///   - color: Colour of the boids.
-    ///   - speed: Cruising speed, in points per second.
-    public init(count: Int = 50, color: Color = .white, speed: Double = 90) {
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
+    public init(count: Int = 50, color: Color = .white, speed: Double = 1) {
         self.count = max(1, count)
         self.color = color
-        self.speed = speed
+        self.speed = speed * 90
     }
 
     public var body: some View {
@@ -14790,7 +14936,7 @@ Image("city-night")
 
 ### How it works
 
-Create a SwiftUI RainOnGlass(drops:tint:) overlay (iOS 17+) in TimelineView(.animation) + Canvas. Scatter one static bead per 900 pt² at hashed positions with radius 0.8–2.6 pt. Each of the sliding drops (9) has a cycle of 3.5–7.5 s; its progress l through the cycle becomes stick-slip motion with five steps, (floor(5l) + frac(5l)³) / 5, carrying it from a hashed start near the top past the bottom edge, with a 3 pt sideways wobble and radius 3.2–5.8 pt, stretched 1.25× vertically. Behind it, leave a trail of tiny beads every 9 pt with hashed jitter. Draw every drop like a tiny lens: an ellipse filled with a diagonal gradient (tint 35 % → tint 5 % → black 35 %) plus a bright fleck at the top-left. Disable hit testing. With Reduce Motion on, pause the timeline.
+Create a SwiftUI RainOnGlass(drops:color:) overlay (iOS 17+) in TimelineView(.animation) + Canvas. Scatter one static bead per 900 pt² at hashed positions with radius 0.8–2.6 pt. Each of the sliding drops (9) has a cycle of 3.5–7.5 s; its progress l through the cycle becomes stick-slip motion with five steps, (floor(5l) + frac(5l)³) / 5, carrying it from a hashed start near the top past the bottom edge, with a 3 pt sideways wobble and radius 3.2–5.8 pt, stretched 1.25× vertically. Behind it, leave a trail of tiny beads every 9 pt with hashed jitter. Draw every drop like a tiny lens: an ellipse filled with a diagonal gradient (tint 35 % → tint 5 % → black 35 %) plus a bright fleck at the top-left. Disable hit testing. With Reduce Motion on, pause the timeline.
 
 ### Source
 
@@ -14808,16 +14954,21 @@ import SwiftUI
 /// ```
 public struct RainOnGlass: View {
     private let drops: Int
-    private let tint: Color
+    private let color: Color
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// - Parameters:
     ///   - drops: Number of sliding drops.
-    ///   - tint: Colour of the drops' highlights.
-    public init(drops: Int = 9, tint: Color = .white) {
+    ///   - color: Colour of the drops' highlights.
+    public init(drops: Int = 9, color: Color = .white) {
         self.drops = max(0, drops)
-        self.tint = tint
+        self.color = color
+    }
+
+    @available(*, deprecated, renamed: "init(drops:color:)")
+    public init(drops: Int = 9, tint: Color) {
+        self.init(drops: drops, color: tint)
     }
 
     public var body: some View {
@@ -14862,10 +15013,10 @@ public struct RainOnGlass: View {
     private func drawDrop(_ context: inout GraphicsContext, at p: CGPoint, radius r: Double, stretch: Double = 1) {
         let rect = CGRect(x: p.x - r, y: p.y - r * stretch, width: r * 2, height: r * 2 * stretch)
         context.fill(Path(ellipseIn: rect), with: .linearGradient(
-            Gradient(colors: [tint.opacity(0.35), tint.opacity(0.05), Color.black.opacity(0.35)]),
+            Gradient(colors: [color.opacity(0.35), color.opacity(0.05), Color.black.opacity(0.35)]),
             startPoint: CGPoint(x: rect.minX, y: rect.minY), endPoint: CGPoint(x: rect.maxX, y: rect.maxY)))
         let fleck = r * 0.35
-        context.fill(Path(ellipseIn: CGRect(x: p.x - r * 0.45 - fleck / 2, y: p.y - r * stretch * 0.5 - fleck / 2, width: fleck, height: fleck)), with: .color(tint.opacity(0.8)))
+        context.fill(Path(ellipseIn: CGRect(x: p.x - r * 0.45 - fleck / 2, y: p.y - r * stretch * 0.5 - fleck / 2, width: fleck, height: fleck)), with: .color(color.opacity(0.8)))
     }
 
     private static func hash(_ a: Int, _ b: Int) -> Double {
@@ -15113,12 +15264,12 @@ public struct ClockWipeTransition: Transition {
 struct ClockWipeShape: Shape {
     var progress: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         guard progress > 0 else { return Path() }
         let centre = CGPoint(x: rect.midX, y: rect.midY)
@@ -15162,12 +15313,12 @@ struct DissolveShape: Shape {
     var progress: Double
     var cellSize: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         var path = Path()
         guard progress > 0 else { return path }
@@ -15356,12 +15507,12 @@ public struct ClockWipeTransition: Transition {
 struct ClockWipeShape: Shape {
     var progress: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         guard progress > 0 else { return Path() }
         let centre = CGPoint(x: rect.midX, y: rect.midY)
@@ -15405,12 +15556,12 @@ struct DissolveShape: Shape {
     var progress: Double
     var cellSize: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         var path = Path()
         guard progress > 0 else { return path }
@@ -15596,12 +15747,12 @@ public struct ClockWipeTransition: Transition {
 struct ClockWipeShape: Shape {
     var progress: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         guard progress > 0 else { return Path() }
         let centre = CGPoint(x: rect.midX, y: rect.midY)
@@ -15645,12 +15796,12 @@ struct DissolveShape: Shape {
     var progress: Double
     var cellSize: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         var path = Path()
         guard progress > 0 else { return path }
@@ -15839,12 +15990,12 @@ public struct ClockWipeTransition: Transition {
 struct ClockWipeShape: Shape {
     var progress: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         guard progress > 0 else { return Path() }
         let centre = CGPoint(x: rect.midX, y: rect.midY)
@@ -15888,12 +16039,12 @@ struct DissolveShape: Shape {
     var progress: Double
     var cellSize: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         var path = Path()
         guard progress > 0 else { return path }
@@ -16061,7 +16212,7 @@ private struct SwooshBody<Content: View>: View {
 struct SkewSlide: GeometryEffect {
     var progress: CGFloat
 
-    var animatableData: CGFloat {
+    nonisolated var animatableData: CGFloat {
         get { progress }
         set { progress = newValue }
     }
@@ -16241,7 +16392,7 @@ private struct SwooshBody<Content: View>: View {
 struct SkewSlide: GeometryEffect {
     var progress: CGFloat
 
-    var animatableData: CGFloat {
+    nonisolated var animatableData: CGFloat {
         get { progress }
         set { progress = newValue }
     }
@@ -16423,7 +16574,7 @@ private struct SwooshBody<Content: View>: View {
 struct SkewSlide: GeometryEffect {
     var progress: CGFloat
 
-    var animatableData: CGFloat {
+    nonisolated var animatableData: CGFloat {
         get { progress }
         set { progress = newValue }
     }
@@ -16597,12 +16748,12 @@ struct RevealCircle: Shape {
     var progress: Double
     var origin: UnitPoint
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let o = CGPoint(x: rect.minX + rect.width * origin.x, y: rect.minY + rect.height * origin.y)
         let corners = [CGPoint(x: rect.minX, y: rect.minY), CGPoint(x: rect.maxX, y: rect.minY), CGPoint(x: rect.minX, y: rect.maxY), CGPoint(x: rect.maxX, y: rect.maxY)]
         let reach = corners.map { hypot($0.x - o.x, $0.y - o.y) }.max() ?? 0
@@ -16702,12 +16853,12 @@ struct LiquidEdge: Shape {
     var progress: Double
     var bulge: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         var path = Path()
         guard progress > 0 else { return path }
@@ -16833,7 +16984,7 @@ struct PageTurnEffect: ViewModifier, Animatable {
     var progress: Double
     var reduceMotion: Bool
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -16958,7 +17109,7 @@ struct GlitchEffect: ViewModifier, Animatable {
     var amount: Double
     var slices: Int
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { amount }
         set { amount = newValue }
     }
@@ -17048,7 +17199,7 @@ struct GlitchSlice: Shape {
     var index: Int
     var count: Int
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let height = rect.height / CGFloat(count)
         return Path(CGRect(x: rect.minX - rect.width, y: rect.minY + CGFloat(index) * height, width: rect.width * 3, height: height + 0.5))
     }
@@ -17124,7 +17275,7 @@ struct OrigamiEffect: ViewModifier, Animatable {
     var progress: Double
     var folds: Int
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -17219,7 +17370,7 @@ struct GlitchSlice: Shape {
     var index: Int
     var count: Int
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let height = rect.height / CGFloat(count)
         return Path(CGRect(x: rect.minX - rect.width, y: rect.minY + CGFloat(index) * height, width: rect.width * 3, height: height + 0.5))
     }
@@ -17244,13 +17395,13 @@ New content spreads in like a blot of ink on wet paper, with a ragged edge.
 ```swift
 if showsDetail {
     DetailCard()
-        .transition(.inkBleed(from: .topLeading))
+        .transition(.inkBleed(origin: .topLeading))
 }
 ```
 
 ### How it works
 
-Create a SwiftUI Transition .inkBleed / .inkBleed(from: UnitPoint) (iOS 17+) that masks the content with an Animatable blot view whose progress is 1 when the phase is identity and 0 otherwise. The blot is a Canvas with .alphaThreshold(min: 0.5) and a blur of max(2, 0.06r), drawing into a layer: a circle of radius 0.82r at the origin plus 26 circles around it, at angle i / 26 × 2π + hashed jitter, distance r × (0.62–0.92) and radius r × (0.12–0.32). r = (1.25 × distance to the furthest corner + 30) × progress, so blurring then thresholding melts them into one ragged blot that clears the corners at 1. With Reduce Motion on, fade instead.
+Create a SwiftUI Transition .inkBleed / .inkBleed(origin: UnitPoint) (iOS 17+) that masks the content with an Animatable blot view whose progress is 1 when the phase is identity and 0 otherwise. The blot is a Canvas with .alphaThreshold(min: 0.5) and a blur of max(2, 0.06r), drawing into a layer: a circle of radius 0.82r at the origin plus 26 circles around it, at angle i / 26 × 2π + hashed jitter, distance r × (0.62–0.92) and radius r × (0.12–0.32). r = (1.25 × distance to the furthest corner + 30) × progress, so blurring then thresholding melts them into one ragged blot that clears the corners at 1. With Reduce Motion on, fade instead.
 
 ### Source
 
@@ -17293,7 +17444,7 @@ struct InkBlot: View, Animatable {
     var progress: Double
     var origin: UnitPoint
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -17340,6 +17491,9 @@ public extension Transition where Self == InkBleedTransition {
     static var inkBleed: InkBleedTransition { InkBleedTransition() }
 
     /// Spreads the view in from `origin` like a blot of ink.
+    static func inkBleed(origin: UnitPoint) -> InkBleedTransition { InkBleedTransition(origin: origin) }
+
+    @available(*, deprecated, renamed: "inkBleed(origin:)")
     static func inkBleed(from origin: UnitPoint) -> InkBleedTransition { InkBleedTransition(origin: origin) }
 }
 
@@ -17352,7 +17506,7 @@ public extension Transition where Self == InkBleedTransition {
                 if shown {
                     LinearGradient(colors: [.indigo, .purple], startPoint: .top, endPoint: .bottom)
                         .overlay(Text("Ink").font(.largeTitle.bold()).foregroundStyle(.white))
-                        .transition(.inkBleed(from: .topLeading))
+                        .transition(.inkBleed(origin: .topLeading))
                 }
             }
             .frame(width: 280, height: 180)
@@ -17433,7 +17587,7 @@ private struct ZoomBlurEffect<Echo: View>: ViewModifier, Animatable {
     var scale: CGFloat
     let content: Echo
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { amount }
         set { amount = newValue }
     }
@@ -17690,7 +17844,7 @@ import SwiftUI
 struct PixellateModifier: ViewModifier, Animatable {
     var size: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { size }
         set { size = newValue }
     }
@@ -17794,7 +17948,7 @@ import SwiftUI
 struct ChromaticAberrationModifier: ViewModifier, Animatable {
     var amount: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { amount }
         set { amount = newValue }
     }
@@ -18136,7 +18290,7 @@ struct NoiseDissolveModifier: ViewModifier, Animatable {
     var scale: Double
     var edge: Color
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -18317,7 +18471,7 @@ struct DisintegrateModifier: ViewModifier, Animatable {
     var wind: CGVector
     var grain: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -18494,7 +18648,7 @@ struct GenieModifier: ViewModifier, Animatable {
     var progress: Double
     var target: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -18829,7 +18983,7 @@ struct SwirlModifier: ViewModifier, Animatable {
     var radius: Double
     var strength: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { strength }
         set { strength = newValue }
     }
@@ -18992,7 +19146,7 @@ struct KaleidoscopeEffect: ViewModifier, Animatable {
     var segments: Int
     var rotation: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { rotation }
         set { rotation = newValue }
     }
@@ -19107,7 +19261,7 @@ struct HalftoneModifier: ViewModifier, Animatable {
     var angle: Angle
     var paper: Color
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { dotSize }
         set { dotSize = newValue }
     }
@@ -19224,7 +19378,7 @@ struct DitherModifier: ViewModifier, Animatable {
     var pixelSize: Double
     var palette: [Color]
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { pixelSize }
         set { pixelSize = newValue }
     }
@@ -19353,7 +19507,7 @@ import SwiftUI
 struct ThermalModifier: ViewModifier, Animatable {
     var intensity: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { intensity }
         set { intensity = newValue }
     }
@@ -19494,7 +19648,7 @@ public extension View {
     /// - Parameters:
     ///   - amplitude: Height of the ripples at the free end, in points.
     ///   - wavelength: Length of one ripple, in points.
-    ///   - speed: How fast the ripples run.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     func flagWave(amplitude: Double = 9, wavelength: Double = 120, speed: Double = 1) -> some View {
         modifier(FlagWaveModifier(amplitude: amplitude, wavelength: wavelength, speed: speed))
     }
@@ -19562,7 +19716,7 @@ VoronoiCells(colors: [.indigo, .purple, .pink, .orange, .teal])
 
 ### How it works
 
-Create a SwiftUI VoronoiCells(colors:cellSize:speed:) view (iOS 17+): a Rectangle with a Metal [[stitchable]] colour shader (position, colour, float time, float scale, device const half4 *palette, int count) driven by TimelineView(.animation). Work in cells of scale (60 pt); for the 3 × 3 neighbouring cells, the seed is cell + 0.5 + 0.4 × sin(time + 2π × hash2(cell)), so seeds drift. Track the nearest and second-nearest distances; colour the pixel with palette[hash(nearest cell) × count], darkened by smoothstep(0, 0.08, second − nearest) for soft seams and by 1 − 0.35 × nearest for a gentle glow at each seed. Pass the colours with .colorArray. With Reduce Motion on, pause the timeline. Hide it from accessibility.
+Create a SwiftUI VoronoiCells(colors:cellSize:speed:) view (iOS 17+): a Rectangle with a Metal [[stitchable]] colour shader (position, colour, float time, float scale, device const half4 *palette, int count) driven by TimelineView(.animation). Work in cells of scale (60 pt); for the 3 × 3 neighbouring cells, the seed is cell + 0.5 + 0.4 × sin(0.6 × speed × time + 2π × hash2(cell)) (speed is a multiplier defaulting to 1), so seeds drift. Track the nearest and second-nearest distances; colour the pixel with palette[hash(nearest cell) × count], darkened by smoothstep(0, 0.08, second − nearest) for soft seams and by 1 − 0.35 × nearest for a gentle glow at each seed. Pass the colours with .colorArray. With Reduce Motion on, pause the timeline. Hide it from accessibility.
 
 ### Source
 
@@ -19583,11 +19737,11 @@ public struct VoronoiCells: View {
     /// - Parameters:
     ///   - colors: Colours the cells are picked from.
     ///   - cellSize: Typical size of a cell, in points.
-    ///   - speed: How fast the seeds drift.
-    public init(colors: [Color] = [.indigo, .purple, .pink, .orange, .teal], cellSize: Double = 60, speed: Double = 0.6) {
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
+    public init(colors: [Color] = [.indigo, .purple, .pink, .orange, .teal], cellSize: Double = 60, speed: Double = 1) {
         self.colors = colors.isEmpty ? [.gray] : colors
         self.cellSize = max(8, cellSize)
-        self.speed = speed
+        self.speed = speed * 0.6
     }
 
     public var body: some View {

@@ -13,17 +13,17 @@ public struct WarpTunnel: View {
     /// - Parameters:
     ///   - rings: Number of rings in the tunnel.
     ///   - colors: Ring colours, cycled from the back of the tunnel.
-    ///   - speed: Rings passed per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - sides: 0 for circles, 3 or more for polygons (6 = hexagons).
     public init(
         rings: Int = 18,
         colors: [Color] = [.cyan, .blue, .purple, .pink],
-        speed: Double = 1.2,
+        speed: Double = 1,
         sides: Int = 0
     ) {
         self.rings = max(2, rings)
         self.colors = colors.isEmpty ? [.white] : colors
-        self.speed = speed
+        self.speed = speed * 1.2
         self.sides = sides
     }
 

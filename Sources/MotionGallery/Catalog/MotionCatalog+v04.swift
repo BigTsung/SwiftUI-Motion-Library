@@ -74,7 +74,7 @@ extension MotionCatalog {
                 .font(.system(size: 36, design: .rounded))
             """#,
             prompt: #"""
-            Create a SwiftUI WeightWaveText(_:speed:wavelength:) view (iOS 17+) that lays the characters out in an HStack(spacing: 0) inside TimelineView(.animation). Each character gets .fontWeight from the nine weights ultraLight…black, indexed by level = (sin(2π × (index / wavelength − time × speed)) + 1) / 2 (wavelength 8 letters, speed 0.6 waves/s), so a swell of bold travels through the word. The font comes from the environment. With Reduce Motion on, pause the timeline and use .regular. Combine into one accessibility element labelled with the string.
+            Create a SwiftUI WeightWaveText(_:speed:wavelength:) view (iOS 17+) that lays the characters out in an HStack(spacing: 0) inside TimelineView(.animation). Each character gets .fontWeight from the nine weights ultraLight…black, indexed by level = (sin(2π × (index / wavelength − time × speed)) + 1) / 2 (wavelength 8 letters, 0.6 waves/s × speed, a multiplier defaulting to 1), so a swell of bold travels through the word. The font comes from the environment. With Reduce Motion on, pause the timeline and use .regular. Combine into one accessibility element labelled with the string.
             """#
         ) { WeightWaveDemo() },
 

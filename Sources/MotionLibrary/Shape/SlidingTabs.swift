@@ -15,7 +15,7 @@ public struct SlidingTabs<Value: Hashable>: View {
     private let options: [Value]
     private let title: (Value) -> String
     private let indicator: Indicator
-    private let tint: Color
+    private let color: Color
 
     @Namespace private var namespace
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -24,20 +24,31 @@ public struct SlidingTabs<Value: Hashable>: View {
     ///   - options: The options, in order.
     ///   - selection: The selected option.
     ///   - indicator: `.pill` or `.underline`.
-    ///   - tint: Colour of the indicator.
+    ///   - color: Colour of the indicator.
     ///   - title: The title of an option.
     public init(
         _ options: [Value],
         selection: Binding<Value>,
         indicator: Indicator = .pill,
-        tint: Color = .accentColor,
+        color: Color = .accentColor,
         title: @escaping (Value) -> String
     ) {
         self.options = options
         _selection = selection
         self.indicator = indicator
-        self.tint = tint
+        self.color = color
         self.title = title
+    }
+
+    @available(*, deprecated, renamed: "init(_:selection:indicator:color:title:)")
+    public init(
+        _ options: [Value],
+        selection: Binding<Value>,
+        indicator: Indicator = .pill,
+        tint: Color,
+        title: @escaping (Value) -> String
+    ) {
+        self.init(options, selection: selection, indicator: indicator, color: tint, title: title)
     }
 
     public var body: some View {
@@ -53,7 +64,7 @@ public struct SlidingTabs<Value: Hashable>: View {
                         .font(.subheadline.weight(.semibold))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .foregroundStyle(indicator == .pill && selected ? Color.white : selected ? tint : Color.secondary)
+                        .foregroundStyle(indicator == .pill && selected ? Color.white : selected ? color : Color.secondary)
                         .background { marker(selected) }
                         .contentShape(Rectangle())
                 }
@@ -75,13 +86,13 @@ public struct SlidingTabs<Value: Hashable>: View {
             switch indicator {
             case .pill:
                 Capsule()
-                    .fill(tint)
+                    .fill(color)
                     .matchedGeometryEffect(id: "indicator", in: namespace)
             case .underline:
                 VStack {
                     Spacer()
                     Capsule()
-                        .fill(tint)
+                        .fill(color)
                         .frame(height: 3)
                         .padding(.horizontal, 10)
                 }
@@ -97,8 +108,13 @@ public extension SlidingTabs where Value == String {
     /// ```swift
     /// SlidingTabs(["Day", "Week", "Month"], selection: $range)
     /// ```
-    init(_ options: [String], selection: Binding<String>, indicator: Indicator = .pill, tint: Color = .accentColor) {
-        self.init(options, selection: selection, indicator: indicator, tint: tint) { $0 }
+    init(_ options: [String], selection: Binding<String>, indicator: Indicator = .pill, color: Color = .accentColor) {
+        self.init(options, selection: selection, indicator: indicator, color: color) { $0 }
+    }
+
+    @available(*, deprecated, renamed: "init(_:selection:indicator:color:)")
+    init(_ options: [String], selection: Binding<String>, indicator: Indicator = .pill, tint: Color) {
+        self.init(options, selection: selection, indicator: indicator, color: tint) { $0 }
     }
 }
 

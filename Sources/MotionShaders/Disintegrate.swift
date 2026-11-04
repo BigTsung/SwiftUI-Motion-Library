@@ -9,7 +9,7 @@ struct DisintegrateModifier: ViewModifier, Animatable {
     var wind: CGVector
     var grain: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }

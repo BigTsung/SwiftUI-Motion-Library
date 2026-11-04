@@ -20,12 +20,12 @@ public struct TopographicLines: View {
     ///   - levels: Number of contour lines between the lowest and highest ground.
     ///   - scale: Size of the hills, in points.
     ///   - color: Colour of the lines.
-    ///   - speed: How fast the landscape shifts.
-    public init(levels: Int = 14, scale: Double = 90, color: Color = .primary, speed: Double = 0.12) {
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
+    public init(levels: Int = 14, scale: Double = 90, color: Color = .primary, speed: Double = 1) {
         self.levels = max(1, levels)
         self.scale = max(10, scale)
         self.color = color
-        self.speed = speed
+        self.speed = speed * 0.12
     }
 
     public var body: some View {

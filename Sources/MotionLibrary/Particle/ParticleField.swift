@@ -14,12 +14,12 @@ public struct ParticleField: View {
     /// - Parameters:
     ///   - count: Number of particles.
     ///   - color: Particle and line colour.
-    ///   - speed: Drift speed in points per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - linkDistance: Particles closer than this are joined by a line (0 turns lines off).
-    public init(count: Int = 50, color: Color = .white, speed: Double = 14, linkDistance: CGFloat = 70) {
+    public init(count: Int = 50, color: Color = .white, speed: Double = 1, linkDistance: CGFloat = 70) {
         self.count = count
         self.color = color
-        self.speed = speed
+        self.speed = speed * 14
         self.linkDistance = linkDistance
         var generator = SplitMix64(seed: 42)
         seeds = (0..<max(0, count)).map { _ in ParticleSeed(using: &generator) }

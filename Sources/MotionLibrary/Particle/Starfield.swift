@@ -11,10 +11,10 @@ public struct Starfield: View {
 
     /// - Parameters:
     ///   - count: Number of stars.
-    ///   - speed: Depth units per second; 0.3 cruises, 1.5 is warp speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - color: Star colour.
-    public init(count: Int = 200, speed: Double = 0.35, color: Color = .white) {
-        self.speed = speed
+    public init(count: Int = 200, speed: Double = 1, color: Color = .white) {
+        self.speed = speed * 0.35
         self.color = color
         var generator = SplitMix64(seed: 7)
         stars = (0..<max(0, count)).map { _ in

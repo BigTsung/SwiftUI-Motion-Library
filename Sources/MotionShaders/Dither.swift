@@ -8,7 +8,7 @@ struct DitherModifier: ViewModifier, Animatable {
     var pixelSize: Double
     var palette: [Color]
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { pixelSize }
         set { pixelSize = newValue }
     }

@@ -34,12 +34,12 @@ struct LiquidEdge: Shape {
     var progress: Double
     var bulge: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         guard progress < 1 else { return Path(rect) }
         var path = Path()
         guard progress > 0 else { return path }

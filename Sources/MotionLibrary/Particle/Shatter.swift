@@ -56,7 +56,7 @@ struct ShatterEffect: ViewModifier, Animatable {
     var distance: CGFloat
     var spin: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }
@@ -134,7 +134,7 @@ enum ShatterGrid {
 struct ShardShape: Shape {
     var points: [CGPoint]
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         var path = Path()
         let mapped = points.map { CGPoint(x: rect.minX + $0.x * rect.width, y: rect.minY + $0.y * rect.height) }
         path.addLines(mapped)

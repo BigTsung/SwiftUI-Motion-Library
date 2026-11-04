@@ -20,11 +20,11 @@ public struct Flock: View {
     /// - Parameters:
     ///   - count: Number of boids.
     ///   - color: Colour of the boids.
-    ///   - speed: Cruising speed, in points per second.
-    public init(count: Int = 50, color: Color = .white, speed: Double = 90) {
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
+    public init(count: Int = 50, color: Color = .white, speed: Double = 1) {
         self.count = max(1, count)
         self.color = color
-        self.speed = speed
+        self.speed = speed * 90
     }
 
     public var body: some View {

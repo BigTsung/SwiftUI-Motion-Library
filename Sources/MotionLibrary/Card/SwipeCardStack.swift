@@ -1,10 +1,14 @@
 import SwiftUI
 
-/// Which way a card left the stack.
-public enum SwipeDirection: Sendable {
+/// Which way a card left a `SwipeCardStack`.
+public enum SwipeCardDirection: Sendable {
     case left
     case right
 }
+
+/// The old name of `SwipeCardDirection`.
+@available(*, deprecated, renamed: "SwipeCardDirection")
+public typealias SwipeDirection = SwipeCardDirection
 
 /// A Tinder-style deck. The top card follows the finger and tilts; past a
 /// threshold it flies off and the cards behind move up. Drag less and it
@@ -13,12 +17,12 @@ public struct SwipeCardStack<Data: RandomAccessCollection, Card: View>: View whe
     private let items: Data
     private let visibleCount: Int
     private let loops: Bool
-    private let onSwipe: (Data.Element, SwipeDirection) -> Void
+    private let onSwipe: (Data.Element, SwipeCardDirection) -> Void
     private let card: (Data.Element) -> Card
 
     @State private var position = 0
     @State private var drag: CGSize = .zero
-    @State private var flyingOff: SwipeDirection?
+    @State private var flyingOff: SwipeCardDirection?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let threshold: CGFloat = 110
@@ -33,7 +37,7 @@ public struct SwipeCardStack<Data: RandomAccessCollection, Card: View>: View whe
         _ items: Data,
         visibleCount: Int = 3,
         loops: Bool = true,
-        onSwipe: @escaping (Data.Element, SwipeDirection) -> Void = { _, _ in },
+        onSwipe: @escaping (Data.Element, SwipeCardDirection) -> Void = { _, _ in },
         @ViewBuilder card: @escaping (Data.Element) -> Card
     ) {
         self.items = items
@@ -84,7 +88,7 @@ public struct SwipeCardStack<Data: RandomAccessCollection, Card: View>: View whe
             }
     }
 
-    private func swipe(_ item: Data.Element, _ direction: SwipeDirection) {
+    private func swipe(_ item: Data.Element, _ direction: SwipeCardDirection) {
         flyingOff = direction
         let distance: CGFloat = direction == .right ? 600 : -600
         withAnimation(reduceMotion ? .easeOut(duration: 0.2) : .easeIn(duration: 0.25)) {

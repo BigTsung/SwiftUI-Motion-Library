@@ -14,7 +14,7 @@ public struct MorphingBlob<Fill: ShapeStyle>: View {
     ///   - fill: Any shape style: a colour, gradient or material.
     ///   - points: Number of lobes around the outline (4…10 looks organic).
     ///   - wobble: How far the outline moves in and out, as a fraction of the radius.
-    ///   - speed: Multiplier on the morphing tempo.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(fill: Fill, points: Int = 6, wobble: CGFloat = 0.18, speed: Double = 1) {
         self.fill = fill
         self.points = points
@@ -55,7 +55,7 @@ struct BlobShape: Shape {
     var points: Int
     var wobble: CGFloat
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let count = max(3, points)
         let centre = CGPoint(x: rect.midX, y: rect.midY)
         let baseRadius = min(rect.width, rect.height) / 2 * (1 - wobble)

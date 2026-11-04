@@ -15,11 +15,11 @@ public struct WeightWaveText: View {
 
     /// - Parameters:
     ///   - string: The text to show.
-    ///   - speed: Waves per second.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     ///   - wavelength: Letters per wave.
-    public init(_ string: String, speed: Double = 0.6, wavelength: Double = 8) {
+    public init(_ string: String, speed: Double = 1, wavelength: Double = 8) {
         self.string = string
-        self.speed = speed
+        self.speed = speed * 0.6
         self.wavelength = max(1, wavelength)
     }
 

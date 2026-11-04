@@ -7,7 +7,7 @@ import SwiftUI
 struct ChromaticAberrationModifier: ViewModifier, Animatable {
     var amount: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { amount }
         set { amount = newValue }
     }

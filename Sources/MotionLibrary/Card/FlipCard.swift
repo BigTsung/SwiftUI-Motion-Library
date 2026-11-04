@@ -50,7 +50,7 @@ private struct FlipFace: ViewModifier, Animatable {
     var axis: Axis
     var isBack: Bool
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { angle }
         set { angle = newValue }
     }

@@ -13,7 +13,7 @@ public struct NetworkBackground: View {
     private let count: Int
     private let linkDistance: CGFloat
     private let color: Color
-    private let interactive: Bool
+    private let isInteractive: Bool
 
     @State private var pointer: CGPoint?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -22,12 +22,17 @@ public struct NetworkBackground: View {
     ///   - count: Number of points.
     ///   - linkDistance: Points closer than this are joined, in points.
     ///   - color: Colour of points and lines.
-    ///   - interactive: Pull points towards the pointer or a drag.
-    public init(count: Int = 46, linkDistance: CGFloat = 70, color: Color = .white, interactive: Bool = true) {
+    ///   - isInteractive: Pull points towards the pointer or a drag.
+    public init(count: Int = 46, linkDistance: CGFloat = 70, color: Color = .white, isInteractive: Bool = true) {
         self.count = max(2, count)
         self.linkDistance = linkDistance
         self.color = color
-        self.interactive = interactive
+        self.isInteractive = isInteractive
+    }
+
+    @available(*, deprecated, renamed: "init(count:linkDistance:color:isInteractive:)")
+    public init(count: Int = 46, linkDistance: CGFloat = 70, color: Color = .white, interactive: Bool) {
+        self.init(count: count, linkDistance: linkDistance, color: color, isInteractive: interactive)
     }
 
     public var body: some View {
@@ -53,10 +58,10 @@ public struct NetworkBackground: View {
         }
         .contentShape(Rectangle())
         .onContinuousHover { phase in
-            guard interactive else { return }
+            guard isInteractive else { return }
             if case let .active(location) = phase { pointer = location } else { pointer = nil }
         }
-        .gesture(interactive ? DragGesture(minimumDistance: 0)
+        .gesture(isInteractive ? DragGesture(minimumDistance: 0)
             .onChanged { pointer = $0.location }
             .onEnded { _ in pointer = nil } : nil)
         .accessibilityHidden(true)

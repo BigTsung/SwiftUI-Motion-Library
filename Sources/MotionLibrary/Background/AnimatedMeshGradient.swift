@@ -12,7 +12,7 @@ public struct AnimatedMeshGradient: View {
     /// - Parameters:
     ///   - colors: Nine colours, row by row from the top left. Fewer are
     ///     repeated; more are ignored.
-    ///   - speed: 1 = default pace; 0.5 is half as fast.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(
         colors: [Color] = [
             .indigo, .purple, .pink,

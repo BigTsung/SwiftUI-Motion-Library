@@ -39,7 +39,7 @@ private struct ZoomBlurEffect<Echo: View>: ViewModifier, Animatable {
     var scale: CGFloat
     let content: Echo
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { amount }
         set { amount = newValue }
     }

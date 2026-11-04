@@ -161,7 +161,7 @@ struct MarqueeWallDemo: View {
     private let symbols = ["star.fill", "heart.fill", "bolt.fill", "leaf.fill", "moon.fill", "flame.fill", "drop.fill", "cloud.fill"]
 
     var body: some View {
-        MarqueeWall(count: 8, columns: 4, itemSize: CGSize(width: 40, height: 52), spacing: 7, speed: 16) { index in
+        MarqueeWall(count: 8, columns: 4, itemSize: CGSize(width: 40, height: 52), spacing: 7, speed: 0.67) { index in
             Rectangle().fill(colors[index].gradient)
                 .overlay(Image(systemName: symbols[index]).font(.caption).foregroundStyle(.white.opacity(0.9)))
         }
@@ -202,7 +202,7 @@ struct NetworkDemo: View {
 struct TopographicDemo: View {
     var body: some View {
         DarkPanel(color: Color(red: 0.05, green: 0.08, blue: 0.07)) {
-            TopographicLines(levels: 10, scale: 55, color: .mint, speed: 0.25)
+            TopographicLines(levels: 10, scale: 55, color: .mint, speed: 2)
         }
     }
 }
@@ -249,7 +249,7 @@ struct AnalogClockDemo: View {
 struct FlockDemo: View {
     var body: some View {
         DarkPanel(color: Color(red: 0.06, green: 0.1, blue: 0.2)) {
-            Flock(count: 28, color: .white, speed: 55)
+            Flock(count: 28, color: .white, speed: 0.6)
         }
     }
 }
@@ -307,7 +307,7 @@ struct InkBleedDemo: View {
                 if index == page {
                     Rectangle().fill(pages[index].0.gradient)
                         .overlay(Image(systemName: pages[index].1).font(.system(size: 34)).foregroundStyle(.white))
-                        .transition(.asymmetric(insertion: AnyTransition(.inkBleed(from: index.isMultiple(of: 2) ? .topLeading : .bottomTrailing)), removal: .opacity.animation(.easeOut(duration: 0.01).delay(1.1))))
+                        .transition(.asymmetric(insertion: AnyTransition(.inkBleed(origin: index.isMultiple(of: 2) ? .topLeading : .bottomTrailing)), removal: .opacity.animation(.easeOut(duration: 0.01).delay(1.1))))
                         .zIndex(Double(page))
                 }
             }

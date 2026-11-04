@@ -9,7 +9,7 @@ struct NoiseDissolveModifier: ViewModifier, Animatable {
     var scale: Double
     var edge: Color
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }

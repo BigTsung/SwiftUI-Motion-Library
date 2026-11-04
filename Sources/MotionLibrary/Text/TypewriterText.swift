@@ -10,16 +10,21 @@ import SwiftUI
 /// The animation restarts whenever `text` changes.
 public struct TypewriterText: View {
     private let text: String
-    private let interval: Duration
+    private let interval: Double
     private let showsCursor: Bool
     private let cursor: String
 
     @State private var visibleCount = 0
     @State private var cursorVisible = true
 
+    /// - Parameters:
+    ///   - text: The text to type out.
+    ///   - interval: Seconds between characters.
+    ///   - showsCursor: Shows a blinking cursor after the text.
+    ///   - cursor: The cursor character.
     public init(
         _ text: String,
-        interval: Duration = .milliseconds(60),
+        interval: Double = 0.06,
         showsCursor: Bool = true,
         cursor: String = "|"
     ) {
@@ -27,6 +32,17 @@ public struct TypewriterText: View {
         self.interval = interval
         self.showsCursor = showsCursor
         self.cursor = cursor
+    }
+
+    @available(*, deprecated, message: "Pass interval in seconds as a Double, e.g. interval: 0.06")
+    public init(
+        _ text: String,
+        interval: Duration,
+        showsCursor: Bool = true,
+        cursor: String = "|"
+    ) {
+        let parts = interval.components
+        self.init(text, interval: Double(parts.seconds) + Double(parts.attoseconds) / 1e18, showsCursor: showsCursor, cursor: cursor)
     }
 
     public var body: some View {
@@ -40,7 +56,7 @@ public struct TypewriterText: View {
             visibleCount = 0
             guard !text.isEmpty else { return }
             for index in 1...text.count {
-                try? await Task.sleep(for: interval)
+                try? await Task.sleep(for: .seconds(interval))
                 if Task.isCancelled { return }
                 visibleCount = index
             }

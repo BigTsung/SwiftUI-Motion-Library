@@ -14,11 +14,11 @@ public struct VoronoiCells: View {
     /// - Parameters:
     ///   - colors: Colours the cells are picked from.
     ///   - cellSize: Typical size of a cell, in points.
-    ///   - speed: How fast the seeds drift.
-    public init(colors: [Color] = [.indigo, .purple, .pink, .orange, .teal], cellSize: Double = 60, speed: Double = 0.6) {
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
+    public init(colors: [Color] = [.indigo, .purple, .pink, .orange, .teal], cellSize: Double = 60, speed: Double = 1) {
         self.colors = colors.isEmpty ? [.gray] : colors
         self.cellSize = max(8, cellSize)
-        self.speed = speed
+        self.speed = speed * 0.6
     }
 
     public var body: some View {

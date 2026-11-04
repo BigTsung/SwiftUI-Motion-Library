@@ -76,12 +76,12 @@ struct GaugeArc: Shape {
     var sweep: Double
     var fraction: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { fraction }
         set { fraction = newValue }
     }
 
-    func path(in rect: CGRect) -> Path {
+    nonisolated func path(in rect: CGRect) -> Path {
         let radius = min(rect.width, rect.height) * 0.42
         let start = 90 + (360 - sweep) / 2
         var path = Path()

@@ -11,16 +11,21 @@ import SwiftUI
 /// ```
 public struct RainOnGlass: View {
     private let drops: Int
-    private let tint: Color
+    private let color: Color
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// - Parameters:
     ///   - drops: Number of sliding drops.
-    ///   - tint: Colour of the drops' highlights.
-    public init(drops: Int = 9, tint: Color = .white) {
+    ///   - color: Colour of the drops' highlights.
+    public init(drops: Int = 9, color: Color = .white) {
         self.drops = max(0, drops)
-        self.tint = tint
+        self.color = color
+    }
+
+    @available(*, deprecated, renamed: "init(drops:color:)")
+    public init(drops: Int = 9, tint: Color) {
+        self.init(drops: drops, color: tint)
     }
 
     public var body: some View {
@@ -65,10 +70,10 @@ public struct RainOnGlass: View {
     private func drawDrop(_ context: inout GraphicsContext, at p: CGPoint, radius r: Double, stretch: Double = 1) {
         let rect = CGRect(x: p.x - r, y: p.y - r * stretch, width: r * 2, height: r * 2 * stretch)
         context.fill(Path(ellipseIn: rect), with: .linearGradient(
-            Gradient(colors: [tint.opacity(0.35), tint.opacity(0.05), Color.black.opacity(0.35)]),
+            Gradient(colors: [color.opacity(0.35), color.opacity(0.05), Color.black.opacity(0.35)]),
             startPoint: CGPoint(x: rect.minX, y: rect.minY), endPoint: CGPoint(x: rect.maxX, y: rect.maxY)))
         let fleck = r * 0.35
-        context.fill(Path(ellipseIn: CGRect(x: p.x - r * 0.45 - fleck / 2, y: p.y - r * stretch * 0.5 - fleck / 2, width: fleck, height: fleck)), with: .color(tint.opacity(0.8)))
+        context.fill(Path(ellipseIn: CGRect(x: p.x - r * 0.45 - fleck / 2, y: p.y - r * stretch * 0.5 - fleck / 2, width: fleck, height: fleck)), with: .color(color.opacity(0.8)))
     }
 
     private static func hash(_ a: Int, _ b: Int) -> Double {

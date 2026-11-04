@@ -12,7 +12,7 @@ public struct Fireflies: View {
     /// - Parameters:
     ///   - count: Number of fireflies.
     ///   - color: Glow colour.
-    ///   - speed: Multiplier on the drifting speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(count: Int = 24, color: Color = Color(red: 1, green: 0.9, blue: 0.45), speed: Double = 1) {
         self.count = max(1, count)
         self.color = color

@@ -15,7 +15,7 @@ public struct DotGlobe: View {
     ///   - dots: Number of dots on the sphere.
     ///   - color: Dot colour.
     ///   - accent: Colour of the pulsing cities.
-    ///   - speed: Turns per minute ÷ 6 (1 = one turn every 10 s… roughly).
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(dots: Int = 700, color: Color = .cyan, accent: Color = .pink, speed: Double = 1) {
         self.dots = max(10, dots)
         self.color = color

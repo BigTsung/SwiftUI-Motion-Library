@@ -5,6 +5,8 @@
 #
 #   Scripts/check-standalone.sh            # every effect
 #   Scripts/check-standalone.sh shimmer    # only these ids
+#   SWIFT_FLAGS="-swift-version 6" Scripts/check-standalone.sh
+#                                          # as an app in the Swift 6 language mode would
 #
 # Run Scripts/generate-docs.sh first if you changed which helpers an effect
 # uses. MotionShaders effects are skipped: their Swift file loads the shader
@@ -37,7 +39,7 @@ for id in "${ids[@]}"; do
         failed+=("$id")
         continue
     fi
-    if xcrun swiftc -typecheck -sdk "$SDK" -target "$(uname -m)-apple-macos14" -parse-as-library "$dir"/*.swift >"$dir.log" 2>&1; then
+    if xcrun swiftc -typecheck -sdk "$SDK" -target "$(uname -m)-apple-macos14" -parse-as-library ${SWIFT_FLAGS:-} "$dir"/*.swift >"$dir.log" 2>&1; then
         echo "ok    $id"
     else
         echo "FAIL  $id"

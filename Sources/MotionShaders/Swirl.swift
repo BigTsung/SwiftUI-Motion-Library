@@ -8,7 +8,7 @@ struct SwirlModifier: ViewModifier, Animatable {
     var radius: Double
     var strength: Double
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { strength }
         set { strength = newValue }
     }

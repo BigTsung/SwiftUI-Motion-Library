@@ -15,7 +15,7 @@ public struct MatrixRain: View {
     /// - Parameters:
     ///   - color: Colour of the trails. Heads are drawn white.
     ///   - fontSize: Glyph size; also sets the column width.
-    ///   - speed: Multiplier on the falling speed.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(color: Color = .green, fontSize: CGFloat = 14, speed: Double = 1) {
         self.color = color
         self.fontSize = fontSize

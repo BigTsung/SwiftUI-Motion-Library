@@ -21,7 +21,7 @@ public struct Snowfall: View {
     ///   - style: `.snow` or `.rain`.
     ///   - count: Number of flakes or drops.
     ///   - color: Flake or drop colour.
-    ///   - speed: 1 = default pace.
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
     public init(_ style: Style = .snow, count: Int = 80, color: Color = .white, speed: Double = 1) {
         self.style = style
         self.color = color

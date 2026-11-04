@@ -52,7 +52,7 @@ struct SplitRenderer: TextRenderer, Animatable {
     var spread: Double
     var distance: CGFloat
 
-    var animatableData: Double {
+    nonisolated var animatableData: Double {
         get { progress }
         set { progress = newValue }
     }

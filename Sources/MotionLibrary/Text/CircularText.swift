@@ -14,13 +14,13 @@ public struct CircularText: View {
     ///   - text: The text to wrap around the circle. Add a separator such as
     ///     " • " at the end so the start and end don't touch.
     ///   - radius: Radius of the circle the letters stand on, in points.
-    ///   - speed: Rotation speed in degrees per second (negative turns
-    ///     counter-clockwise, 0 stops it).
-    public init(_ text: String, radius: CGFloat = 60, speed: Double = 20) {
+    ///   - speed: Multiplier on the default pace: 1 is normal, 2 twice as fast, 0.5 half as fast.
+    ///     Negative turns counter-clockwise, 0 stops it.
+    public init(_ text: String, radius: CGFloat = 60, speed: Double = 1) {
         self.text = text
         self.characters = text.map(String.init)
         self.radius = radius
-        self.speed = speed
+        self.speed = speed * 20
     }
 
     public var body: some View {
